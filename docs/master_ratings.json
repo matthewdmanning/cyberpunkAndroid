@@ -1,0 +1,996 @@
+{
+    "glow_radius": {
+        "test_name": "glow_radius",
+        "results": [
+            {
+                "value": 8,
+                "rating": 0
+            },
+            {
+                "value": 16,
+                "rating": 0
+            },
+            {
+                "value": 24,
+                "rating": 0
+            },
+            {
+                "value": 32,
+                "rating": 0
+            },
+            {
+                "value": 48,
+                "rating": 0
+            },
+            {
+                "value": 64,
+                "rating": 0
+            }
+        ],
+        "timestamp": 1790359952487,
+        "base_config": {
+            "GlowPulseDuration": 1000,
+            "PulseMinOpacity": 0.20000000298023224,
+            "GlowIntensity": 3,
+            "PingScale": 2.5
+        }
+    },
+    "glow_opacity": {
+        "test_name": "glow_opacity",
+        "results": [
+            {
+                "value": 0.10000000149011612,
+                "rating": -1
+            },
+            {
+                "value": 0.30000001192092896,
+                "rating": -1
+            },
+            {
+                "value": 0.5,
+                "rating": -1
+            },
+            {
+                "value": 0.699999988079071,
+                "rating": -1
+            },
+            {
+                "value": 0.8999999761581421,
+                "rating": 1
+            },
+            {
+                "value": 1,
+                "rating": 1
+            }
+        ],
+        "timestamp": 1790358320757
+    },
+    "pulse_opacity": {
+        "test_name": "pulse_opacity",
+        "results": [
+            {
+                "value": 0.10000000149011612,
+                "rating": 1
+            },
+            {
+                "value": 0.30000001192092896,
+                "rating": 1
+            },
+            {
+                "value": 0.5,
+                "rating": 0
+            },
+            {
+                "value": 0.699999988079071,
+                "rating": -1
+            },
+            {
+                "value": 0.8999999761581421,
+                "rating": -1
+            },
+            {
+                "value": 1,
+                "rating": -1
+            }
+        ],
+        "timestamp": 1790358486119
+    },
+    "glow_pulse_speed": {
+        "test_name": "glow_pulse_speed",
+        "results": [
+            {
+                "value": 500,
+                "rating": -1
+            },
+            {
+                "value": 800,
+                "rating": 0
+            },
+            {
+                "value": 1000,
+                "rating": 1
+            },
+            {
+                "value": 1500,
+                "rating": 0
+            },
+            {
+                "value": 2000,
+                "rating": 0
+            },
+            {
+                "value": 3000,
+                "rating": -1
+            }
+        ],
+        "timestamp": 1790358546968
+    },
+    "backdrop_blur_radius": {
+        "test_name": "backdrop_blur_radius",
+        "results": [
+            {
+                "value": 4,
+                "rating": 0
+            },
+            {
+                "value": 8,
+                "rating": 0
+            },
+            {
+                "value": 12,
+                "rating": 0
+            },
+            {
+                "value": 16,
+                "rating": 0
+            },
+            {
+                "value": 24,
+                "rating": 0
+            },
+            {
+                "value": 32,
+                "rating": 0
+            }
+        ],
+        "timestamp": 1790360548137,
+        "base_config": {
+            "GlowPulseDuration": 1000,
+            "PulseMinOpacity": 0.20000000298023224,
+            "GlowIntensity": 3,
+            "PingScale": 2.5
+        }
+    },
+    "noise_opacity": {
+        "test_name": "noise_opacity",
+        "results": [
+            {
+                "value": 0.05000000074505806,
+                "rating": 0
+            },
+            {
+                "value": 0.10000000149011612,
+                "rating": 0
+            },
+            {
+                "value": 0.20000000298023224,
+                "rating": 0
+            },
+            {
+                "value": 0.30000001192092896,
+                "rating": 0
+            },
+            {
+                "value": 0.5,
+                "rating": 0
+            },
+            {
+                "value": 0.800000011920929,
+                "rating": 0
+            }
+        ],
+        "timestamp": 1790361231200,
+        "base_config": {
+            "GlowPulseDuration": 1000,
+            "PulseMinOpacity": 0.20000000298023224,
+            "GlowIntensity": 3,
+            "PingScale": 2.5
+        }
+    },
+    "overload_intensity": {
+        "test_name": "overload_intensity",
+        "results": [
+            {
+                "value": 0.10000000149011612,
+                "rating": 0
+            },
+            {
+                "value": 0.30000001192092896,
+                "rating": 0
+            },
+            {
+                "value": 0.5,
+                "rating": 0
+            },
+            {
+                "value": 0.800000011920929,
+                "rating": 0
+            },
+            {
+                "value": 1,
+                "rating": -1
+            },
+            {
+                "value": 1.5,
+                "rating": 0
+            }
+        ],
+        "timestamp": 1790361357325,
+        "base_config": {
+            "GlowPulseDuration": 1000,
+            "PulseMinOpacity": 0.20000000298023224,
+            "GlowIntensity": 3,
+            "PingScale": 2.5
+        }
+    },
+    "scanlines_opacity": {
+        "test_name": "scanlines_opacity",
+        "results": [
+            {
+                "value": 0.05000000074505806,
+                "rating": 0
+            },
+            {
+                "value": 0.10000000149011612,
+                "rating": 0
+            },
+            {
+                "value": 0.20000000298023224,
+                "rating": 0
+            },
+            {
+                "value": 0.30000001192092896,
+                "rating": 0
+            },
+            {
+                "value": 0.5,
+                "rating": 0
+            },
+            {
+                "value": 0.800000011920929,
+                "rating": 0
+            }
+        ],
+        "timestamp": 1790361500738,
+        "base_config": {
+            "GlowPulseDuration": 1000,
+            "PulseMinOpacity": 0.20000000298023224,
+            "GlowIntensity": 3,
+            "PingScale": 2.5
+        }
+    },
+    "stripes_width": {
+        "test_name": "stripes_width",
+        "results": [
+            {
+                "value": 2,
+                "rating": -1
+            },
+            {
+                "value": 4,
+                "rating": -1
+            },
+            {
+                "value": 6,
+                "rating": 0
+            },
+            {
+                "value": 8,
+                "rating": 1
+            },
+            {
+                "value": 10,
+                "rating": 1
+            },
+            {
+                "value": 16,
+                "rating": 1
+            }
+        ],
+        "timestamp": 1790361576454,
+        "base_config": {
+            "GlowPulseDuration": 1000,
+            "PulseMinOpacity": 0.20000000298023224,
+            "GlowIntensity": 3,
+            "PingScale": 2.5
+        }
+    },
+    "datastream_speed": {
+        "test_name": "datastream_speed",
+        "results": [
+            {
+                "value": 0.20000000298023224,
+                "rating": -1
+            },
+            {
+                "value": 0.5,
+                "rating": -1
+            },
+            {
+                "value": 1,
+                "rating": 0
+            },
+            {
+                "value": 1.5,
+                "rating": 1
+            },
+            {
+                "value": 2,
+                "rating": 1
+            },
+            {
+                "value": 3,
+                "rating": -1
+            }
+        ],
+        "timestamp": 1790361965379,
+        "base_config": {
+            "GlowPulseDuration": 1000,
+            "PulseMinOpacity": 0.20000000298023224,
+            "GlowIntensity": 3,
+            "PingScale": 2.5
+        }
+    },
+    "glowborder_width": {
+        "test_name": "glowborder_width",
+        "results": [
+            {
+                "value": 1,
+                "rating": 0
+            },
+            {
+                "value": 2,
+                "rating": 0
+            },
+            {
+                "value": 3,
+                "rating": 1
+            },
+            {
+                "value": 4,
+                "rating": 0
+            },
+            {
+                "value": 6,
+                "rating": 0
+            },
+            {
+                "value": 8,
+                "rating": -1
+            }
+        ],
+        "timestamp": 1790361988412,
+        "base_config": {
+            "GlowPulseDuration": 1000,
+            "PulseMinOpacity": 0.20000000298023224,
+            "GlowIntensity": 3,
+            "PingScale": 2.5
+        }
+    },
+    "stripes_opacity": {
+        "test_name": "stripes_opacity",
+        "results": [
+            {
+                "value": 0.05000000074505806,
+                "rating": -1
+            },
+            {
+                "value": 0.10000000149011612,
+                "rating": -1
+            },
+            {
+                "value": 0.15000000596046448,
+                "rating": -1
+            },
+            {
+                "value": 0.20000000298023224,
+                "rating": 0
+            },
+            {
+                "value": 0.30000001192092896,
+                "rating": 0
+            },
+            {
+                "value": 0.5,
+                "rating": 1
+            }
+        ],
+        "timestamp": 1790362013638,
+        "base_config": {
+            "GlowPulseDuration": 1000,
+            "PulseMinOpacity": 0.20000000298023224,
+            "GlowIntensity": 3,
+            "PingScale": 2.5
+        }
+    },
+    "backdrop_blur_opacity": {
+        "test_name": "backdrop_blur_opacity",
+        "results": [
+            {
+                "value": 0.10000000149011612,
+                "rating": -1
+            },
+            {
+                "value": 0.30000001192092896,
+                "rating": -1
+            },
+            {
+                "value": 0.5,
+                "rating": 1
+            },
+            {
+                "value": 0.699999988079071,
+                "rating": 1
+            },
+            {
+                "value": 0.8999999761581421,
+                "rating": -1
+            },
+            {
+                "value": 1,
+                "rating": -1
+            }
+        ],
+        "timestamp": 1790367710707,
+        "base_config": {
+            "GlowPulseDuration": 1000,
+            "PulseMinOpacity": 0.20000000298023224,
+            "GlowIntensity": 3,
+            "PingScale": 2.5
+        }
+    },
+    "datastream_maxalpha": {
+        "test_name": "datastream_maxalpha",
+        "results": [
+            {
+                "value": 0.10000000149011612,
+                "rating": -1
+            },
+            {
+                "value": 0.30000001192092896,
+                "rating": -1
+            },
+            {
+                "value": 0.5,
+                "rating": -1
+            },
+            {
+                "value": 0.699999988079071,
+                "rating": 0
+            },
+            {
+                "value": 0.8999999761581421,
+                "rating": 1
+            },
+            {
+                "value": 1,
+                "rating": 0
+            }
+        ],
+        "timestamp": 1790367733835,
+        "base_config": {
+            "GlowPulseDuration": 1000,
+            "PulseMinOpacity": 0.20000000298023224,
+            "GlowIntensity": 3,
+            "PingScale": 2.5
+        }
+    },
+    "glowborder_opacity": {
+        "test_name": "glowborder_opacity",
+        "results": [
+            {
+                "value": 0.10000000149011612,
+                "rating": 0
+            },
+            {
+                "value": 0.30000001192092896,
+                "rating": 0
+            },
+            {
+                "value": 0.5,
+                "rating": 1
+            },
+            {
+                "value": 0.699999988079071,
+                "rating": 1
+            },
+            {
+                "value": 0.8999999761581421,
+                "rating": 0
+            },
+            {
+                "value": 1,
+                "rating": 0
+            }
+        ],
+        "timestamp": 1790367750929,
+        "base_config": {
+            "GlowPulseDuration": 1000,
+            "PulseMinOpacity": 0.20000000298023224,
+            "GlowIntensity": 3,
+            "PingScale": 2.5
+        }
+    },
+    "noise_speed": {
+        "test_name": "noise_speed",
+        "results": [
+            {
+                "value": 0.20000000298023224,
+                "rating": 0
+            },
+            {
+                "value": 0.5,
+                "rating": 0
+            },
+            {
+                "value": 1,
+                "rating": 0
+            },
+            {
+                "value": 1.5,
+                "rating": 0
+            },
+            {
+                "value": 2,
+                "rating": 0
+            },
+            {
+                "value": 3,
+                "rating": 0
+            }
+        ],
+        "timestamp": 1790366577764,
+        "base_config": {
+            "GlowPulseDuration": 1000,
+            "PulseMinOpacity": 0.20000000298023224,
+            "GlowIntensity": 3,
+            "PingScale": 2.5
+        }
+    },
+    "overload_bounceamount": {
+        "test_name": "overload_bounceamount",
+        "results": [
+            {
+                "value": 0,
+                "rating": 0
+            },
+            {
+                "value": 4,
+                "rating": 0
+            },
+            {
+                "value": 8,
+                "rating": 0
+            },
+            {
+                "value": 12,
+                "rating": 0
+            },
+            {
+                "value": 16,
+                "rating": 0
+            },
+            {
+                "value": 24,
+                "rating": 0
+            }
+        ],
+        "timestamp": 1790366580803,
+        "base_config": {
+            "GlowPulseDuration": 1000,
+            "PulseMinOpacity": 0.20000000298023224,
+            "GlowIntensity": 3,
+            "PingScale": 2.5
+        }
+    },
+    "stripes_speed": {
+        "test_name": "stripes_speed",
+        "results": [
+            {
+                "value": 0.20000000298023224,
+                "rating": -1
+            },
+            {
+                "value": 0.5,
+                "rating": -1
+            },
+            {
+                "value": 1,
+                "rating": 1
+            },
+            {
+                "value": 1.5,
+                "rating": 1
+            },
+            {
+                "value": 2,
+                "rating": 1
+            },
+            {
+                "value": 3,
+                "rating": -1
+            }
+        ],
+        "timestamp": 1790367799401,
+        "base_config": {
+            "GlowPulseDuration": 1000,
+            "PulseMinOpacity": 0.20000000298023224,
+            "GlowIntensity": 3,
+            "PingScale": 2.5
+        }
+    },
+    "bounce_offset": {
+        "test_name": "bounce_offset",
+        "results": [
+            {
+                "value": 4,
+                "rating": -1
+            },
+            {
+                "value": 8,
+                "rating": -1
+            },
+            {
+                "value": 12,
+                "rating": 0
+            },
+            {
+                "value": 16,
+                "rating": 0
+            },
+            {
+                "value": 24,
+                "rating": 0
+            },
+            {
+                "value": 32,
+                "rating": 0
+            }
+        ],
+        "timestamp": 1790368845436,
+        "base_config": {
+            "GlowPulseDuration": 1000,
+            "PulseMinOpacity": 0.20000000298023224,
+            "GlowIntensity": 3,
+            "PingScale": 2.5
+        }
+    },
+    "float_offset": {
+        "test_name": "float_offset",
+        "results": [
+            {
+                "value": 4,
+                "rating": -1
+            },
+            {
+                "value": 8,
+                "rating": -1
+            },
+            {
+                "value": 12,
+                "rating": -1
+            },
+            {
+                "value": 16,
+                "rating": 0
+            },
+            {
+                "value": 24,
+                "rating": 0
+            },
+            {
+                "value": 32,
+                "rating": 0
+            }
+        ],
+        "timestamp": 1790368937792,
+        "base_config": {
+            "GlowPulseDuration": 1000,
+            "PulseMinOpacity": 0.20000000298023224,
+            "GlowIntensity": 3,
+            "PingScale": 2.5
+        }
+    },
+    "float_speed": {
+        "test_name": "float_speed",
+        "results": [
+            {
+                "value": 1000,
+                "rating": -1
+            },
+            {
+                "value": 2000,
+                "rating": 0
+            },
+            {
+                "value": 3000,
+                "rating": 1
+            },
+            {
+                "value": 4000,
+                "rating": 0
+            },
+            {
+                "value": 5000,
+                "rating": 0
+            },
+            {
+                "value": 6000,
+                "rating": 0
+            }
+        ],
+        "timestamp": 1790369011010,
+        "base_config": {
+            "GlowPulseDuration": 1000,
+            "PulseMinOpacity": 0.20000000298023224,
+            "GlowIntensity": 3,
+            "PingScale": 2.5
+        }
+    },
+    "doe_bounce": {
+        "test_name": "doe_bounce",
+        "results": [
+            {
+                "value": 0,
+                "rating": 1
+            },
+            {
+                "value": 1,
+                "rating": -1
+            },
+            {
+                "value": 2,
+                "rating": 0
+            },
+            {
+                "value": 3,
+                "rating": -1
+            },
+            {
+                "value": 4,
+                "rating": 1
+            },
+            {
+                "value": 5,
+                "rating": -1
+            },
+            {
+                "value": 6,
+                "rating": -1
+            },
+            {
+                "value": 7,
+                "rating": 1
+            }
+        ],
+        "timestamp": 1790444856533,
+        "base_config": {
+            "GlowPulseDuration": 1000,
+            "PulseMinOpacity": 0.20000000298023224,
+            "GlowIntensity": 3,
+            "PingScale": 2.5
+        }
+    },
+    "doe_datastream": {
+        "test_name": "doe_datastream",
+        "results": [
+            {
+                "value": 0,
+                "rating": -1
+            },
+            {
+                "value": 1,
+                "rating": 1
+            },
+            {
+                "value": 2,
+                "rating": -1
+            },
+            {
+                "value": 3,
+                "rating": 1
+            }
+        ],
+        "timestamp": 1790444939210,
+        "base_config": {
+            "GlowPulseDuration": 1000,
+            "PulseMinOpacity": 0.20000000298023224,
+            "GlowIntensity": 3,
+            "PingScale": 2.5
+        }
+    },
+    "doe_glowborder": {
+        "test_name": "doe_glowborder",
+        "results": [
+            {
+                "value": 0,
+                "rating": -1
+            },
+            {
+                "value": 1,
+                "rating": 0
+            },
+            {
+                "value": 2,
+                "rating": -1
+            },
+            {
+                "value": 3,
+                "rating": 0
+            },
+            {
+                "value": 4,
+                "rating": -1
+            },
+            {
+                "value": 5,
+                "rating": 0
+            },
+            {
+                "value": 6,
+                "rating": -1
+            },
+            {
+                "value": 7,
+                "rating": 0
+            }
+        ],
+        "timestamp": 1790445019170,
+        "base_config": {
+            "GlowPulseDuration": 1000,
+            "PulseMinOpacity": 0.20000000298023224,
+            "GlowIntensity": 3,
+            "PingScale": 2.5
+        }
+    },
+    "doe_stripes": {
+        "test_name": "doe_stripes",
+        "results": [
+            {
+                "value": 0,
+                "rating": -1
+            },
+            {
+                "value": 1,
+                "rating": 0
+            },
+            {
+                "value": 2,
+                "rating": 1
+            },
+            {
+                "value": 3,
+                "rating": -1
+            },
+            {
+                "value": 4,
+                "rating": -1
+            },
+            {
+                "value": 5,
+                "rating": 0
+            },
+            {
+                "value": 6,
+                "rating": -1
+            },
+            {
+                "value": 7,
+                "rating": -1
+            },
+            {
+                "value": 8,
+                "rating": -1
+            }
+        ],
+        "timestamp": 1790445168092,
+        "base_config": {
+            "GlowPulseDuration": 1000,
+            "PulseMinOpacity": 0.20000000298023224,
+            "GlowIntensity": 3,
+            "PingScale": 2.5
+        }
+    },
+    "doe_blur": {
+        "test_name": "doe_blur",
+        "results": [
+            {
+                "value": 0,
+                "rating": 0
+            },
+            {
+                "value": 1,
+                "rating": 0
+            },
+            {
+                "value": 2,
+                "rating": 0
+            },
+            {
+                "value": 3,
+                "rating": 0
+            },
+            {
+                "value": 4,
+                "rating": 0
+            },
+            {
+                "value": 5,
+                "rating": 0
+            },
+            {
+                "value": 6,
+                "rating": 0
+            },
+            {
+                "value": 7,
+                "rating": 0
+            },
+            {
+                "value": 8,
+                "rating": 0
+            }
+        ],
+        "timestamp": 1790445908723,
+        "base_config": {
+            "GlowPulseDuration": 1000,
+            "PulseMinOpacity": 0.20000000298023224,
+            "GlowIntensity": 3,
+            "PingScale": 2.5
+        }
+    },
+    "doe_float": {
+        "test_name": "doe_float",
+        "results": [
+            {
+                "value": 0,
+                "rating": -1
+            },
+            {
+                "value": 1,
+                "rating": -1
+            },
+            {
+                "value": 2,
+                "rating": -1
+            },
+            {
+                "value": 3,
+                "rating": -1
+            },
+            {
+                "value": 4,
+                "rating": -1
+            },
+            {
+                "value": 5,
+                "rating": -1
+            },
+            {
+                "value": 6,
+                "rating": -1
+            },
+            {
+                "value": 7,
+                "rating": -1
+            }
+        ],
+        "timestamp": 1790446031874,
+        "base_config": {
+            "GlowPulseDuration": 1000,
+            "PulseMinOpacity": 0.20000000298023224,
+            "GlowIntensity": 3,
+            "PingScale": 2.5
+        }
+    }
+}

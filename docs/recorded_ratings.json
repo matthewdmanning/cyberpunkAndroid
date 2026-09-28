@@ -1,0 +1,122 @@
+{
+    "glow_radius": {
+        "test_name": "glow_radius",
+        "results": [
+            {
+                "value": 8,
+                "rating": 0
+            },
+            {
+                "value": 16,
+                "rating": 0
+            },
+            {
+                "value": 24,
+                "rating": 0
+            },
+            {
+                "value": 32,
+                "rating": 0
+            },
+            {
+                "value": 48,
+                "rating": 0
+            },
+            {
+                "value": 64,
+                "rating": 0
+            }
+        ],
+        "timestamp": 1790358183575
+    },
+    "glow_opacity": {
+        "test_name": "glow_opacity",
+        "results": [
+            {
+                "value": 0.10000000149011612,
+                "rating": -1
+            },
+            {
+                "value": 0.30000001192092896,
+                "rating": -1
+            },
+            {
+                "value": 0.5,
+                "rating": -1
+            },
+            {
+                "value": 0.699999988079071,
+                "rating": -1
+            },
+            {
+                "value": 0.8999999761581421,
+                "rating": 1
+            },
+            {
+                "value": 1,
+                "rating": 1
+            }
+        ],
+        "timestamp": 1790358320757
+    },
+    "pulse_opacity": {
+        "test_name": "pulse_opacity",
+        "results": [
+            {
+                "value": 0.10000000149011612,
+                "rating": 1
+            },
+            {
+                "value": 0.30000001192092896,
+                "rating": 1
+            },
+            {
+                "value": 0.5,
+                "rating": 0
+            },
+            {
+                "value": 0.699999988079071,
+                "rating": -1
+            },
+            {
+                "value": 0.8999999761581421,
+                "rating": -1
+            },
+            {
+                "value": 1,
+                "rating": -1
+            }
+        ],
+        "timestamp": 1790358486119
+    },
+    "glow_pulse_speed": {
+        "test_name": "glow_pulse_speed",
+        "results": [
+            {
+                "value": 500,
+                "rating": -1
+            },
+            {
+                "value": 800,
+                "rating": 0
+            },
+            {
+                "value": 1000,
+                "rating": 1
+            },
+            {
+                "value": 1500,
+                "rating": 0
+            },
+            {
+                "value": 2000,
+                "rating": 0
+            },
+            {
+                "value": 3000,
+                "rating": -1
+            }
+        ],
+        "timestamp": 1790358546968
+    }
+}

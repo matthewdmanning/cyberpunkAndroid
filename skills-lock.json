@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "modern-jetpack-compose": {
+      "source": "anhvt52/jetpack-compose-skills",
+      "sourceType": "github",
+      "skillPath": "modern-jetpack-compose/SKILL.md",
+      "computedHash": "7ab67c0306af2cf3b53301e965da013b0a171a7eb38cbd84a5bc182d07bc0255"
+    },
+    "setup-matt-pocock-skills": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/setup-matt-pocock-skills/SKILL.md",
+      "computedHash": "552b0f48b9fe054aa93c5d432fefbd7bd9645e3f2d20b4e22432453a81800b21"
+    }
+  }
+}

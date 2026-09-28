@@ -1,0 +1,10 @@
+{
+    "test_name": "doe_datastream",
+    "icon_size_dp": 64,
+    "values": [
+        0,
+        1,
+        2,
+        3
+    ]
+}
