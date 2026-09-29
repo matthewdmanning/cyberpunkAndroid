@@ -80,9 +80,11 @@ Modifier.cyberNoise(opacity = 0.05f).background(CyberTheme.colors.background)
 
 ### `Modifier.cyberCrt`
 
-**What:** Makes the content look like it's on a curved CRT (cathode-ray tube) screen.
+**What:** A CRT (cathode-ray tube) screen look.
 
-**Looks like:** The content bulges outward (barrel distortion), with red/blue color fringing that grows toward the edges and a dark vignette around the border. Corners pushed outside the screen area turn black. The fallback draws only the vignette (transparent center fading to 55% black at the edges).
+**Looks like (spec):** Barrel distortion and a vignette: the content bulges outward and the border darkens.
+
+Today the shader also adds red/blue fringing toward the edges and turns corners pushed off-screen black, which the spec doesn't mention. The fallback below Android 13 draws only the vignette (transparent center fading to 55% black), with no distortion ([see the table](README.md#doesnt-match-its-description-yet)). No quality parameter set has been rated yet, so strength values are still hard-coded in the shader.
 
 **Use for:** A retro monitor frame around a whole panel or screen. **Avoid** on small elements; the distortion needs room.
 
@@ -372,17 +374,21 @@ CyberIcon(CyberIcons.Signal, contentDescription = "Live", modifier = Modifier.cy
 
 ### `Modifier.cyberDatastream`
 
-**What:** Data streaming down a surface, like falling code.
+**What:** A scanning line with a decaying trail.
 
-**Looks like:** A repeating vertical gradient in `color` that fades from transparent to bright and scrolls downward (100 px/s × `speed`), blended with Screen so it only brightens. With `mirror = true`, a second reversed stream scrolls upward through it.
+**Looks like (spec):** A scanning line, usually moving vertically, with opacity that decays behind it. Blended with Screen, so it only brightens. Depending on color matching, speed and parameters it reads as a **radar-like sweep** or a **raster-refresh** look.
 
-**Use for:** Backgrounds of data panels, loading states, network activity.
+Today it draws one horizontal line per element height moving downward (150 px/s at the default speed), with the trail fading from transparent up to `maxAlpha` at the leading edge. With `mirror = true`, a reversed line moves upward through it.
+
+**Use for:** Radar and scanner panels, "refreshing" displays, loading states.
+
+Named presets for the radar and raster-refresh looks will be added once a quality parameter set is rated for each (`TODO(presets)` in code).
 
 | Parameter | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `color` | `Color` | required | Stream color. |
-| `speed` | `Float` | `1` | Scroll speed. |
-| `maxAlpha` | `Float` | `0.5` | Peak stream opacity, 0–1. |
+| `color` | `Color` | required | Line color. |
+| `speed` | `Float` | `1.5` | Scroll speed (100 px/s × `speed`). Default from ratings: 1.5 and 2.0 rated best. |
+| `maxAlpha` | `Float` | `0.81` | Peak opacity at the leading edge, 0–1. Default reproduces the best-rated look (rated as 0.9 under the old squared math). |
 | `mirror` | `Boolean` | `false` | Adds an upward stream. |
 | `alphaTransform` | `(Float) -> Float` | linear (`f`) | Shapes the fade along each stream: maps 0 (tail)…1 (head) to 0…1; the result is scaled by `maxAlpha`. E.g. `{ it * it }` for a sharper head. |
 | `animationSpec` | `AnimationSpec<Float>` | `tween(300)` | Fade in/out when the trigger changes. |

@@ -96,6 +96,7 @@ The visual description is the spec. These effects don't draw what it describes y
 | `cyberScanlines` | Scanlines **and subtle barrel curvature** | Scanlines only | Curvature strength; whether the fallback approximates it |
 | `cyberPing` | Expanding ring **with a locked dense core** | Expanding ring only | Is the core a stationary ring or a filled shape? |
 | `cyberBorder` | Static **outer neon glow** on a container | Thin dashed stroke, no glow | Add a glow (and how it differs from `cyberGlowBorder`) or retire it |
+| `cyberCrt` | **Barrel distortion and vignette** | Shader: both, plus red/blue edge fringing and black off-screen corners. Fallback: vignette only | Keep or drop the fringing; whether the fallback approximates the distortion |
 
 ## Limitations
 

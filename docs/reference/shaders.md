@@ -35,7 +35,7 @@ Modifier.cyberOverload(…)            public API, CyberModifiers.kt
 
 ## `CrtShader`
 
-**Effect:** CRT screen curvature. Used by `Modifier.cyberCrt`.
+**Effect:** CRT screen look, specified as barrel distortion and vignette. Used by `Modifier.cyberCrt`. Steps 2–3 below go beyond that spec and are pending a keep/drop decision.
 
 **What it computes**
 1. **Barrel distortion:** maps each pixel to −1…1 space and pushes it outward by `1 + r² × 0.20`, so the center bulges.

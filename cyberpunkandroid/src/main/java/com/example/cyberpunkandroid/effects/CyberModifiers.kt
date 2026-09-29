@@ -181,20 +181,31 @@ fun Modifier.cyberScanlines(
 }
 
 /**
- * Overlays data streaming down the surface: a repeating vertical gradient in [color] that fades from
- * transparent to bright and scrolls downward, blended with Screen so it only brightens the content.
+ * A scanning line, usually moving vertically, with a trail of decaying opacity behind it. Blended with Screen,
+ * so it only brightens the content. Depending on color matching, speed and parameters it reads as a radar-like
+ * sweep or a raster-refresh look.
+ *
+ * Currently draws one horizontal scan line per element height moving downward, with its trail fading from
+ * transparent up to [maxAlpha] at the leading edge; [mirror] adds a reversed line moving upward.
+ *
+ * TODO(presets): add named defaults for the radar-like and raster-refresh looks once a quality parameter set is
+ *  found for each (rate them the same way as docs/master_ratings.json). The sample's doe_datastream runs can't be
+ *  used: they vary an easing that this modifier never receives, so all four rendered identically.
  *
  * @param color Stream color.
  * @param speed Scroll speed multiplier (100 px/s at 1).
- * @param maxAlpha Peak stream opacity, 0–1.
+ * @param maxAlpha Peak stream opacity at the leading edge, 0–1.
  * @param mirror Adds a second, reversed stream scrolling upward.
  * @param alphaTransform Shapes the fade along each stream: maps 0 (tail) to 1 (head) onto 0–1; the result is
  *   multiplied by [maxAlpha]. Default is a linear ramp.
  */
 fun Modifier.cyberDatastream(
     color: Color,
-    speed: Float = 1f,
-    maxAlpha: Float = 0.5f,
+    // Rated +1 in docs/master_ratings.json (datastream_speed: 1.5 and 2.0 = +1, 1.0 = 0); lower of the two
+    speed: Float = 1.5f,
+    // datastream_maxalpha rated 0.9 = +1 under the old code, which squared maxAlpha (0.9² = 0.81 on screen);
+    // 0.81 reproduces that rated look now that maxAlpha is applied once
+    maxAlpha: Float = 0.81f,
     mirror: Boolean = false,
     alphaTransform: (Float) -> Float = { factor -> factor },
     trigger: CyberInteractionTrigger = CyberInteractionTrigger.ALWAYS,
@@ -499,11 +510,15 @@ fun Modifier.cyberBounce(
 }
 
 /**
- * Makes the content look like it is on a curved CRT screen: barrel distortion bulges the center outward,
- * red/blue fringing grows toward the edges, and a vignette darkens the border; corners pushed off-screen
- * turn black. Below API 33 only the vignette is drawn.
+ * CRT screen look: barrel distortion and a vignette. The center bulges outward and the border darkens.
  *
  * Switches on and off instantly with [trigger] (no fade).
+ *
+ * TODO(visual): the API < 33 fallback draws only the vignette, with no barrel distortion.
+ * TODO(visual): the shader also adds red/blue edge fringing and blacks out off-screen corners, which the
+ *  description doesn't mention; keep or remove?
+ * TODO(defaults): no quality parameter set has been rated for CRT yet; curvature (0.20), vignette (1.6 / 0.3) and
+ *  fringing (0.015) are hard-coded in CrtShader. Hoist and set defaults once rated.
  */
 fun Modifier.cyberCrt(
     enabled: Boolean = true,
