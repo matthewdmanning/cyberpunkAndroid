@@ -18,6 +18,15 @@ val NeusharpFontFamily = FontFamily(
     Font(resId = R.font.neusharp_bold, weight = FontWeight.W700)
 )
 
+/**
+ * Custom Fastup font family for body and regular text.
+ */
+val FastupFontFamily = FontFamily(
+    Font(resId = R.font.fastup_regular, weight = FontWeight.Normal),
+    Font(resId = R.font.fastup_bold, weight = FontWeight.Bold),
+    Font(resId = R.font.fastup_bold, weight = FontWeight.W700)
+)
+
 @Immutable
 data class CyberTypography(
     val display: TextStyle = TextStyle(
@@ -33,7 +42,7 @@ data class CyberTypography(
         letterSpacing = 0.1.em
     ),
     val body: TextStyle = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = FastupFontFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
         letterSpacing = 0.1.em

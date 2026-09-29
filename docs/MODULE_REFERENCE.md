@@ -27,9 +27,10 @@ Defines the theme provider (`CyberTheme.kt`), shape tokens (`CyberShapes.kt`), p
 - `CyberShapes` defaults to asymmetric chamfered cut-corner shapes (`CutCornerShape`) rather than standard Material rounded corners.
 
 ### 5. Fonts & Typography (`src/main/res/font/`, `src/main/java/.../theme/CyberTypography.kt`)
-Stores the custom `neusharp_bold.otf` font asset and configures type tokens in `CyberTypography.kt`.
+Stores custom font assets (`neusharp_bold.otf`, `fastup_bold.ttf`, `fastup_regular.ttf`) and configures type tokens in `CyberTypography.kt`.
 - `NeusharpFontFamily` maps the custom angular `neusharp_bold.otf` font asset to `CyberTypography.display` for display headers and title banners.
-- Mandates lowercase resource naming (`neusharp_bold.otf`) in `src/main/res/font/` for Android R-class compilation compliance, while terminal text relies on system `FontFamily.Monospace`.
+- `FastupFontFamily` maps `fastup_regular.ttf` and `fastup_bold.ttf` to `CyberTypography.body` for body and regular copy.
+- Mandates strict lowercase underscore resource naming (`neusharp_bold.otf`, `fastup_bold.ttf`, `fastup_regular.ttf`) in `src/main/res/font/` for Android R-class compilation compliance, while terminal text relies on system `FontFamily.Monospace`.
 
 ### 6. Drawing Utilities (`src/main/java/.../utils/`)
 Houses custom brush generators (`CyberBrushes.kt`), drawing extensions (`CyberDrawUtils.kt`), and data mappers (`CyberDataMapper.kt`).
