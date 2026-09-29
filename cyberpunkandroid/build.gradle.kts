@@ -63,6 +63,6 @@ dependencies { testImplementation("androidx.compose.ui:ui-test-junit4")
  debugImplementation("androidx.compose.ui:ui-test-manifest")
  testImplementation("org.robolectric:robolectric:4.14-beta-1")
  testImplementation("androidx.test.ext:junit:1.1.5") }
-dependencies { implementation("androidx.compose.material3:material3:1.3.1") }
+dependencies { implementation("androidx.compose.material3:material3:1.4.0") }
 
 kotlin { jvmToolchain(11) }

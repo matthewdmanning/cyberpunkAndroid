@@ -8,7 +8,7 @@ import com.example.cyberpunkandroid.config.CyberPrimitives
 import com.example.cyberpunkandroid.config.CyberSemanticColors
 
 /**
- * Maps the Cyber palette onto every Material 3 color role supported by material3 1.3.1 (36 roles),
+ * Maps the Cyber palette onto all 48 Material 3 color roles (material3 1.4.0),
  * so stock Material 3 components (Text, Slider, Surface, …) inside [CyberTheme] render as neon accents
  * on void-black surfaces instead of Material's default purple.
  *
@@ -16,7 +16,8 @@ import com.example.cyberpunkandroid.config.CyberSemanticColors
  * the perceptual Oklab space, using fractions that approximate Material 3's dark-theme tone targets:
  * accent = tone 80, container = tone 30, on-container = tone 90, background = tone ~6, white = tone 100.
  *
- * Not included: the 12 "fixed" roles (primaryFixed, onPrimaryFixedVariant, …), which require material3 1.4.0+.
+ * Fixed roles keep the same tone in light and dark themes: fixed = tone 90, fixedDim = tone 80,
+ * onFixed = tone 10, onFixedVariant = tone 30.
  *
  * @param colors Cyber base colors; overriding these re-derives every dependent role.
  * @param semantic Cyber semantic colors; supplies the error family.
@@ -88,6 +89,21 @@ fun cyberColorScheme(
         surfaceContainerHigh = colors.surfaceElevated,
         surfaceContainerHighest = colors.surface,
         // Surface bright ≈ tone 24, one small step above the highest container (tone 22)
-        surfaceBright = lerp(colors.surface, colors.textSecondary, 0.1f)
+        surfaceBright = lerp(colors.surface, colors.textSecondary, 0.1f),
+
+        // Fixed roles: fixed = tone 90 (same blend as on-container), fixedDim = the tone 80 accent,
+        // onFixed = tone 10 (near-black void), onFixedVariant = tone 30 (same blend as container)
+        primaryFixed = onContainer(colors.primary),
+        primaryFixedDim = colors.primary,
+        onPrimaryFixed = onAccent,
+        onPrimaryFixedVariant = container(colors.primary),
+        secondaryFixed = onContainer(colors.secondary),
+        secondaryFixedDim = colors.secondary,
+        onSecondaryFixed = onAccent,
+        onSecondaryFixedVariant = container(colors.secondary),
+        tertiaryFixed = onContainer(tertiary),
+        tertiaryFixedDim = tertiary,
+        onTertiaryFixed = onAccent,
+        onTertiaryFixedVariant = container(tertiary)
     )
 }
