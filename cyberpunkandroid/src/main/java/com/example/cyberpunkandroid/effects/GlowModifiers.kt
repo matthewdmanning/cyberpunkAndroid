@@ -25,7 +25,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /**
- * Text and icon contour glow following the exact object/vector path.
+ * Text and icon contour glow following the exact object/vector path: a blurred (API 31+), [color]-tinted copy of
+ * the content is drawn behind it, giving each glyph or stroke a soft halo.
+ *
+ * @param color Glow color.
+ * @param radius Blur spread; 0.dp disables the glow.
+ * @param intensity Glow opacity is 0.85 × intensity (capped at 1); whole numbers above 1 stack extra passes.
+ * @param outsideGlowOnly Removes the glow wherever the content itself is drawn, so translucent content doesn't
+ *   show the halo through it. Renders this element into an offscreen layer.
  */
 fun Modifier.cyberTextGlow(
     color: Color = Color.Cyan,
@@ -34,8 +41,12 @@ fun Modifier.cyberTextGlow(
     outsideGlowOnly: Boolean = false,
     appendedA11y: String? = null,
     customA11y: String? = null
-): Modifier = this.cyberSemantics("CyberTextGlow", appendedA11y, customA11y).drawWithCache {
+): Modifier = this.cyberSemantics("CyberTextGlow", appendedA11y, customA11y)
+    // Offscreen so the DstOut mask below erases only this element's glow, not what is behind it
+    .then(if (outsideGlowOnly) Modifier.graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen } else Modifier)
+    .drawWithCache {
     val graphicsLayer = obtainGraphicsLayer()
+    val maskLayer = if (outsideGlowOnly) obtainGraphicsLayer().apply { blendMode = BlendMode.DstOut } else null
     val blurRadius = radius.toPx()
 
     onDrawWithContent {
@@ -64,6 +75,12 @@ fun Modifier.cyberTextGlow(
             val drawCount = intensity.toInt().coerceAtLeast(1)
             for (i in 0 until drawCount) {
                 drawLayer(graphicsLayer)
+            }
+
+            if (maskLayer != null) {
+                // Punch the content's silhouette out of the glow before drawing the content itself
+                maskLayer.record { this@onDrawWithContent.drawContent() }
+                drawLayer(maskLayer)
             }
         }
         drawContent()

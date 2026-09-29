@@ -108,7 +108,7 @@ fun Modifier.cyberLongPressFill(
     customA11y: String? = null,
     onProgressUpdate: (Float) -> Unit,
     onComplete: () -> Unit
-): Modifier = this.pointerInput(Unit) {
+): Modifier = this.cyberSemantics("CyberLongPressFill", appendedA11y, customA11y).pointerInput(Unit) {
     detectTapGestures(
         onPress = {
             var isPressed = true

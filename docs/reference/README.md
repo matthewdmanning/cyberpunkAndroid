@@ -81,21 +81,10 @@ Shader effects process what is drawn **after** them in the modifier chain, so pu
 
 ---
 
-## Known gaps
+## Limitations
 
-Worth fixing in code; the reference documents current behavior.
-
-- **`cyberSpark` ignores `sparkCount` on API 33+.** The shader always draws 32 sparks; `sparkCount` only affects the fallback.
-- **`cyberSpark`'s `speed` is applied twice** (in Kotlin and in the shader), so the effective burst rate is `speed²`.
-- **`cyberDatastream` applies `maxAlpha` twice** with the default `alphaTransform`, so the default peak opacity is 0.25, not 0.5.
-- **`cyberTextGlow`'s `outsideGlowOnly` isn't implemented** and has no effect.
-- **`cyberPing` crashes with a non-repeating `animationSpec`.** The parameter is typed `AnimationSpec<Float>` but is cast to `InfiniteRepeatableSpec`; pass `infiniteRepeatable(…)` only.
-- **`cyberBoot`'s `exitAnimationSpec` has no visible effect.** Alpha is forced to 1 while inactive.
-- **`cyberBackdropBlur` blurs its own content, not what is behind it.** A render effect on a layer cannot sample sibling content.
-- **`cyberScanlines` fallback differs for transparent `color`.** The shader darkens bands; the fallback cuts see-through bands (`DstOut`).
-- **`cyberDraggable`, `cyberLongPressFill` and `CyberDragDropProvider` accept `appendedA11y`/`customA11y` but don't apply them.**
-- **`CyberGlowIcon` and `CyberGlowIconPath` take a `Painter`**, which AGENTS.md discourages, and have no accessibility parameters.
-- **Stale KDoc** on `cyberCrt`, `cyberDatastream` and `cyberBackdropBlur` describes a different effect; trust this reference.
+- **`cyberBackdropBlur` blurs its own content, not what is behind it.** A layer's render effect can't sample siblings or the parent, so put the content that should look frosted *inside* the blurred element. True background blur would need a capture library, which isn't a dependency today.
+- **Motion effects' inactive spec is fixed.** `cyberPing` and `cyberIconPulse` switch to a built-in 100 ms loop while inactive; only the active spec is configurable.
 
 ## To confirm on device
 

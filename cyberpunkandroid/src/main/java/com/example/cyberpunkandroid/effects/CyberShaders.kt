@@ -7,6 +7,9 @@ import org.intellij.lang.annotations.Language
  * every shader declares `uniform float2 resolution` and `uniform shader contents`.
  */
 internal object CyberShaders {
+    /** Upper bound on sparks per [SparkShader]; AGSL loops need a constant bound. */
+    const val MaxSparks: Int = 64
+
     @Language("AGSL")
     const val CrtShader = """
         uniform float2 resolution;
@@ -135,6 +138,7 @@ internal object CyberShaders {
         uniform float time;
         uniform float intensity;
         uniform float speed;
+        uniform float sparkCount;
         layout(color) uniform half4 primaryColor;
         layout(color) uniform half4 secondaryColor;
         layout(color) uniform half4 warningColor;
@@ -157,7 +161,10 @@ internal object CyberShaders {
             float totalSparkGlow = 0.0;
             half3 accumColor = half3(0.0);
             
-            for (float i = 0.0; i < 32.0; i += 1.0) {
+            for (float i = 0.0; i < 64.0; i += 1.0) {
+                // Constant bound (MaxSparks); only the first sparkCount sparks contribute
+                if (i >= sparkCount) { continue; }
+
                 // Popcorn burst cycle timing driven by speed
                 float burstCycle = fract(time * speed * (0.8 + sparkHash(i * 3.1) * 1.2) + sparkHash(i * 7.7));
                 float t = burstCycle;

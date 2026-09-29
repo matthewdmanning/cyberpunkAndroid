@@ -89,7 +89,7 @@ Modifier.cyberOverload(…)            public API, CyberModifiers.kt
 | `spacing` | `float` | `spacing` in px (min 1) |
 | `scanlineColor` | `layout(color) half4` | `color` |
 
-**Fallback:** solid lines half a `spacing` thick, moving at 20 px/s × `speed`. A transparent color **erases** those bands (`BlendMode.DstOut`) instead of darkening them.
+**Fallback:** solid lines half a `spacing` thick, moving at 20 px/s × `speed`. A transparent color darkens with black at 70% × opacity, matching the shader's darkening.
 
 ## `NoiseShader`
 
@@ -109,7 +109,7 @@ Modifier.cyberOverload(…)            public API, CyberModifiers.kt
 
 **Effect:** Particle sparks drawn analytically: no particle objects, and each pixel sums the light from every spark. Used by `Modifier.cyberSpark` / `CyberSpark`.
 
-**What it computes, for each of 32 sparks (`i`)**
+**What it computes, for each of `sparkCount` sparks (`i`, up to `MaxSparks` = 64)**
 1. **Life cycle:** each spark has its own staggered 0…1 life, `t = fract(time × speed × (0.8…2.0) + offset)`, with smoothstep easing for position.
 2. **Trajectory:** launched from the center upward (`vy ≈ −1.2 ± 10%`) with a small random sideways velocity (`vx` in ±0.5), then pulled down by gravity 1.8. The horizontal reach is about ±12% of the short side, so the burst is a narrow fountain.
 3. **Brightness:** a pinpoint glow, `radius × flicker ÷ (d² + ε)`. The radius is `0.0006 × intensity` and halves over the spark's life. Flicker re-rolls 30 times per second in 0.85–1.15.
@@ -119,14 +119,15 @@ Modifier.cyberOverload(…)            public API, CyberModifiers.kt
 | Uniform | Type | Set from |
 | --- | --- | --- |
 | `resolution` | `float2` | runtime |
-| `time` | `float` | clock × `speed` |
+| `time` | `float` | raw clock (seconds) |
 | `intensity` | `float` | animated level |
 | `speed` | `float` | `speed` |
+| `sparkCount` | `float` | `sparkCount`, clamped 0–64 |
 | `primaryColor`, `secondaryColor`, `warningColor` | `layout(color) half4` | parameters / theme |
 
-**Known quirks:**
-- **Fixed spark count:** the shader always draws 32 sparks and ignores `sparkCount`.
-- **Double speed factor:** `speed` scales `time` in Kotlin and again inside the shader, so the effective burst rate is `speed²`.
+**Implementation notes:**
+- **Constant loop bound:** AGSL loops need a constant bound, so the loop always runs 64 times and skips sparks past `sparkCount`.
+- **Speed applied in the shader:** Kotlin passes the raw clock as `time`; the shader applies `speed`.
 
 **Fallback:**
 - **Dots:** `sparkCount` dots of 3–6 px × `intensity`.

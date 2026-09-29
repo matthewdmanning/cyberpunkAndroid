@@ -95,8 +95,9 @@ internal object CyberFallbacks {
     ) {
         drawContent()
         val isClear = color == Color.Transparent
-        val drawColor = if (isClear) Color.Black.copy(alpha = opacity) else color.copy(alpha = opacity)
-        val blendMode = if (isClear) BlendMode.DstOut else BlendMode.SrcOver
+        // Transparent means "darken", matching the shader's up-to-70% darkening; otherwise tint toward color
+        val drawColor = if (isClear) Color.Black.copy(alpha = opacity * 0.7f) else color.copy(alpha = opacity)
+        val blendMode = BlendMode.SrcOver
         
         var y = offset
         while (y < size.height) {

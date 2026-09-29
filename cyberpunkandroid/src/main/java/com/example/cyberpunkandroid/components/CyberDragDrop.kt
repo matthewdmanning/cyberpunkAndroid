@@ -1,6 +1,7 @@
 package com.example.cyberpunkandroid.components
 
 import androidx.compose.foundation.gestures.detectDragGestures
+import com.example.cyberpunkandroid.effects.cyberSemantics
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
@@ -32,11 +33,10 @@ val LocalCyberDragDropState = compositionLocalOf<CyberDragDropState<Any>> {
 
 /**
  * Provider container that establishes the scope for tactical sorting and reallocation.
+ * Adds no layout node, so it has no accessibility label of its own; label the draggable items instead.
  */
 @Composable
 fun CyberDragDropProvider(
-    appendedA11y: String? = null,
-    customA11y: String? = null,
     content: @Composable () -> Unit
 ) {
     val state = remember { CyberDragDropState<Any>() }
@@ -57,7 +57,7 @@ fun <T : Any> Modifier.cyberDraggable(
     customA11y: String? = null,
     onDragStart: () -> Unit = {},
     onDragEnd: () -> Unit = {}
-): Modifier = composed {
+): Modifier = this.cyberSemantics("CyberDraggable", appendedA11y, customA11y).composed {
     val state = LocalCyberDragDropState.current
     var offset by remember { mutableStateOf(Offset.Zero) }
 

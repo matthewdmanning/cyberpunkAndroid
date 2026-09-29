@@ -52,7 +52,7 @@ CyberIcon(CyberIcons.Loading, contentDescription = "Loading", modifier = Modifie
 CyberIcon(CyberIcons.Online, contentDescription = "Live", modifier = Modifier.cyberPing())
 ```
 
-For glowing icons, use [`CyberGlowIcon` / `CyberGlowIconPath`](modifiers-and-effects.md#cyberglowicon), which take a `painter`: `painterResource(CyberIcons.Shield)`.
+For glowing icons, use [`CyberGlowIcon` / `CyberGlowIconPath`](modifiers-and-effects.md#cyberglowicon), which take the same `iconRes`: `CyberGlowIcon(iconRes = CyberIcons.Shield, contentDescription = "Firewall")`.
 
 ---
 

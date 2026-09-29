@@ -14,6 +14,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.keyframes
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.PathEffect
@@ -177,22 +178,22 @@ fun Modifier.cyberScanlines(
 }
 
 /**
- * Draws a static high-intensity neon glow border around the specified [shape].
+ * Overlays data streaming down the surface: a repeating vertical gradient in [color] that fades from
+ * transparent to bright and scrolls downward, blended with Screen so it only brightens the content.
  *
- * Composes a dual-layer stroke consisting of a sharp inner perimeter border accompanied by an expanded,
- * semi-transparent atmospheric glow perimeter.
- *
- * @param color Solid emissive neon tint color.
- * @param width Stroke thickness of the sharp inner perimeter border. Defaults to [com.example.cyberpunkandroid.config.CyberPrimitives.BorderWidths.dp2].
- * @param shape Geometric shape outline of the bordered surface.
- * @param glowRadius Radial spread and thickness of the diffused outer glow. Defaults to [com.example.cyberpunkandroid.config.CyberPrimitives.Spacing.dp8].
+ * @param color Stream color.
+ * @param speed Scroll speed multiplier (100 px/s at 1).
+ * @param maxAlpha Peak stream opacity, 0–1.
+ * @param mirror Adds a second, reversed stream scrolling upward.
+ * @param alphaTransform Shapes the fade along each stream: maps 0 (tail) to 1 (head) onto 0–1; the result is
+ *   multiplied by [maxAlpha]. Default is a linear ramp.
  */
 fun Modifier.cyberDatastream(
     color: Color,
     speed: Float = 1f,
     maxAlpha: Float = 0.5f,
     mirror: Boolean = false,
-    alphaTransform: (Float) -> Float = { factor -> factor * maxAlpha },
+    alphaTransform: (Float) -> Float = { factor -> factor },
     trigger: CyberInteractionTrigger = CyberInteractionTrigger.ALWAYS,
     interactionSource: InteractionSource? = null,
     animationSpec: AnimationSpec<Float> = tween(300),
@@ -330,7 +331,7 @@ fun Modifier.cyberPing(
     borderWidth: Dp = 2.dp,
     trigger: CyberInteractionTrigger = CyberInteractionTrigger.ALWAYS,
     interactionSource: InteractionSource? = null,
-    animationSpec: AnimationSpec<Float> = infiniteRepeatable(
+    animationSpec: InfiniteRepeatableSpec<Float> = infiniteRepeatable(
         animation = tween(durationMillis, easing = LinearEasing),
         repeatMode = RepeatMode.Restart
     ),
@@ -345,7 +346,7 @@ fun Modifier.cyberPing(
     val progress by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = specToUse as InfiniteRepeatableSpec<Float>
+        animationSpec = specToUse
     )
 
     if (!isActive) return@composed this
@@ -381,7 +382,7 @@ fun Modifier.cyberIconPulse(
     maxOpacity: Float = 1.0f,
     trigger: CyberInteractionTrigger = CyberInteractionTrigger.ALWAYS,
     interactionSource: InteractionSource? = null,
-    animationSpec: AnimationSpec<Float> = infiniteRepeatable(
+    animationSpec: InfiniteRepeatableSpec<Float> = infiniteRepeatable(
         animation = tween(durationMillis, easing = LinearEasing),
         repeatMode = RepeatMode.Reverse
     ),
@@ -396,7 +397,7 @@ fun Modifier.cyberIconPulse(
     val progress by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = specToUse as InfiniteRepeatableSpec<Float>
+        animationSpec = specToUse
     )
 
     graphicsLayer {
@@ -448,12 +449,12 @@ fun Modifier.cyberBoot(
         0.9f at 640
         1.0f at 800
     },
-    exitAnimationSpec: AnimationSpec<Float> = tween(300),
     appendedA11y: String? = null,
     customA11y: String? = null
 ): Modifier = this.cyberSemantics("CyberBoot", appendedA11y, customA11y).composed {
     val isActive = trigger.isActive(interactionSource)
-    val progress = animateTriggeredProgress(isActive, animationSpec, exitAnimationSpec)
+    // Inactive shows the content at full opacity, so the reset back to 0 is invisible: snap instead of animating
+    val progress = animateTriggeredProgress(isActive, animationSpec, snap())
 
     graphicsLayer {
         this.alpha = if (isActive) progress.value else 1f
@@ -486,7 +487,11 @@ fun Modifier.cyberBounce(
 }
 
 /**
- * Pulsing brightness and drop shadow.
+ * Makes the content look like it is on a curved CRT screen: barrel distortion bulges the center outward,
+ * red/blue fringing grows toward the edges, and a vignette darkens the border; corners pushed off-screen
+ * turn black. Below API 33 only the vignette is drawn.
+ *
+ * Switches on and off instantly with [trigger] (no fade).
  */
 fun Modifier.cyberCrt(
     enabled: Boolean = true,
@@ -644,7 +649,14 @@ fun Modifier.cyberHoloBackground(
 }
 
 /**
- * Multi-layer atmospheric neon glow (omnidirectional bloom).
+ * Frosted-glass look: Gaussian-blurs this element's own content by [radius] (API 31+) over a translucent [tint].
+ *
+ * Blurs only what is drawn inside this element, not siblings or the parent behind it: a layer's render effect
+ * cannot sample other layers. For glass over a background, draw that background inside this element.
+ * Below API 31 only the tint is drawn.
+ *
+ * @param radius Blur radius.
+ * @param tint Drawn behind the content; [Color.Transparent] skips it.
  */
 fun Modifier.cyberBackdropBlur(
     radius: Dp = 12.dp,
@@ -706,9 +718,11 @@ fun Modifier.cyberSpark(
         shaderSource = CyberShaders.SparkShader,
         level = level,
         uniforms = { _, current ->
-            floatUniform("time", clock.value * speed)
+            // The shader multiplies time by speed itself, so pass the raw clock
+            floatUniform("time", clock.value)
             floatUniform("intensity", current)
             floatUniform("speed", speed)
+            floatUniform("sparkCount", sparkCount.coerceIn(0, CyberShaders.MaxSparks).toFloat())
             colorUniform("primaryColor", primary)
             colorUniform("secondaryColor", secondary)
             colorUniform("warningColor", warning)

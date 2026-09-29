@@ -55,7 +55,7 @@ Modifier
 | `spacing` | `Dp` | `4.dp` | Distance between line centers. Larger = fewer, thicker-looking lines. |
 | `opacity` | `Float` | `0.02` (`CyberConfig.Shaders.ScanlineOpacity`) | Line strength, 0–1. |
 | `speed` | `Float` | `1` | Scroll speed multiplier (shader ≈ 30 px/s at 1; fallback ≈ 20 px/s). |
-| `color` | `Color` | `Transparent` | `Transparent` darkens bands; any other color tints bands toward it. **Fallback:** transparent cuts see-through bands instead of darkening. |
+| `color` | `Color` | `Transparent` | `Transparent` darkens bands; any other color tints bands toward it. |
 | `animationSpec` | `AnimationSpec<Float>` | `tween(300)` | Fade in *and* out when the trigger changes. |
 
 ### `Modifier.cyberNoise`
@@ -101,7 +101,7 @@ Unlike the other shader effects, it clips to its bounds only while active.
 
 **What:** An electrical-spark burst: glowing embers shoot up from the center, arc over and fall under gravity.
 
-**Looks like:** Up to 32 pinpoint embers launching upward from the center, curving back down in parabolic arcs, and fading out. Each ember changes color over its life: white-hot → warning color (yellow) → primary (cyan) → secondary (magenta) → dim warning, and it shrinks to half size. Bursts restart at staggered times, so it pops continuously like popcorn. The fallback draws small (3–6 px) colored dots on similar arcs.
+**Looks like:** `sparkCount` (default 32) pinpoint embers launching upward from the center, curving back down in parabolic arcs, and fading out. Each ember changes color over its life: white-hot → warning color (yellow) → primary (cyan) → secondary (magenta) → dim warning, and it shrinks to half size. Bursts restart at staggered times, so it pops continuously like popcorn. The fallback draws small (3–6 px) colored dots on similar arcs.
 
 **Use for:** Short-circuit / damage moments, a "powering up" accent behind an icon, or celebratory energy. The container clips sparks at its edges, so give it room.
 
@@ -119,9 +119,9 @@ CyberSpark(Modifier.size(160.dp), intensity = 1.2f) {
 | `color` | `Color` | theme `primary` | Mid-life ember color. |
 | `secondaryColor` | `Color` | theme `secondary` | Late-life ember color. |
 | `warningColor` | `Color` | semantic `warning` | Birth flash color and final dim color. |
-| `sparkCount` | `Int` | `32` | Number of embers. **Fallback only**; the shader always draws 32. |
+| `sparkCount` | `Int` | `32` | Number of embers, 0–64 (values outside are clamped). |
 | `intensity` | `Float` | `1` | Brightness and ember size. |
-| `speed` | `Float` | `1` | How fast bursts cycle. |
+| `speed` | `Float` | `1` | How fast bursts cycle (linear: 2 = twice as fast). |
 | `animationSpec` | `AnimationSpec<Float>` | `tween(300)` | Fade in/out when the trigger changes (modifier only). |
 | `content` | `@Composable () -> Unit` | `null` | (`CyberSpark` only) Drawn centered, under the sparks. |
 
@@ -148,7 +148,7 @@ Text("ONLINE", style = CyberTheme.typography.terminal, modifier = Modifier.cyber
 | `color` | `Color` | `Color.Cyan` | Glow color. |
 | `radius` | `Dp` | `8.dp` | Blur spread. `0.dp` disables the glow. |
 | `intensity` | `Float` | `1` | Glow opacity is `0.85 × intensity` (capped at 1). Whole numbers above 1 also stack extra glow passes (2.0 = two passes). `0` disables. |
-| `outsideGlowOnly` | `Boolean` | `false` | **Not implemented**: currently has no effect. |
+| `outsideGlowOnly` | `Boolean` | `false` | Erases the glow wherever the content is drawn, so translucent text or icons don't show the halo through them. Renders the element offscreen (slightly more GPU memory). |
 
 ### `Modifier.cyberGlowBorder`
 
@@ -235,7 +235,7 @@ GlowingText("NEON CITY", glowColor = CyberTheme.colors.secondary, fontSize = 36.
 
 | Parameter | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `painter` | `Painter` | required | Icon image, e.g. `painterResource(CyberIcons.Shield)`. |
+| `iconRes` | `@DrawableRes Int` | required | Vector drawable, e.g. `CyberIcons.Shield`. |
 | `contentDescription` | `String?` | required | Screen reader label; `null` if decorative. |
 | `modifier` | `Modifier` | `Modifier` | Size/layout. |
 | `color` | `Color` | `Color.Cyan` | Icon tint. |
@@ -251,7 +251,7 @@ GlowingText("NEON CITY", glowColor = CyberTheme.colors.secondary, fontSize = 36.
 
 | Parameter | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `painter`, `contentDescription`, `modifier`, `color`, `glowColor` | | | As `CyberGlowIcon`. |
+| `iconRes`, `contentDescription`, `modifier`, `color`, `glowColor` | | | As `CyberGlowIcon`. |
 | `outerPadding` | `Dp` | `6.dp` | Inset of the far bloom layer. |
 | `innerPadding` | `Dp` | `3.dp` | Inset of the mid glow layer. |
 | `radius` | `Dp` | `16.dp` | Far bloom spread (mid layer uses half). |
@@ -311,7 +311,7 @@ CyberIcon(CyberIcons.Signal, contentDescription = "Live", modifier = Modifier.cy
 | `alphaDecayExponent` | `Float` | `1` | Fade curve. 1 = linear; > 1 fades faster early; < 1 lingers. |
 | `shape` | `Shape` | `CircleShape` | Ring outline. |
 | `borderWidth` | `Dp` | `2.dp` | Ring stroke width. |
-| `animationSpec` | `AnimationSpec<Float>` | infinite linear restart | **Must be `infiniteRepeatable(…)`**, or it crashes. |
+| `animationSpec` | `InfiniteRepeatableSpec<Float>` | infinite linear restart | Ping timing; must be `infiniteRepeatable(…)` (enforced by the type). |
 
 ### `Modifier.cyberIconPulse`
 
@@ -326,7 +326,7 @@ CyberIcon(CyberIcons.Signal, contentDescription = "Live", modifier = Modifier.cy
 | `durationMillis` | `Int` | `600` | One fade direction. |
 | `minOpacity` | `Float` | `0.2` (`CyberConfig.Effects.PulseMinOpacity`) | Dimmest point. |
 | `maxOpacity` | `Float` | `1` | Brightest point. |
-| `animationSpec` | `AnimationSpec<Float>` | infinite linear reverse | Pulse timing. |
+| `animationSpec` | `InfiniteRepeatableSpec<Float>` | infinite linear reverse | Pulse timing; must be `infiniteRepeatable(…)`. |
 
 ### `Modifier.cyberFloat`
 
@@ -363,8 +363,7 @@ CyberIcon(CyberIcons.Signal, contentDescription = "Live", modifier = Modifier.cy
 
 | Parameter | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `animationSpec` | `AnimationSpec<Float>` | 800 ms flicker keyframes | The flicker pattern. |
-| `exitAnimationSpec` | `AnimationSpec<Float>` | `tween(300)` | Currently no visible effect (alpha is 1 while inactive). |
+| `animationSpec` | `AnimationSpec<Float>` | 800 ms flicker keyframes | The flicker pattern. When the trigger deactivates, the element returns to full opacity immediately. |
 
 ---
 
@@ -382,9 +381,9 @@ CyberIcon(CyberIcons.Signal, contentDescription = "Live", modifier = Modifier.cy
 | --- | --- | --- | --- |
 | `color` | `Color` | required | Stream color. |
 | `speed` | `Float` | `1` | Scroll speed. |
-| `maxAlpha` | `Float` | `0.5` | Target strength. With the default `alphaTransform` the peak opacity is `maxAlpha²` (0.25). |
+| `maxAlpha` | `Float` | `0.5` | Peak stream opacity, 0–1. |
 | `mirror` | `Boolean` | `false` | Adds an upward stream. |
-| `alphaTransform` | `(Float) -> Float` | `f × maxAlpha` | Shapes the fade along each stream; input runs 0 (tail) to 1 (head). |
+| `alphaTransform` | `(Float) -> Float` | linear (`f`) | Shapes the fade along each stream: maps 0 (tail)…1 (head) to 0…1; the result is scaled by `maxAlpha`. E.g. `{ it * it }` for a sharper head. |
 | `animationSpec` | `AnimationSpec<Float>` | `tween(300)` | Fade in/out when the trigger changes. |
 
 ### `Modifier.cyberStripes`

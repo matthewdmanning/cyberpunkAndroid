@@ -8,7 +8,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
+import androidx.annotation.DrawableRes
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -37,7 +39,7 @@ import androidx.compose.ui.unit.dp
 /**
  * Icon-type effect wrapper. Pre-applies contour glow following the exact vector object path.
  *
- * @param painter Vector icon painter asset.
+ * @param iconRes Vector drawable to draw, e.g. [com.example.cyberpunkandroid.icons.CyberIcons.Shield].
  * @param contentDescription Screen reader description.
  * @param modifier Composable modifier for icon sizing/layout.
  * @param color Primary icon tint color.
@@ -47,7 +49,7 @@ import androidx.compose.ui.unit.dp
  */
 @Composable
 fun CyberGlowIcon(
-    painter: Painter,
+    @DrawableRes iconRes: Int,
     contentDescription: String?,
     modifier: Modifier = Modifier,
     color: Color = Color.Cyan,
@@ -55,6 +57,7 @@ fun CyberGlowIcon(
     radius: Dp = 12.dp,
     intensity: Float = 1.5f
 ) {
+    val vector = ImageVector.vectorResource(iconRes)
     Box(
         modifier = modifier
             .padding(radius)
@@ -62,7 +65,7 @@ fun CyberGlowIcon(
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            painter = painter,
+            imageVector = vector,
             contentDescription = contentDescription,
             tint = color,
             modifier = Modifier.fillMaxSize()
@@ -76,7 +79,7 @@ fun CyberGlowIcon(
  */
 @Composable
 fun CyberGlowIconPath(
-    painter: Painter,
+    @DrawableRes iconRes: Int,
     contentDescription: String?,
     modifier: Modifier = Modifier,
     color: Color = Color.Cyan,
@@ -86,13 +89,14 @@ fun CyberGlowIconPath(
     radius: Dp = 16.dp,
     intensity: Float = 2f
 ) {
+    val vector = ImageVector.vectorResource(iconRes)
     Box(
-        modifier = modifier.padding(),
+        modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
         // Layer 1: Far Outer Bloom
         Icon(
-            painter = painter,
+            imageVector = vector,
             contentDescription = null,
             tint = glowColor.copy(alpha = 0.25f),
             modifier = Modifier
@@ -103,7 +107,7 @@ fun CyberGlowIconPath(
 
         // Layer 2: Mid Outer Glow
         Icon(
-            painter = painter,
+            imageVector = vector,
             contentDescription = null,
             tint = glowColor.copy(alpha = 0.55f),
             modifier = Modifier
@@ -114,7 +118,7 @@ fun CyberGlowIconPath(
 
         // Layer 3: Crisp Foreground Icon
         Icon(
-            painter = painter,
+            imageVector = vector,
             contentDescription = contentDescription,
             tint = color,
             modifier = Modifier.fillMaxSize()

@@ -140,7 +140,7 @@ CyberSpark(
 ## Overlays & Glassmorphism
 
 ### 6. Cyber Backdrop Blur (`Modifier.cyberBackdropBlur`)
-Blurs content drawn *behind* it in the Compose tree. Must be applied over background content.
+Blurs the content drawn *inside* it (its children) over a translucent tint. It cannot blur siblings or the parent behind it, so put whatever should look frosted inside the blurred box.
 
 ```kotlin
 Box(
