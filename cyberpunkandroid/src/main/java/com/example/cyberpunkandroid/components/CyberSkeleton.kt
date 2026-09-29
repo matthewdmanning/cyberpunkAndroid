@@ -16,6 +16,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import com.example.cyberpunkandroid.theme.CyberTheme
+import com.example.cyberpunkandroid.effects.cyberComponentSemantics
 
 /**
  * Shimmering cut-corner skeleton placeholder surface for loading state mockups.
@@ -57,7 +58,7 @@ fun CyberSkeleton(
     )
 
     Box(
-        modifier = modifier
+        modifier = modifier.cyberComponentSemantics("CyberSkeleton", appendedA11y, customA11y)
             .clip(CyberTheme.shapes.cyberCutCornerShapeSmall)
             .background(brush)
     )

@@ -39,7 +39,7 @@ Modifier
 
 **What:** Moving horizontal scanlines, like an old CRT monitor or a security feed.
 
-**Looks like:** Soft horizontal bands, one per `spacing`, drifting slowly downward. With the default transparent `color` the bands darken the content (up to 70% × `opacity`); with a color they tint it toward that color. The default opacity (2%) is very subtle; 0.2–0.5 is clearly visible.
+**Looks like:** Soft horizontal bands, one per `spacing`, drifting slowly downward. The description also calls for subtle barrel curvature, which isn't implemented yet ([see the table](README.md#doesnt-match-its-description-yet)). With the default transparent `color` the bands darken the content (up to 70% × `opacity`); with a color they tint it toward that color. The default opacity (2%) is very subtle; 0.2–0.5 is clearly visible.
 
 **Use for:** Terminal panels, video/feed placeholders, "monitor" cards. Frame the panel with a border drawn *before* the effect so the frame stays crisp.
 
@@ -294,7 +294,7 @@ Small looping animations. Apply them to the **icon or inner content**, not the w
 
 **What:** A radar/sonar ping: rings expand outward from the element and fade.
 
-**Looks like:** A ring in `shape`'s outline starts at the element's size, grows to `maxDiffuseScale` × and fades to transparent, repeating every `durationMillis`. The ring keeps the same stroke width while it grows. Nothing is drawn while inactive.
+**Looks like (spec):** A locked dense core with a diffuse outer ring that scales up and fades out. Today only the ring is drawn ([see the table](README.md#doesnt-match-its-description-yet)): a ring in `shape`'s outline starts at the element's size, grows to `maxDiffuseScale` × and fades to transparent, repeating every `durationMillis`. The ring keeps the same stroke width while it grows. Nothing is drawn while inactive.
 
 **Use for:** Live indicators (recording, online, incoming signal), map markers, "look here" hints.
 
@@ -345,12 +345,12 @@ CyberIcon(CyberIcons.Signal, contentDescription = "Live", modifier = Modifier.cy
 
 **What:** A springy vertical bounce.
 
-**Looks like:** Rises by `height` quickly, easing out at the top, and drops back, 500 ms each way on repeat.
+**Looks like:** Rises by `height` and drops back, 500 ms each way on repeat, on a cubic-bezier bounce curve (`CyberConfig.Easings.BounceEasing`) that dips slightly before rising and overshoots at the top.
 
 | Parameter | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `height` | `Dp` | `16.dp` | Bounce height. |
-| `animationSpec` | `AnimationSpec<Float>` | infinite 500 ms ease-out reverse | Bounce timing. |
+| `animationSpec` | `AnimationSpec<Float>` | infinite 500 ms `BounceEasing` reverse | Bounce timing. |
 | `exitAnimationSpec` | `AnimationSpec<Float>` | `spring()` | Settle back when deactivated. |
 
 ### `Modifier.cyberBoot`
@@ -363,7 +363,8 @@ CyberIcon(CyberIcons.Signal, contentDescription = "Live", modifier = Modifier.cy
 
 | Parameter | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `animationSpec` | `AnimationSpec<Float>` | 800 ms flicker keyframes | The flicker pattern. When the trigger deactivates, the element returns to full opacity immediately. |
+| `animationSpec` | `AnimationSpec<Float>` | 800 ms flicker keyframes | The flicker pattern, replayed each time the trigger activates. |
+| `exitAnimationSpec` | `AnimationSpec<Float>` | `tween(300)` | If the trigger deactivates mid-flicker, how the element settles to full opacity. |
 
 ---
 
@@ -390,7 +391,7 @@ CyberIcon(CyberIcons.Signal, contentDescription = "Live", modifier = Modifier.cy
 
 **What:** Moving diagonal hazard stripes.
 
-**Looks like:** 45° stripes `stripeWidth` wide with equal gaps, sliding sideways continuously, drawn over the content and clipped to its bounds. Default is 15% white.
+**Looks like:** 45° stripes `stripeWidth` wide with equal gaps, sliding sideways continuously, drawn **behind** the content (it's a background) and clipped to its bounds. Default is 15% white.
 
 **Use for:** Caution zones, disabled or locked areas, "under construction" and progress fills.
 
@@ -417,9 +418,11 @@ No trigger: always on.
 
 ### `Modifier.cyberBorder`
 
-**What:** A plain dashed technical border (no glow).
+**What:** A static neon glow around a container's shape.
 
-**Looks like:** A thin cyan outline of `shape`, dashed 10 px on / 10 px off by default.
+**Looks like (spec):** An outer neon glow following `shape`.
+
+> **Not implemented yet:** it currently draws a thin cyan outline of `shape`, dashed 10 px on / 10 px off, with no glow ([see the table](README.md#doesnt-match-its-description-yet)). For a glowing border today, use `cyberGlowBorder`.
 
 **Use for:** Drop zones, placeholders, secondary frames. Pass `pathEffect = null` for a solid line.
 
@@ -432,16 +435,18 @@ No trigger: always on.
 
 ### `Modifier.cyberBackdropBlur`
 
-**What:** Blurs the element's own content and lays a light tint behind it, for a frosted-glass look.
+**What:** A glassmorphism overlay: frosted glass over whatever is behind it.
 
-**Looks like:** Children drawn inside the element are Gaussian-blurred by `radius`, over a 10% white tint. It does **not** blur content behind the element (siblings or the parent's background). Below Android 12 there's no blur, only the tint.
+**Looks like (spec):** Whatever is drawn behind the element is Gaussian-blurred by `radius` and washed with a 10% white tint, so the element reads as a frosted pane over the content. Apply it to a foreground element layered over the background ([ordering rule](../agents/effects-rules.md)).
 
-**Use for:** A frosted panel whose own contents should be soft (a blurred preview image, an obscured secret). For true "glass over the app" blur, render the background inside the blurred element.
+> **Not implemented yet:** today it blurs the element's own children, not what's behind it ([see the table](README.md#doesnt-match-its-description-yet)). Below Android 12 there's no blur, only the tint.
+
+**Use for:** Floating panels, modals and nav bars over busy backgrounds.
 
 | Parameter | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `radius` | `Dp` | `12.dp` | Blur radius (API 31+). |
-| `tint` | `Color` | 10% white | Drawn behind the content; `Transparent` to skip. |
+| `tint` | `Color` | 10% white | Wash over the blurred backdrop; `Transparent` to skip. |
 
 ---
 
@@ -480,7 +485,7 @@ Throws if used outside `CyberDragDropProvider`.
 
 ### `Modifier.cyberSemantics`
 
-Applies the library's accessibility label pattern to your own components. See [Accessibility parameters](README.md#2-accessibility-parameters).
+Applies the library's accessibility label pattern to your own components. See [Accessibility parameters](README.md#2-accessibility-parameters). `Modifier.cyberComponentSemantics` takes the same parameters but applies the label only when `appendedA11y` or `customA11y` is set; use it for components whose own content should be read by default.
 
 | Parameter | Type | Default | What it does |
 | --- | --- | --- | --- |

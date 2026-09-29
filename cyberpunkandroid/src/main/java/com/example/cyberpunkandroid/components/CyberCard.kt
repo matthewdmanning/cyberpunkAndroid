@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import com.example.cyberpunkandroid.config.CyberPrimitives
 
 import com.example.cyberpunkandroid.theme.CyberTheme
+import com.example.cyberpunkandroid.effects.cyberComponentSemantics
 
 /**
  * Asymmetric cut-corner surface container with neon border glow, interactive tactile states, and slot architecture.
@@ -59,7 +60,7 @@ fun CyberCard(
     val scale by animateFloatAsState(targetValue = if (interactive && isPressed) 0.98f else 1f, animationSpec = scaleAnimationSpec, label = "CardScale")
     val borderAlpha by animateFloatAsState(targetValue = if (interactive && isPressed) 1f else 0.5f, animationSpec = alphaAnimationSpec, label = "CardBorderAlpha")
 
-    var cardModifier = modifier
+    var cardModifier = modifier.cyberComponentSemantics("CyberCard", appendedA11y, customA11y)
         .graphicsLayer {
             scaleX = scale
             scaleY = scale

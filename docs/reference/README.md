@@ -59,9 +59,14 @@ Every modifier and composable ends with the same two parameters:
 | `appendedA11y` | `null` | Extra context appended to the default label: `"CyberOverload - Reactor offline"`. |
 | `customA11y` | `null` | Replaces the label entirely. |
 
-The default label is the effect's name (e.g. `"CyberScanlines"`), applied with `mergeDescendants = true`. Screen readers will announce that name, so **set `customA11y` on anything a user can reach with TalkBack**, or describe the content instead of the decoration.
+Two behaviors, depending on what you're labeling:
 
-`Modifier.cyberSemantics(name, appendedA11y, customA11y)` is the public helper that applies this label; use it on your own components to match.
+- **Effects** (`cyberOverload`, `cyberScanlines`, …) always apply a label. Its default is the effect's name (e.g. `"CyberScanlines"`), with `mergeDescendants = true`, so screen readers announce that name: **set `customA11y` on anything a user can reach with TalkBack**.
+- **Components and interaction modifiers** (`CyberButton`, `CyberCard`, `cyberDraggable`, `cyberLongPressFill`, …) apply a label **only when you pass one**. Without it, screen readers keep reading the component's own content (a button's text), not its type name.
+
+Helpers for your own components: `Modifier.cyberSemantics(name, appendedA11y, customA11y)` always labels; `Modifier.cyberComponentSemantics(…)` labels only when a value is passed.
+
+`CyberDragDropProvider` accepts both parameters but can't apply them yet: it adds no layout node to attach a label to (marked `TODO(a11y)` in code).
 
 ### 3. Rendering: shader vs. fallback
 
@@ -81,9 +86,19 @@ Shader effects process what is drawn **after** them in the modifier chain, so pu
 
 ---
 
+## Doesn't match its description yet
+
+The visual description is the spec. These effects don't draw what it describes yet; each carries a `TODO(visual)` in its KDoc with the open decision.
+
+| Effect | Described as | Currently draws | Open decision |
+| --- | --- | --- | --- |
+| `cyberBackdropBlur` | Blurs and tints whatever is **behind** it (frosted glass over content) | Blurs its **own** children over a tint | Capture the background into a layer for the modifier to draw blurred |
+| `cyberScanlines` | Scanlines **and subtle barrel curvature** | Scanlines only | Curvature strength; whether the fallback approximates it |
+| `cyberPing` | Expanding ring **with a locked dense core** | Expanding ring only | Is the core a stationary ring or a filled shape? |
+| `cyberBorder` | Static **outer neon glow** on a container | Thin dashed stroke, no glow | Add a glow (and how it differs from `cyberGlowBorder`) or retire it |
+
 ## Limitations
 
-- **`cyberBackdropBlur` blurs its own content, not what is behind it.** A layer's render effect can't sample siblings or the parent, so put the content that should look frosted *inside* the blurred element. True background blur would need a capture library, which isn't a dependency today.
 - **Motion effects' inactive spec is fixed.** `cyberPing` and `cyberIconPulse` switch to a built-in 100 ms loop while inactive; only the active spec is configurable.
 
 ## To confirm on device

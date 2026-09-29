@@ -28,6 +28,7 @@ import com.example.cyberpunkandroid.config.CyberPrimitives
 
 import com.example.cyberpunkandroid.theme.CyberTheme
 import kotlin.math.roundToInt
+import com.example.cyberpunkandroid.effects.cyberComponentSemantics
 
 /**
  * Segmented futuristic navigation tab bar featuring dynamic width measurement and a smooth sliding neon glow indicator.
@@ -62,7 +63,7 @@ fun CyberTabs(
     )
 
     Box(
-        modifier = modifier
+        modifier = modifier.cyberComponentSemantics("CyberTabs", appendedA11y, customA11y)
             .fillMaxWidth()
             .height(CyberPrimitives.Spacing.dp32 + CyberPrimitives.Spacing.dp16)
             .background(CyberTheme.colors.surface)

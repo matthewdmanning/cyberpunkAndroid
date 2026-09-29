@@ -8,6 +8,7 @@ import androidx.compose.ui.semantics.collectionInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
 import kotlin.math.sqrt
+import com.example.cyberpunkandroid.effects.cyberComponentSemantics
 
 /**
  * A honeycomb layout that arranges its children in an interlocking hexagonal grid.
@@ -30,7 +31,7 @@ fun CyberHexGrid(
 ) {
     Layout(
         content = content,
-        modifier = modifier.semantics {
+        modifier = modifier.cyberComponentSemantics("CyberHexGrid", appendedA11y, customA11y).semantics {
             collectionInfo = CollectionInfo(rowCount = -1, columnCount = columns)
         }
     ) { measurables, constraints ->

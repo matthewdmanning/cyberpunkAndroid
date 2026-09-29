@@ -14,7 +14,6 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.keyframes
-import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.PathEffect
@@ -131,9 +130,13 @@ fun Modifier.cyberOverload(
 /**
  * Applies animated CRT cathode-ray scanlines and subtle barrel curvature over the composable.
  *
+ * TODO(visual): the "subtle barrel curvature" is not implemented: ScanlinesShader only draws bands and the
+ *  fallback only draws lines. Needs a decision on strength (CyberConfig.Shaders.CrtCurvature = 0.3 exists but is
+ *  unused; cyberCrt uses 0.20, which is not subtle) and on whether the fallback should approximate it.
+ *
  * ### Rendering Architecture:
- * - **Android 13+ (API 33+)**: Uses hardware AGSL [com.example.cyberpunkandroid.effects.CyberShaders.CrtShader]
- *   simulating physical CRT phosphor scanlines and geometric curvature distortion.
+ * - **Android 13+ (API 33+)**: Uses hardware AGSL [com.example.cyberpunkandroid.effects.CyberShaders.ScanlinesShader]
+ *   drawing moving phosphor scanline bands.
  * - **API < 33 & Previews**: Falls back to [com.example.cyberpunkandroid.effects.CyberFallbacks.drawScanlinesFallback],
  *   rendering animated semi-transparent horizontal stroke lines on Compose graphics.
  *
@@ -320,6 +323,9 @@ fun Modifier.cyberIconSpin(
 
 /**
  * Scale up and fade out radar ping effect with a locked dense core and diffuse outer ring.
+ *
+ * TODO(visual): only the diffuse expanding ring is drawn; there is no "locked dense core". Needs a decision on what
+ *  the core is (a stationary full-opacity ring at [startScale], or a filled [shape]) before implementing.
  */
 fun Modifier.cyberPing(
     color: Color = Color.Unspecified,
@@ -449,15 +455,21 @@ fun Modifier.cyberBoot(
         0.9f at 640
         1.0f at 800
     },
+    exitAnimationSpec: AnimationSpec<Float> = tween(300),
     appendedA11y: String? = null,
     customA11y: String? = null
 ): Modifier = this.cyberSemantics("CyberBoot", appendedA11y, customA11y).composed {
     val isActive = trigger.isActive(interactionSource)
-    // Inactive shows the content at full opacity, so the reset back to 0 is invisible: snap instead of animating
-    val progress = animateTriggeredProgress(isActive, animationSpec, snap())
+    // Starts dark only if booting immediately; an idle element (e.g. PRESS trigger) starts fully visible
+    val bootAlpha = remember { Animatable(if (isActive) 0f else 1f) }
+    LaunchedEffect(isActive) {
+        // Activating replays the flicker (its keyframes restart from 0); deactivating mid-flicker settles to
+        // full opacity with exitAnimationSpec instead of jumping
+        bootAlpha.animateTo(1f, if (isActive) animationSpec else exitAnimationSpec)
+    }
 
     graphicsLayer {
-        this.alpha = if (isActive) progress.value else 1f
+        alpha = bootAlpha.value
     }
 }
 
@@ -471,7 +483,7 @@ fun Modifier.cyberBounce(
     trigger: CyberInteractionTrigger = CyberInteractionTrigger.ALWAYS,
     interactionSource: InteractionSource? = null,
     animationSpec: AnimationSpec<Float> = infiniteRepeatable(
-        animation = tween(500, easing = { t -> 1f - (1f - t) * (1f - t) }), // Parabolic EaseOut
+        animation = tween(500, easing = CyberConfig.Easings.BounceEasing), // Cubic-bezier bounce, per the visual description
         repeatMode = RepeatMode.Reverse
     ),
     exitAnimationSpec: AnimationSpec<Float> = spring(),
@@ -530,6 +542,9 @@ fun Modifier.cyberCrt(
 /**
  * Applies a static rectangular/shape-based outer neon glow to a container.
  * For contour-following glows on text or icons, use [cyberTextGlow].
+ *
+ * TODO(visual): the implementation draws a thin dashed stroke with no glow. Either add the outer glow (and decide
+ *  how it differs from [cyberGlowBorder], which already draws a glowing shape border) or retire this in favor of it.
  */
 fun Modifier.cyberBorder(
     width: Dp = 1.dp,
@@ -576,9 +591,8 @@ fun Modifier.cyberStripes(
 
     drawWithCache {
         val widthPx = stripeWidth.toPx()
-        // We draw overlapping lines diagonally
+        // Described as a background, so stripes are drawn behind the content
         onDrawWithContent {
-            drawContent()
             clipRect {
                 val diagonalLength = size.width + size.height
                 val numStripes = (diagonalLength / (widthPx * 2)).toInt() + 2
@@ -596,6 +610,7 @@ fun Modifier.cyberStripes(
                     )
                 }
             }
+            drawContent()
         }
     }
 }
@@ -649,14 +664,17 @@ fun Modifier.cyberHoloBackground(
 }
 
 /**
- * Frosted-glass look: Gaussian-blurs this element's own content by [radius] (API 31+) over a translucent [tint].
+ * Glassmorphism overlay: blurs and tints whatever is drawn *behind* this element in the Compose tree, so the
+ * element reads as frosted glass over the background content. Apply it to a foreground element layered over
+ * the content (see docs/agents/effects-rules.md).
  *
- * Blurs only what is drawn inside this element, not siblings or the parent behind it: a layer's render effect
- * cannot sample other layers. For glass over a background, draw that background inside this element.
- * Below API 31 only the tint is drawn.
+ * TODO(visual): the implementation does not match this description yet. A graphicsLayer render effect only
+ *  blurs this element's own content, so today the children are blurred and nothing behind the element is.
+ *  Matching the spec needs the background captured into a GraphicsLayer (a source modifier on the background
+ *  plus position tracking) that this modifier draws blurred, clipped to its bounds.
  *
- * @param radius Blur radius.
- * @param tint Drawn behind the content; [Color.Transparent] skips it.
+ * @param radius Blur radius (blur requires API 31+).
+ * @param tint Translucent wash drawn over the blurred backdrop; [Color.Transparent] skips it.
  */
 fun Modifier.cyberBackdropBlur(
     radius: Dp = 12.dp,

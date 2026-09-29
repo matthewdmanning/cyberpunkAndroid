@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import com.example.cyberpunkandroid.config.CyberPrimitives
 import com.example.cyberpunkandroid.effects.cyberScanlines
 import com.example.cyberpunkandroid.theme.CyberTheme
+import com.example.cyberpunkandroid.effects.cyberComponentSemantics
 
 /**
  * Retro-futuristic command terminal emulator window with top title bar, traffic light window controls, and animated CRT scanlines.
@@ -42,7 +43,7 @@ fun CyberTerminal(
     content: @Composable () -> Unit,
 ) {
     Column(
-        modifier = modifier
+        modifier = modifier.cyberComponentSemantics("CyberTerminal", appendedA11y, customA11y)
             .clip(CyberTheme.shapes.cyberCutCornerShape)
             .background(CyberTheme.colors.background)
     ) {

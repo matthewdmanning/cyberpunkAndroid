@@ -16,6 +16,7 @@ import androidx.compose.ui.text.withStyle
 import com.example.cyberpunkandroid.config.CyberPrimitives
 import com.example.cyberpunkandroid.theme.CyberTheme
 import kotlinx.coroutines.delay
+import com.example.cyberpunkandroid.effects.cyberComponentSemantics
 
 /**
  * A typographic progress indicator that reveals [targetText] as [progress] approaches 1f.
@@ -72,7 +73,7 @@ fun CyberDecrypter(
     }
     
     Box(
-        modifier = modifier.semantics(mergeDescendants = true) {
+        modifier = modifier.cyberComponentSemantics("CyberDecrypter", appendedA11y, customA11y).semantics(mergeDescendants = true) {
             text = AnnotatedString(targetText)
             progressBarRangeInfo = ProgressBarRangeInfo(
                 current = clampedProgress,

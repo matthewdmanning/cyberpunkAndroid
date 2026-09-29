@@ -11,12 +11,13 @@ Because Compose modifier ordering is highly effect-dependent and unpredictable f
   `Modifier.border(...).then(macroShader).background(...)`
 
 **2. Glassmorphism & Overlays (`cyberBackdropBlur`)**
-- **How they work:** Blurs the content drawn *inside* the modified element (its children) and draws a tint behind them. A layer's render effect cannot sample siblings or the parent, so it never blurs what is *behind* it.
-- **The Rule:** Put the content that should look frosted *inside* the blurred element. An empty overlay `Box` on top of other content blurs nothing and only shows the tint.
+- **How they work:** Blurs and tints whatever is drawn *behind* them in the Compose tree.
+- **The Rule:** Do NOT apply to the same `Box` as the background. Apply it to a floating foreground `Box` layered over the background content.
 - **Correct Order:** 
   ```kotlin
-  Box(Modifier.background(DarkColor).cyberBackdropBlur(...)) { 
+  Box(Modifier.background(DarkColor)) { 
       Text("Content to be blurred")
+      Box(Modifier.matchParentSize().cyberBackdropBlur(...)) 
   }
   ```
 
