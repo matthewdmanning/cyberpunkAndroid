@@ -2,7 +2,8 @@ name: Android CI Workflow
 
 on:
   push:
-    branches: [ main ]
+    # Every branch ('**' matches names with slashes; tag pushes stay with release.yml)
+    branches: [ '**' ]
   pull_request:
     branches: [ main ]
 
