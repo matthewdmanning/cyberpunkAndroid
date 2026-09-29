@@ -30,3 +30,9 @@ Because Compose modifier ordering is highly effect-dependent and unpredictable f
 - **How they work:** Animates alpha, scale, or translation of a specific vector or element.
 - **The Rule:** Apply directly to the `Icon` or inner content itself, NOT the outer container, otherwise the entire component container will float/pulse/ping.
 - **Correct Order:** `Icon(modifier = Modifier.cyberFloat())`
+
+**5. Path borders & dividers (`cyberPathBorder`, `cyberPathDivider`)**
+- **How they work:** They draw over the content with `drawWithContent`, along the shape outline or a horizontal line, then add a glow pass.
+- **The Rule:** Pass the same `Shape` as the component's background. Apply outside (before) macro-shaders so the shader doesn't distort the border.
+- **Correct Order:** `Modifier.background(color, shape).cyberPathBorder(CyberCometTracer(), shape = shape)`
+- **With a macro-shader:** `Modifier.cyberPathBorder(effect, shape = shape).cyberOverload().background(color, shape)`

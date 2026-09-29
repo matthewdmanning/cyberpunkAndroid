@@ -27,5 +27,12 @@ This is the "conductor" that ties everything else together. It contains the actu
 - **Purpose:** It is the high-level, declarative API. 
 - **Relationship:** A modifier in this file will typically check **`CyberInteraction`** to see if it should run, request a brush from **`CyberBrushes`** or a distortion from **`CyberShaders`**, and potentially drive its animation state using **`CyberTelemetry`**. 
 
+### 6. Path effects (tracers & box patterns)
+Light and geometry that run *along* an outline. See `docs/PATH_EFFECTS.md`.
+- **`utils/CyberPathGeometry.kt` (the paint):** stamp building (ribbons, polygons, correctly wound holes), length fitting, corner detection, seam relocation, and dash windows. It has no UI knowledge.
+- **`effects/CyberPathEffect.kt`:** the `CyberPathEffect` contract. An effect is prepared once per outline, then returns `CyberPathLayer`s for each animation progress value.
+- **`effects/CyberPathPatterns.kt` / `effects/CyberPathTracers.kt`:** the effects themselves. Patterns are static-able border geometry; tracers are moving light.
+- **`effects/CyberPathModifiers.kt` (public API):** `cyberPathBorder` / `cyberPathDivider`. These tie an effect to a shape, the hoisted `animationSpec`, `CyberInteraction` triggers, and the glow pass (RenderEffect blur on API 31+, stroke fallback below).
+
 ## Summary
 `Brushes` and `Shaders` are the raw graphics. `Interaction` and `Telemetry` decide when and how those graphics animate. `Modifiers` packages them all into a single line of code that you can apply to a UI element.
