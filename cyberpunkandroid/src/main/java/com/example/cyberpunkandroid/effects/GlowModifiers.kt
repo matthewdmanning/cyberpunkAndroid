@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
@@ -79,56 +80,8 @@ fun Modifier.cyberGlowBorder(
     width: Dp = 2.dp,
     appendedA11y: String? = null,
     customA11y: String? = null
-): Modifier = this.cyberSemantics("CyberGlowBorder", appendedA11y, customA11y).drawWithCache {
-    val outline = shape.createOutline(size, layoutDirection, this)
-    val path = Path().apply {
-        when (outline) {
-            is Outline.Rectangle -> addRect(outline.rect)
-            is Outline.Rounded -> addRoundRect(outline.roundRect)
-            is Outline.Generic -> addPath(outline.path)
-        }
-    }
-    
-    val graphicsLayer = obtainGraphicsLayer()
-    val blurRadius = glowRadius.toPx()
-    val strokeWidthPx = width.toPx()
-    val glowWidthPx = strokeWidthPx + blurRadius
-
-    onDrawWithContent {
-        drawContent()
-        
-        if (glowRadius > 0.dp) {
-            // Draw outer atmospheric glow pass
-            drawPath(
-                path = path,
-                color = color.copy(alpha = 0.35f),
-                style = Stroke(width = glowWidthPx)
-            )
-            graphicsLayer.record {
-                drawPath(
-                    path = path,
-                    color = color,
-                    style = Stroke(width = strokeWidthPx * 2f)
-                )
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && blurRadius > 0f) {
-                val blurEffect = android.graphics.RenderEffect.createBlurEffect(
-                    blurRadius,
-                    blurRadius,
-                    android.graphics.Shader.TileMode.DECAL
-                )
-                graphicsLayer.renderEffect = blurEffect.asComposeRenderEffect()
-            }
-            drawLayer(graphicsLayer)
-        }
-        
-        drawPath(
-            path = path,
-            color = color,
-            style = Stroke(width = strokeWidthPx)
-        )
-    }
-}
+): Modifier = this.cyberSemantics("CyberGlowBorder", appendedA11y, customA11y)
+    .cyberGlowStroke(shape, glowRadius, width) { SolidColor(color) }
 
 /**
  * Static neon glow border with a rounded corner profile shape.
@@ -172,67 +125,58 @@ fun Modifier.cyberGlowBorderFlow(
         label = "glowFlow"
     )
     
-    val actualColors = if (colors.isEmpty()) listOf(Color.Cyan, Color.Magenta) 
-                       else if (colors.size == 1) listOf(colors.first(), colors.first()) 
+    val actualColors = if (colors.isEmpty()) listOf(Color.Cyan, Color.Magenta)
+                       else if (colors.size == 1) listOf(colors.first(), colors.first())
                        else colors
+    val gradientColors = actualColors + actualColors.first()
 
-    drawWithCache {
-        val outline = shape.createOutline(size, layoutDirection, this)
-        val path = Path().apply {
-            when (outline) {
-                is Outline.Rectangle -> addRect(outline.rect)
-                is Outline.Rounded -> addRoundRect(outline.roundRect)
-                is Outline.Generic -> addPath(outline.path)
+    cyberGlowStroke(shape, glowRadius, width) {
+        cyberSweepGradient(
+            center = Offset(size.width / 2f, size.height / 2f),
+            colors = gradientColors,
+            rotation = phase * 360f
+        )
+    }
+}
+
+/**
+ * Shared neon border renderer: a soft 35% outer stroke, a blurred double-width stroke (blur on API 31+),
+ * and a sharp stroke on top, all following [shape]'s outline and painted with [brush].
+ * [brush] is evaluated every draw so animated brushes update without rebuilding the cache.
+ */
+private fun Modifier.cyberGlowStroke(
+    shape: Shape,
+    glowRadius: Dp,
+    width: Dp,
+    brush: DrawScope.() -> Brush
+): Modifier = drawWithCache {
+    val path = Path().apply { addOutline(shape.createOutline(size, layoutDirection, this@drawWithCache)) }
+    val glowLayer = obtainGraphicsLayer()
+    val blurRadius = glowRadius.toPx()
+    val strokeWidthPx = width.toPx()
+    val glowWidthPx = strokeWidthPx + blurRadius
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && blurRadius > 0f) {
+        glowLayer.renderEffect = android.graphics.RenderEffect.createBlurEffect(
+            blurRadius,
+            blurRadius,
+            android.graphics.Shader.TileMode.DECAL
+        ).asComposeRenderEffect()
+    }
+
+    onDrawWithContent {
+        drawContent()
+        val paint = brush()
+
+        if (glowRadius > 0.dp) {
+            // Outer atmospheric glow pass
+            drawPath(path = path, brush = paint, style = Stroke(width = glowWidthPx), alpha = 0.35f)
+            glowLayer.record {
+                drawPath(path = path, brush = paint, style = Stroke(width = strokeWidthPx * 2f))
             }
+            drawLayer(glowLayer)
         }
-        
-        val graphicsLayer = obtainGraphicsLayer()
-        val blurRadius = glowRadius.toPx()
-        val strokeWidthPx = width.toPx()
-        val glowWidthPx = strokeWidthPx + blurRadius
-        val center = Offset(size.width / 2f, size.height / 2f)
-        val gradientColors = actualColors + actualColors.first()
 
-        onDrawWithContent {
-            drawContent()
-            
-            val sweepBrush = cyberSweepGradient(
-                center = center,
-                colors = gradientColors,
-                rotation = phase * 360f
-            )
-
-            if (glowRadius > 0.dp) {
-                drawPath(
-                    path = path,
-                    brush = sweepBrush,
-                    style = Stroke(width = glowWidthPx),
-                    alpha = 0.35f
-                )
-                graphicsLayer.record {
-                    drawPath(
-                        path = path,
-                        brush = sweepBrush,
-                        style = Stroke(width = strokeWidthPx * 2f)
-                    )
-                }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && blurRadius > 0f) {
-                    val blurEffect = android.graphics.RenderEffect.createBlurEffect(
-                        blurRadius,
-                        blurRadius,
-                        android.graphics.Shader.TileMode.DECAL
-                    )
-                    graphicsLayer.renderEffect = blurEffect.asComposeRenderEffect()
-                }
-                drawLayer(graphicsLayer)
-            }
-            
-            drawPath(
-                path = path,
-                brush = sweepBrush,
-                style = Stroke(width = strokeWidthPx)
-            )
-        }
+        drawPath(path = path, brush = paint, style = Stroke(width = strokeWidthPx))
     }
 }
 

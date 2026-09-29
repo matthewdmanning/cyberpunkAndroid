@@ -18,7 +18,7 @@ import kotlin.random.Random
  * Procedural Compose graphics fallback implementations for visual shaders on Android API < 33 (pre-Tiramisu)
  * and tooling environments where AGSL RuntimeShader is unsupported.
  */
-object CyberFallbacks {
+internal object CyberFallbacks {
 
     /**
      * Rasterizes a multi-pass chromatic aberration overload effect by shifting R and B color channels

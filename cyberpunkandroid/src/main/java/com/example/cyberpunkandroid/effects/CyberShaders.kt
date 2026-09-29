@@ -1,12 +1,12 @@
 package com.example.cyberpunkandroid.effects
 
-import android.graphics.RuntimeShader
-import android.os.Build
-import androidx.annotation.RequiresApi
-import androidx.compose.ui.graphics.asComposeRenderEffect
 import org.intellij.lang.annotations.Language
 
-object CyberShaders {
+/**
+ * AGSL sources for the Cyber runtime-shader effects. Compiled and bound by [cyberShaderEffect];
+ * every shader declares `uniform float2 resolution` and `uniform shader contents`.
+ */
+internal object CyberShaders {
     @Language("AGSL")
     const val CrtShader = """
         uniform float2 resolution;
@@ -43,24 +43,6 @@ object CyberShaders {
             return half4(r * vignette, g * vignette, b * vignette, a);
         }
     """
-
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    fun createCrtShader() = RuntimeShader(CrtShader)
-
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    fun crtEffect(
-        shader: RuntimeShader,
-        width: Float,
-        height: Float,
-        time: Float
-    ): androidx.compose.ui.graphics.RenderEffect {
-        shader.setFloatUniform("resolution", width, height)
-        shader.setFloatUniform("time", time)
-        return android.graphics.RenderEffect.createRuntimeShaderEffect(
-            shader,
-            "contents"
-        ).asComposeRenderEffect()
-    }
 
     @Language("AGSL")
     const val OverloadShader = """
@@ -234,92 +216,4 @@ object CyberShaders {
             return color;
         }
     """
-
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    fun createOverloadShader(): RuntimeShader = RuntimeShader(OverloadShader)
-
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    fun overloadEffect(
-        shader: RuntimeShader,
-        width: Float,
-        height: Float,
-        time: Float,
-        intensity: Float
-    ): androidx.compose.ui.graphics.RenderEffect {
-        shader.setFloatUniform("resolution", width, height)
-        shader.setFloatUniform("time", time)
-        shader.setFloatUniform("intensity", intensity)
-        return android.graphics.RenderEffect.createRuntimeShaderEffect(
-            shader, "contents"
-        ).asComposeRenderEffect()
-    }
-
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    fun createScanlinesShader(): RuntimeShader = RuntimeShader(ScanlinesShader)
-
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    fun scanlinesEffect(
-        shader: RuntimeShader,
-        width: Float,
-        height: Float,
-        time: Float,
-        opacity: Float,
-        spacing: Float,
-        colorArgb: Int
-    ): androidx.compose.ui.graphics.RenderEffect {
-        shader.setFloatUniform("resolution", width, height)
-        shader.setFloatUniform("time", time)
-        shader.setFloatUniform("scanlineOpacity", opacity)
-        shader.setFloatUniform("spacing", spacing)
-        shader.setColorUniform("scanlineColor", colorArgb)
-        return android.graphics.RenderEffect.createRuntimeShaderEffect(
-            shader, "contents"
-        ).asComposeRenderEffect()
-    }
-
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    fun createNoiseShader(): RuntimeShader = RuntimeShader(NoiseShader)
-
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    fun noiseEffect(
-        shader: RuntimeShader,
-        width: Float,
-        height: Float,
-        time: Float,
-        intensity: Float
-    ): androidx.compose.ui.graphics.RenderEffect {
-        shader.setFloatUniform("resolution", width, height)
-        shader.setFloatUniform("time", time)
-        shader.setFloatUniform("intensity", intensity)
-        return android.graphics.RenderEffect.createRuntimeShaderEffect(
-            shader, "contents"
-        ).asComposeRenderEffect()
-    }
-
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    fun createSparkShader(): RuntimeShader = RuntimeShader(SparkShader)
-
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    fun sparkEffect(
-        shader: RuntimeShader,
-        width: Float,
-        height: Float,
-        time: Float,
-        intensity: Float,
-        speed: Float,
-        primaryColorArgb: Int,
-        secondaryColorArgb: Int,
-        warningColorArgb: Int
-    ): androidx.compose.ui.graphics.RenderEffect {
-        shader.setFloatUniform("resolution", width, height)
-        shader.setFloatUniform("time", time)
-        shader.setFloatUniform("intensity", intensity)
-        shader.setFloatUniform("speed", speed)
-        shader.setColorUniform("primaryColor", primaryColorArgb)
-        shader.setColorUniform("secondaryColor", secondaryColorArgb)
-        shader.setColorUniform("warningColor", warningColorArgb)
-        return android.graphics.RenderEffect.createRuntimeShaderEffect(
-            shader, "contents"
-        ).asComposeRenderEffect()
-    }
 }
