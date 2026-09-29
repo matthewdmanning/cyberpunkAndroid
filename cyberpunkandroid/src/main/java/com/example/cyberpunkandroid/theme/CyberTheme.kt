@@ -1,5 +1,7 @@
 package com.example.cyberpunkandroid.theme
 
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
@@ -52,14 +54,18 @@ fun CyberTheme(
     typography: CyberTypography = CyberTheme.typography,
     shapes: CyberShapes = CyberTheme.shapes,
     semantics: CyberSemanticTokens = CyberTheme.semantics,
+    materialColorScheme: ColorScheme = cyberColorScheme(colors, semantics.colors),
     content: @Composable () -> Unit
 ) {
-    CompositionLocalProvider(
-        LocalCyberColors provides colors,
-        LocalCyberTypography provides typography,
-        LocalCyberShapes provides shapes,
-        LocalCyberSemanticTokens provides semantics,
-        content = content
-    )
+    // Stock Material 3 components inside CyberTheme pick up the Cyber palette
+    MaterialTheme(colorScheme = materialColorScheme) {
+        CompositionLocalProvider(
+            LocalCyberColors provides colors,
+            LocalCyberTypography provides typography,
+            LocalCyberShapes provides shapes,
+            LocalCyberSemanticTokens provides semantics,
+            content = content
+        )
+    }
 }
 
