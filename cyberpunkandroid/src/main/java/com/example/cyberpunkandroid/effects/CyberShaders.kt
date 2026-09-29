@@ -181,8 +181,9 @@ object CyberShaders {
                 float t = burstCycle;
                 float easedT = linearInSlowOut(t);
                 
-                // Initial random X velocity
-                float vx = (sparkHash(i * 13.5) * 2.0 - 1.0) * 0.5;
+                // Initial random X velocity. ±1.6 (after the 0.25 scale below) lets sparks
+                // travel up to ~40% of the short side from center, so the burst fans out wide
+                float vx = (sparkHash(i * 13.5) * 2.0 - 1.0) * 1.6;
                 
                 // Initial Y velocity: Always starts going UP (-vy) with 10% randomness
                 float vyBase = -1.2;
@@ -200,9 +201,11 @@ object CyberShaders {
                 
                 float d = length(uv - sparkPos);
                 
-                // 0.1 radius (fine pinpoint ember) decreasing by half over lifetime
-                float baseRadius = 0.0006 * intensity;
-                float currentRadius = baseRadius * (1.0 - 0.5 * t);
+                // Fine pinpoint ember. 0.00025 keeps the saturated (white-hot) core to ~1.6% of the
+                // short side at birth. Quadratic (1-t)^2 decay shrinks that core to nothing over the lifetime
+                float baseRadius = 0.00025 * intensity;
+                float life = 1.0 - t;
+                float currentRadius = baseRadius * life * life;
                 
                 // Stochastic flicker over time
                 float timeStep = floor(time * 30.0);

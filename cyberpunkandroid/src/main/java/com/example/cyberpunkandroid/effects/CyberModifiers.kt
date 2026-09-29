@@ -824,7 +824,7 @@ fun Modifier.cyberBackdropBlur(
 
 /**
  * Overlays high-velocity popcorn electrical spark particles with parabolic downward gravity arcs,
- * initial upward burst launch, plasma colorscale interpolation, and 50% radius decay.
+ * wide upward burst launch, plasma colorscale interpolation, and a small ember core that shrinks to nothing over its lifetime.
  *
  * @param color Primary spark color.
  * @param secondaryColor Secondary plasma color.
