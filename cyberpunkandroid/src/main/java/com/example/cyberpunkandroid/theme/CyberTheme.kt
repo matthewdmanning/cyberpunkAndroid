@@ -31,6 +31,7 @@ val LocalCyberColors = staticCompositionLocalOf { CyberColors() }
 val LocalCyberTypography = staticCompositionLocalOf { CyberTypography() }
 val LocalCyberShapes = staticCompositionLocalOf { CyberShapes() }
 val LocalCyberSemanticTokens = staticCompositionLocalOf { CyberSemanticTokens() }
+val LocalCyberStatusColors = staticCompositionLocalOf { cyberStatusColors() }
 
 object CyberTheme {
     val colors: CyberColors
@@ -48,6 +49,10 @@ object CyberTheme {
     val semantics: CyberSemanticTokens
         @Composable
         get() = LocalCyberSemanticTokens.current
+
+    val status: CyberStatusColors
+        @Composable
+        get() = LocalCyberStatusColors.current
 }
 
 @Composable
@@ -59,6 +64,7 @@ fun CyberTheme(
     materialColorScheme: ColorScheme = cyberColorScheme(colors, semantics.colors),
     materialTypography: Typography = cyberMaterialTypography(typography),
     materialShapes: Shapes = cyberMaterialShapes(),
+    status: CyberStatusColors = cyberStatusColors(colors, semantics.colors),
     content: @Composable () -> Unit
 ) {
     // Stock Material 3 components inside CyberTheme pick up the Cyber palette, type and shapes
@@ -72,6 +78,7 @@ fun CyberTheme(
             LocalCyberTypography provides typography,
             LocalCyberShapes provides shapes,
             LocalCyberSemanticTokens provides semantics,
+            LocalCyberStatusColors provides status,
             content = content
         )
     }

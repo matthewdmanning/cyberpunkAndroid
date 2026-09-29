@@ -27,17 +27,13 @@ fun cyberColorScheme(
     semantic: CyberSemanticColors = CyberSemanticColors()
 ): ColorScheme {
     val background = colors.background
-    // Near-white anchor used for tone 90 / tone 100 blends and the inverse surface
-    val light = CyberPrimitives.Colors.Chrome100
-    // Dark text/icons on neon accents (Material's tone 20 "on" colors) for maximum contrast
-    val onAccent = CyberPrimitives.Colors.Void500
+    val light = ToneLight
+    val onAccent = OnAccent
     // Third brand accent after cyan and magenta; green stays reserved for semantic success
     val tertiary = CyberPrimitives.Colors.Yellow500
 
-    // Container ≈ tone 30: (30 - 6) / (80 - 6) ≈ 0.3 of the way from background to the accent
-    fun container(accent: Color) = lerp(background, accent, 0.3f)
-    // On-container ≈ tone 90: (90 - 80) / (100 - 80) = 0.5 of the way from the accent to white
-    fun onContainer(accent: Color) = lerp(accent, light, 0.5f)
+    fun container(accent: Color) = toneContainer(background, accent)
+    fun onContainer(accent: Color) = toneOnContainer(accent)
 
     return darkColorScheme(
         primary = colors.primary,
@@ -107,3 +103,15 @@ fun cyberColorScheme(
         onTertiaryFixedVariant = container(tertiary)
     )
 }
+
+// Near-white anchor used for tone 90 / tone 100 blends and the inverse surface
+internal val ToneLight = CyberPrimitives.Colors.Chrome100
+
+// Dark text/icons on neon accents (Material's tone 10–20 "on" colors) for maximum contrast
+internal val OnAccent = CyberPrimitives.Colors.Void500
+
+// Container ≈ tone 30: (30 - 6) / (80 - 6) ≈ 0.3 of the way from background to the accent
+internal fun toneContainer(background: Color, accent: Color): Color = lerp(background, accent, 0.3f)
+
+// On-container ≈ tone 90: (90 - 80) / (100 - 80) = 0.5 of the way from the accent to white
+internal fun toneOnContainer(accent: Color): Color = lerp(accent, ToneLight, 0.5f)

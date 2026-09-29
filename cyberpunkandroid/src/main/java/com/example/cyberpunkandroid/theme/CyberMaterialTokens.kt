@@ -75,3 +75,16 @@ fun cyberMaterialShapes(): Shapes {
         extraLarge = diagonalCut(20.dp)
     )
 }
+
+/**
+ * Material 3 elevation levels (copied from Material's internal ElevationTokens, which aren't public).
+ * Higher levels sit visually closer to the viewer (deeper shadow). Values match ElevationTokens.Level0–Level5.
+ */
+object CyberElevation {
+    val level0: Dp = 0.dp
+    val level1: Dp = 1.dp
+    val level2: Dp = 3.dp
+    val level3: Dp = 6.dp
+    val level4: Dp = 8.dp
+    val level5: Dp = 12.dp
+}
