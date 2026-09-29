@@ -10,7 +10,7 @@ This is a low-level drawing utility class. It provides custom `Brush` implementa
 - **Why it's in `utils/`:** It doesn't know about UI components or state; it just provides raw coloring instructions.
 
 ### 2. `effects/CyberShaders.kt` (The GPU Math)
-This file holds raw AGSL (Android Graphics Shading Language) code as string constants (like `CrtShader`) and wraps them into Android `RenderEffect` objects.
+This file holds raw AGSL (Android Graphics Shading Language) code as string constants (like `CrtShader`). Compiling them and applying them as a `RenderEffect` (with a Compose fallback below API 33) is handled by the internal `cyberShaderEffect` in `effects/CyberEffectRuntime.kt`; see [docs/reference/shaders.md](docs/reference/shaders.md).
 - **Purpose:** It handles complex pixel-by-pixel manipulations on the GPU (like barrel distortion, chromatic aberration, or overload glitches) that are too expensive or impossible to do with standard Canvas drawing. 
 - **Relationship:** Like `CyberBrushes`, it is a low-level graphics tool, but for distortion rather than painting.
 
