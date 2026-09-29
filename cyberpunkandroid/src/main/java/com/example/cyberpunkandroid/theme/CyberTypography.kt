@@ -10,8 +10,9 @@ import com.example.cyberpunkandroid.config.CyberPrimitives
 
 @Immutable
 data class CyberTypography(
+    // Display: Orbitron, wide geometric headings
     val display: TextStyle = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = CyberFonts.Orbitron,
         fontWeight = FontWeight.W700,
         fontSize = 32.sp,
         letterSpacing = 0.1.em
@@ -22,8 +23,9 @@ data class CyberTypography(
         fontSize = 14.sp,
         letterSpacing = 0.1.em
     ),
+    // Body: Rajdhani, narrow squared technical sans
     val body: TextStyle = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = CyberFonts.Rajdhani,
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
         letterSpacing = 0.1.em
