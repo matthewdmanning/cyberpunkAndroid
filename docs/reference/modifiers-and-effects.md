@@ -378,17 +378,17 @@ CyberIcon(CyberIcons.Signal, contentDescription = "Live", modifier = Modifier.cy
 
 **Looks like (spec):** A scanning line, usually moving vertically, with opacity that decays behind it. Blended with Screen, so it only brightens. Depending on color matching, speed and parameters it reads as a **radar-like sweep** or a **raster-refresh** look.
 
-Today it draws one horizontal line per element height moving downward (150 px/s at the default speed), with the trail fading from transparent up to `maxAlpha` at the leading edge. With `mirror = true`, a reversed line moves upward through it.
+Today it draws one horizontal line per element height moving downward (100 px/s at the default speed), with the trail fading from transparent up to `maxAlpha` at the leading edge. With `mirror = true`, a reversed line moves upward through it.
 
 **Use for:** Radar and scanner panels, "refreshing" displays, loading states.
 
-Named presets for the radar and raster-refresh looks will be added once a quality parameter set is rated for each (`TODO(presets)` in code).
+Named presets for the radar and raster-refresh looks will be added once a quality parameter set is found for each (`TODO(presets)` in code).
 
 | Parameter | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `color` | `Color` | required | Line color. |
-| `speed` | `Float` | `1.5` | Scroll speed (100 px/s × `speed`). Default from ratings: 1.5 and 2.0 rated best. |
-| `maxAlpha` | `Float` | `0.81` | Peak opacity at the leading edge, 0–1. Default reproduces the best-rated look (rated as 0.9 under the old squared math). |
+| `speed` | `Float` | `1` | Scroll speed (100 px/s × `speed`). |
+| `maxAlpha` | `Float` | `0.5` | Peak opacity at the leading edge, 0–1. |
 | `mirror` | `Boolean` | `false` | Adds an upward stream. |
 | `alphaTransform` | `(Float) -> Float` | linear (`f`) | Shapes the fade along each stream: maps 0 (tail)…1 (head) to 0…1; the result is scaled by `maxAlpha`. E.g. `{ it * it }` for a sharper head. |
 | `animationSpec` | `AnimationSpec<Float>` | `tween(300)` | Fade in/out when the trigger changes. |

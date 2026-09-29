@@ -189,8 +189,7 @@ fun Modifier.cyberScanlines(
  * transparent up to [maxAlpha] at the leading edge; [mirror] adds a reversed line moving upward.
  *
  * TODO(presets): add named defaults for the radar-like and raster-refresh looks once a quality parameter set is
- *  found for each (rate them the same way as docs/master_ratings.json). The sample's doe_datastream runs can't be
- *  used: they vary an easing that this modifier never receives, so all four rendered identically.
+ *  found for each. The sample app's settings are customization examples, not a source for these defaults.
  *
  * @param color Stream color.
  * @param speed Scroll speed multiplier (100 px/s at 1).
@@ -201,11 +200,8 @@ fun Modifier.cyberScanlines(
  */
 fun Modifier.cyberDatastream(
     color: Color,
-    // Rated +1 in docs/master_ratings.json (datastream_speed: 1.5 and 2.0 = +1, 1.0 = 0); lower of the two
-    speed: Float = 1.5f,
-    // datastream_maxalpha rated 0.9 = +1 under the old code, which squared maxAlpha (0.9² = 0.81 on screen);
-    // 0.81 reproduces that rated look now that maxAlpha is applied once
-    maxAlpha: Float = 0.81f,
+    speed: Float = 1f,
+    maxAlpha: Float = 0.5f,
     mirror: Boolean = false,
     alphaTransform: (Float) -> Float = { factor -> factor },
     trigger: CyberInteractionTrigger = CyberInteractionTrigger.ALWAYS,
