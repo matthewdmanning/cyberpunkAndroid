@@ -81,7 +81,26 @@ fun Modifier.cyberPathBorder(
     animationSpec: AnimationSpec<Float> = DefaultPathLoop,
     appendedA11y: String? = null,
     customA11y: String? = null
-): Modifier = this.cyberSemantics("CyberPathBorder", appendedA11y, customA11y).composed {
+): Modifier = cyberPathBorderNamed(
+    "CyberPathBorder", effect, color, shape, glowRadius, inset, steps, trigger, interactionSource, hideWhenIdle, animationSpec, appendedA11y, customA11y
+)
+
+/** [cyberPathBorder] with a custom accessibility name, for effect-specific shortcuts such as [cyberWeld]. */
+internal fun Modifier.cyberPathBorderNamed(
+    a11yName: String,
+    effect: CyberPathEffect,
+    color: Color = Color.Unspecified,
+    shape: Shape = RectangleShape,
+    glowRadius: Dp = CyberPathDefaults.Modifiers.BorderGlow,
+    inset: Dp = Dp.Unspecified,
+    steps: Int = 0,
+    trigger: CyberInteractionTrigger = CyberInteractionTrigger.ALWAYS,
+    interactionSource: InteractionSource? = null,
+    hideWhenIdle: Boolean = false,
+    animationSpec: AnimationSpec<Float> = DefaultPathLoop,
+    appendedA11y: String? = null,
+    customA11y: String? = null
+): Modifier = this.cyberSemantics(a11yName, appendedA11y, customA11y).composed {
     val isActive = trigger.isActive(interactionSource)
     val resolved = if (color == Color.Unspecified) CyberTheme.colors.primary else color
     val progress = rememberPathProgress(isActive, animationSpec)
@@ -169,6 +188,9 @@ private fun rememberPathProgress(isActive: Boolean, animationSpec: AnimationSpec
 
 private fun quantize(p: Float, steps: Int): Float = if (steps > 0) floor(p * steps) / steps else p
 
+/** The layer's own color, or the modifier color when the layer doesn't set one. */
+private fun CyberPathLayer.baseColor(modifierColor: Color): Color = if (color == Color.Unspecified) modifierColor else color
+
 /**
  * Draws [layers] along [outline]: glow passes first (blurred on API 31+, widened strokes below),
  * then the crisp passes. Each layer's `hot` mixes its color toward white.
@@ -193,7 +215,7 @@ internal fun DrawScope.drawPathLayers(
                     for (l in glowing) {
                         drawPath(
                             path = l.path ?: outline,
-                            color = lerp(color, Color.White, l.hot * 0.4f), // glow stays colored; only the core goes white
+                            color = lerp(l.baseColor(color), Color.White, l.hot * 0.4f), // glow stays colored; only the core goes white
                             alpha = l.alpha.coerceIn(0f, 1f),
                             style = Stroke(width = l.width * 2f, cap = l.cap, pathEffect = l.pathEffect),
                         )
@@ -204,7 +226,7 @@ internal fun DrawScope.drawPathLayers(
         } else {
             for (l in glowing) {
                 // two widened translucent strokes approximate a blur without RenderEffect
-                val c = lerp(color, Color.White, l.hot * 0.4f)
+                val c = lerp(l.baseColor(color), Color.White, l.hot * 0.4f)
                 drawPath(l.path ?: outline, c, alpha = (l.alpha * 0.18f).coerceIn(0f, 1f),
                     style = Stroke(width = l.width * 2f + glowRadiusPx, cap = l.cap, pathEffect = l.pathEffect))
                 drawPath(l.path ?: outline, c, alpha = (l.alpha * 0.30f).coerceIn(0f, 1f),
@@ -216,7 +238,7 @@ internal fun DrawScope.drawPathLayers(
         if (l.alpha <= 0.003f) continue
         drawPath(
             path = l.path ?: outline,
-            color = lerp(color, Color.White, l.hot),
+            color = lerp(l.baseColor(color), Color.White, l.hot),
             alpha = l.alpha.coerceIn(0f, 1f),
             style = Stroke(width = l.width, cap = l.cap, pathEffect = l.pathEffect),
         )

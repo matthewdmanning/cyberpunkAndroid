@@ -49,8 +49,10 @@ import com.example.cyberpunkandroid.effects.CyberPacketStream
 import com.example.cyberpunkandroid.effects.CyberPathEffect
 import com.example.cyberpunkandroid.effects.CyberScanner
 import com.example.cyberpunkandroid.effects.CyberSequencedLights
+import com.example.cyberpunkandroid.effects.CyberWeld
 import com.example.cyberpunkandroid.effects.cyberPathBorder
 import com.example.cyberpunkandroid.effects.cyberPathDivider
+import com.example.cyberpunkandroid.effects.cyberWeld
 import com.example.cyberpunkandroid.theme.CyberTheme
 
 /** Demo entry: an effect on a chamfered card (and optionally a ring), with its loop duration. */
@@ -63,6 +65,7 @@ private data class PathDemo(
 )
 
 private val tracerDemos = listOf(
+    PathDemo("CyberWeld", "Flickering arc, fizzing and popping sparks, a bead cooling through blackbody to gunmetal.", CyberWeld(), 4000),
     PathDemo("CyberCometTracer", "Hot head, fading tail, running the outline.", CyberCometTracer(), 2600),
     PathDemo("CyberCometTracer ×3", "Three shorter comets sharing the loop.", CyberCometTracer(count = 3, tail = 0.12f), 3600),
     PathDemo("CyberCometTracer (stutter)", "Stepped motion with afterimages.", CyberCometTracer(stutter = 16, tail = 0.05f), 2400),
@@ -91,6 +94,7 @@ private val dividerDemos = listOf(
     PathDemo("Comet divider", "Comet enters and exits the line.", CyberCometTracer(tail = 0.35f), 1600),
     PathDemo("Live-wire divider", "Arc crawling a divider.", CyberLiveWire(length = 0.35f), 1400),
     PathDemo("Packet divider", "Packets on a divider.", CyberPacketStream(), 3000),
+    PathDemo("Weld divider", "A weld seam laid along a divider.", CyberWeld(cycleMillis = 3000), 3000),
 )
 
 /**
@@ -109,6 +113,7 @@ fun PathEffectsScreen(modifier: Modifier = Modifier) {
         item { SectionTitle("TRACERS") }
         items(tracerDemos) { PathDemoCard(it) }
         item { PressDemo() }
+        item { WeldShortcutDemo() }
         item { SectionTitle("DIVIDERS") }
         items(dividerDemos) { DividerDemo(it) }
         item { SectionTitle("BOX PATTERNS") }
@@ -197,6 +202,25 @@ private fun PressDemo() {
             contentAlignment = Alignment.Center
         ) {
             Text("HOLD TO ENGAGE", style = CyberTheme.typography.terminal, color = CyberTheme.colors.primary)
+        }
+    }
+}
+
+/** The `Modifier.cyberWeld` shortcut: stronger glow and a loop matched to the weld's particle clock. */
+@Composable
+private fun WeldShortcutDemo() {
+    val card: Shape = CutCornerShape(topEnd = 20.dp, bottomStart = 20.dp)
+    Column(verticalArrangement = Arrangement.spacedBy(CyberPrimitives.Spacing.dp8)) {
+        DemoLabel(PathDemo("Modifier.cyberWeld", "Shortcut with the weld's own glow and loop.", CyberWeld()))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp)
+                .background(CyberTheme.colors.surfaceSecondary, card)
+                .cyberWeld(shape = card),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("SEAM 07 // TIG", style = CyberTheme.typography.terminal, color = CyberTheme.colors.textSecondary)
         }
     }
 }

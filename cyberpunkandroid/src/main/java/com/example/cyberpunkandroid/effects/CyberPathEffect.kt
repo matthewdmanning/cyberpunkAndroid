@@ -2,6 +2,7 @@ package com.example.cyberpunkandroid.effects
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
@@ -20,7 +21,8 @@ import androidx.compose.ui.unit.Density
  * @param hot 0..1 mix toward white, for the overexposed core of a neon tracer head.
  * @param glow Whether this pass also feeds the blurred glow layer.
  * @param path Replacement outline for this pass (stamped patterns animate by rotating the
- *   contour start), or null to draw on the prepared outline.
+ *   contour start; sparks are free-standing strokes), or null to draw on the prepared outline.
+ * @param color Color for this pass, or `Color.Unspecified` to use the modifier's color.
  */
 @Immutable
 class CyberPathLayer(
@@ -31,6 +33,7 @@ class CyberPathLayer(
     val hot: Float = 0f,
     val glow: Boolean = true,
     val path: Path? = null,
+    val color: Color = Color.Unspecified,
 )
 
 /** A [CyberPathEffect] resolved against one concrete outline. */

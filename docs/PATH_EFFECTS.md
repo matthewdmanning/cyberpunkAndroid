@@ -60,6 +60,26 @@ A live catalogue is in the sample app under the **Paths** tab (`PathEffectsScree
 | `CyberChargeMeter` | The outline is a ring of segments that power on in order. The leading segment flickers, then the full ring holds and fades. | `segment`, `gap`, `height`, `fadeOut` |
 | `CyberSequencedLights` | Dim chevrons pointing along the path. One lit chevron per group steps forward with a decaying afterglow, like runway approach strobes. | `groups`, `trail`, `size`, `spacing` |
 | `CyberBracketLock` | Corner brackets snap in from nothing with a slight overshoot, flash as they lock, then breathe. | `arm`, `notches` |
+| `CyberWeld` | A welding arc (white core, blue halo) that flickers every frame and flares now and then. Tiny sparks fizz off it; occasional pops throw bigger, faster sparks that burst as they die. Behind it, a jittered bead cools from yellow-white through orange and red to gunmetal. See [Weld](#weld). | `cycleMillis`, `coolingSeconds`, `peakKelvin`, `fizzRate`, `popChance`, `colorScale`, `coolColor` |
+
+### Weld
+
+```kotlin
+Modifier.cyberWeld(shape = card)                                   // shortcut: stronger glow, loop = weld.cycleMillis
+Modifier.cyberPathBorder(CyberWeld(), shape = card,                // same effect through the generic modifier:
+    animationSpec = infiniteRepeatable(tween(4000, easing = LinearEasing)))   // loop must equal cycleMillis
+Modifier.cyberPathDivider(CyberWeld(cycleMillis = 3000),
+    animationSpec = infiniteRepeatable(tween(3000, easing = LinearEasing)))
+```
+
+- **Cooling is physical.** The bead follows Newton's law of cooling from `peakKelvin` (3000 K) toward 300 K, with time constant `coolingSeconds`. Its glow fades out at the Draper point (798 K), below which solids stop visibly glowing, leaving `coolColor`.
+- **Glow color comes from `colorScale`**, a list of (kelvin, color) stops. The default is the blackbody scale from published table values: 1000 K `#FF3800`, 1200 K `#FF5300`, 1800 K `#FF7E00`, 2000 K `#FF8912`, 3000 K `#FFB46B`. Above 2400 K the bead also mixes toward white, because it reads overexposed.
+- **The final color is `CyberPrimitives.Colors.Void100` (#2A2D3A).** It's the palette token closest to gunmetal (#2A3439), at CIEDE2000 ΔE 7.6.
+- **Sparks are ballistic.** Each spark has a launch velocity out of the shape plus screen-down gravity, and cools along the same color scale. Fizz sparks come at `fizzRate` per second. Pops are decided per `popSlotSeconds` slot with probability `popChance`; each pop throws 5–9 big sparks and flashes the arc.
+- **The loop is seamless.** All randomness is a hash of indices that repeat every cycle.
+- **Particle time needs the loop duration.** Spark physics is in seconds, so `cycleMillis` must match the loop duration of the `animationSpec`. `Modifier.cyberWeld` sets this up for you.
+
+Sources: blackbody sRGB values from the [vendian.org blackbody table](http://www.vendian.org/mncharity/dir3/blackbody/), as listed on [temperature.m15y.com](https://temperature.m15y.com/); [Draper point](https://en.wikipedia.org/wiki/Draper_point); gunmetal [#2A3439](https://encycolorpedia.com/2a3439).
 
 ## Box patterns
 
@@ -80,7 +100,7 @@ Implement `CyberPathEffect` as a `data class`:
 
 - `extent(density)` returns how far the geometry reaches from the outline, in px. Borders inset by this amount.
 - `prepare(outline, closed, density)` does all measuring and stamp building. It runs once per size, inside `drawWithCache`.
-- The returned `CyberPathRenderer.layers(progress)` returns `CyberPathLayer`s. Each layer is one `drawPath` pass with its own path effect, width, cap, alpha, `hot` (mix toward white), `glow` flag, and optional replacement `path`.
+- The returned `CyberPathRenderer.layers(progress)` returns `CyberPathLayer`s. Each layer is one `drawPath` pass with its own path effect, width, cap, alpha, `hot` (mix toward white), `glow` flag, optional replacement `path` (free-standing strokes such as sparks), and optional `color` (defaults to the modifier's color).
 
 Use several layers instead of `SumPathEffect`, which is not in Compose's common API. Helpers live in `utils/CyberPathGeometry.kt`.
 
@@ -102,5 +122,5 @@ Android's `PathEffect`s are Skia path effects. Every effect here was prototyped 
 
 - Every effect was rendered in Skia (skia-python, the same engine as Android's path effects) on a chamfered card, a circle, a rounded rect, an octagon and a divider. About 30 candidates went through several rounds of visual review; these 17 survived.
 - The Kotlin was compiled with Kotlin 2.x (language 2.1) against stubs of the Compose APIs used. Stub signatures were checked against the Compose docs.
-- The Kotlin geometry code was run on the JVM and its output rendered in Skia. It was diffed pixel by pixel against the reference prototypes: all 19 variants match to within sub-pixel differences.
+- The Kotlin geometry code was run on the JVM and its output rendered in Skia. It was diffed pixel by pixel against the reference prototypes: all 20 variants (including `CyberWeld`, colors and sparks) match to within sub-pixel differences.
 - **Not yet verified:** a real Gradle/Android build, the on-device look of the RenderEffect glow (previews approximate its blur), and performance on device. `CyberPathEffectsTest` renders every effect on API 33 and API 30 under Robolectric.

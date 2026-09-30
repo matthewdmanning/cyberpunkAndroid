@@ -1,5 +1,6 @@
 package com.example.cyberpunkandroid.config
 
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -57,4 +58,45 @@ object CyberPathDefaults {
     }
     object Meter { val Segment: Dp = 7.dp; val Gap: Dp = 1.8.dp; val Height: Dp = 4.dp }
     object Lights { val Size: Dp = 3.5.dp; val Spacing: Dp = 10.dp; val Width: Dp = 1.5.dp }
+
+    object Weld {
+        /** Weld bead stroke width. */
+        val Width: Dp = 2.2.dp
+        /** Roughness of the bead: normal offset amplitude and spacing of the jitter points. */
+        val Jitter: Dp = 0.55.dp
+        val JitterStep: Dp = 1.6.dp
+        /** Length of the molten pool just behind the arc. */
+        val Pool: Dp = 4.dp
+        /** Half-length of the arc spot along the seam. */
+        val ArcHalfLength: Dp = 1.5.dp
+        /** Screen-down gravity on sparks, in dp per second squared (tuned by eye, not 9.8 m/s² at screen scale). */
+        val Gravity: Dp = 1400.dp
+        val FizzWidth: Dp = 0.8.dp
+        val FizzWarmWidth: Dp = 0.75.dp
+        val FizzCoolWidth: Dp = 0.7.dp
+        val PopWidth: Dp = 1.4.dp
+        val PopCoolWidth: Dp = 1.1.dp
+        /** Star burst at the end of a popping spark: inner radius and growth. */
+        val BurstRadius: Dp = 0.8.dp
+        val BurstGrowth: Dp = 1.6.dp
+        /** Recommended weld glow (more than the default border glow: the arc is high intensity). */
+        val Glow: Dp = 10.dp
+
+        /** White core of the arc with a slight blue cast. */
+        val ArcCore = Color(0xFFF2F8FF)
+        /** Blue halo around the arc. */
+        val ArcHalo = Color(0xFF7FB2FF)
+
+        /**
+         * Blackbody color scale as (kelvin, sRGB) stops, from the vendian.org blackbody table
+         * (via temperature.m15y.com). Only published table values are used; in between is interpolated.
+         */
+        val Blackbody: List<Pair<Float, Color>> = listOf(
+            1000f to Color(0xFFFF3800),
+            1200f to Color(0xFFFF5300),
+            1800f to Color(0xFFFF7E00),
+            2000f to Color(0xFFFF8912),
+            3000f to Color(0xFFFFB46B),
+        )
+    }
 }
