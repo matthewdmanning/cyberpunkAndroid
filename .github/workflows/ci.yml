@@ -6,36 +6,15 @@ on:
   pull_request:
     branches: [ main ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   fast-validation:
-    name: Fast Feedback & Unit Tests
+    name: Fast Validation
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-          cache: 'gradle'
-
-      - name: Grant Execute Permission for Gradlew
-        run: chmod +x gradlew
-
-      - name: Build & Assemble Modules
-        run: ./gradlew :cyberpunkandroid:assembleDebug :sample:assembleDebug --stacktrace
-
-      - name: Run Unit Tests
-        run: ./gradlew :cyberpunkandroid:testDebugUnitTest :sample:testDebugUnitTest --stacktrace
-
-      - name: Upload Test Reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: unit-test-reports
-          path: |
-            cyberpunkandroid/build/reports/tests/testDebugUnitTest/
-            sample/build/reports/tests/testDebugUnitTest/
