@@ -7,6 +7,36 @@ import androidx.compose.ui.graphics.asComposeRenderEffect
 import org.intellij.lang.annotations.Language
 
 object CyberShaders {
+    // Samples each square at its center so the whole screen resolves from coarse pixels to sharp content.
+    @Language("AGSL")
+    const val PixelateShader = """
+        uniform float2 resolution;
+        uniform float pixelSize;
+        uniform shader contents;
+
+        half4 main(float2 fragCoord) {
+            float2 center = (floor(fragCoord / pixelSize) + 0.5) * pixelSize;
+            return contents.eval(min(center, resolution - 0.5));
+        }
+    """
+
+    /** Use this function to prepare the API 33 pixelation shader for a screen transition.
+     * Inputs: None. Dependencies: [PixelateShader].
+     */
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    fun createPixelateShader() = RuntimeShader(PixelateShader)
+
+    /** Use this function to pixelate a composable layer during a screen transition.
+     * Inputs: shader is the cached AGSL program; width and height are the layer dimensions;
+     * pixelSize is the animated square edge length in pixels. Dependencies: [PixelateShader].
+     */
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    fun pixelateEffect(shader: RuntimeShader, width: Float, height: Float, pixelSize: Float): androidx.compose.ui.graphics.RenderEffect {
+        shader.setFloatUniform("resolution", width, height)
+        shader.setFloatUniform("pixelSize", pixelSize)
+        return android.graphics.RenderEffect.createRuntimeShaderEffect(shader, "contents").asComposeRenderEffect()
+    }
+
     @Language("AGSL")
     const val CrtShader = """
         uniform float2 resolution;
