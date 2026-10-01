@@ -9,7 +9,7 @@ import com.example.cyberpunkandroid.theme.CyberTheme
 
 /**
  * Electrical sparking effect component displaying popcorn energy sparks with parabolic downward gravity arcs,
- * initial upward burst launch, plasma colorscale interpolation, and 50% radius decay.
+ * wide upward burst launch, plasma colorscale interpolation, and a small ember core that shrinks to nothing over its lifetime.
  *
  * @param modifier Composable modifier applied to the spark container.
  * @param sparkCount Number of spark rays rendered. Defaults to `32`.

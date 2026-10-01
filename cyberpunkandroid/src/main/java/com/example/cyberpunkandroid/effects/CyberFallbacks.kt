@@ -151,7 +151,7 @@ object CyberFallbacks {
 
     /**
      * Rasterizes popcorn spark particles with parabolic downward arc trajectories,
-     * initial upward burst launch, plasma colorscale interpolation, and 50% radius decay.
+     * wide upward burst launch, plasma colorscale interpolation, and a small ember core that shrinks to nothing over its lifetime.
      *
      * @param primaryColor Semantic primary tint color (e.g. Info/Primary).
      * @param secondaryColor Semantic secondary tint color (e.g. Danger/Secondary).
@@ -182,8 +182,9 @@ object CyberFallbacks {
             // LinearInSlowOut easing curve
             val easedT = t * t * (3f - 2f * t)
 
-            // Always start off going UP: angle between -135 deg and -45 deg (-2.356 rad to -0.785 rad)
-            val angle = -2.356f + random.nextFloat() * 1.5708f
+            // Always start off going UP: angle between -165 deg and -15 deg (-2.880 rad to -0.262 rad)
+            // for a wide fan that matches the AGSL shader's horizontal spread
+            val angle = -2.880f + random.nextFloat() * 2.618f
             val speed = (0.4f + random.nextFloat() * 0.6f) * maxExtent
 
             val vx = kotlin.math.cos(angle) * speed
@@ -195,9 +196,11 @@ object CyberFallbacks {
                 center.y + vy * easedT + 0.5f * gravity * easedT * easedT
             )
 
-            // Radius decreases by half from beginning to end: r(t) = r_base * (1.0 - 0.5 * t)
-            val baseRadius = (3f + random.nextFloat() * 3f) * intensity
-            val currentRadius = baseRadius * (1.0f - 0.5f * t)
+            // Small 2–4 px ember; quadratic decay r(t) = r_base * (1 - t)^2 shrinks it to nothing,
+            // matching the AGSL shader
+            val baseRadius = (2f + random.nextFloat() * 2f) * intensity
+            val life = 1.0f - t
+            val currentRadius = baseRadius * life * life
 
             // Plasma colorscale interpolation across semantic keywords
             val plasmaColor = when {
