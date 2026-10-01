@@ -22,10 +22,7 @@ import com.example.cyberpunkandroid.components.CyberTabs
 import com.example.cyberpunkandroid.components.CyberPixelTransition
 import com.example.cyberpunkandroid.components.CyberTerminalBackground
 import com.example.cyberpunkandroid.theme.CyberTheme
-import com.example.sample.screens.CommandCenterScreen
-import com.example.sample.screens.EffectsScreen
-import com.example.sample.screens.EffectsShowcaseScreen
-import com.example.sample.screens.SandboxScreen
+import com.example.sample.screens.*
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
