@@ -1,38 +1,44 @@
-# Cyberpunk Android Architecture
+# Cyberpunk Android architecture
 
-In this architecture, the graphics and effects pipeline moves from low-level graphics primitives up to the high-level public API that developers actually use. 
+This document is the architectural map for the `:cyberpunkandroid` library. Use it to find the owning source area; use the source code for exact APIs.
 
-Here is the breakdown of the responsibilities of each core effects file:
+## Module map
 
-### 1. `utils/CyberBrushes.kt` (The Paint)
-This is a low-level drawing utility class. It provides custom `Brush` implementations (like `cyberSweepGradient`) that interface directly with the Android Canvas or Compose graphics. 
-- **Purpose:** It provides the exact "paint" used to draw shapes, gradients, and borders.
-- **Why it's in `utils/`:** It doesn't know about UI components or state; it just provides raw coloring instructions.
+| Area | Source | Responsibility |
+|---|---|---|
+| Components | `cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/components/` | Minimal, functional Compose components and feedback fixtures. Visual effects are added with modifiers. |
+| Effects | `cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/effects/` | Public `Modifier.cyber...` effects, shader-backed rendering, Compose fallbacks, interaction triggers, and telemetry-driven state. |
+| Icons | `cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/icons/` | Cyber icon vectors and the Outline, Solid, Duotone, and Overload variants. |
+| Configuration | `cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/config/` | Primitive and semantic design tokens shared across themes and components. |
+| Theme | `cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/theme/` | Colors, typography, shapes, and `CyberTheme` composition locals. |
+| Drawing utilities | `cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/utils/` | Reusable high-level Compose drawing helpers such as datastream gradients. |
+| Android resources | `cyberpunkandroid/src/main/res/` | Drawables and bundled fonts. Neusharp is the display face, Fastup is the body face, and Monospace is used for terminal text. |
+| Feedback assets | `cyberpunkandroid/src/main/assets/` | Design-of-experiments JSON consumed by the feedback fixtures. |
+| Consumer rules | `cyberpunkandroid/consumer-rules.pro` and `cyberpunkandroid/src/main/keepRules/rules.keep` | Shrinker configuration shipped with or applied to the library. Keep these files aligned with resources that actually require preservation. |
 
-### 2. `effects/CyberShaders.kt` (The GPU Math)
-This file holds raw AGSL (Android Graphics Shading Language) code as string constants (like `CrtShader`) and wraps them into Android `RenderEffect` objects.
-- **Purpose:** It handles complex pixel-by-pixel manipulations on the GPU (like barrel distortion, chromatic aberration, or overload glitches) that are too expensive or impossible to do with standard Canvas drawing. 
-- **Relationship:** Like `CyberBrushes`, it is a low-level graphics tool, but for distortion rather than painting.
+## Dependency direction
 
-### 3. `effects/CyberInteraction.kt` (The Triggers)
-This file contains the `CyberInteractionTrigger` enum and the logic to listen to an `InteractionSource` (Compose's system for tracking gestures).
-- **Purpose:** It answers the question: *"When should this effect happen?"* It determines if an effect should activate based on the user hovering, pressing, or focusing on a component. 
+The token path is:
 
-### 4. `effects/CyberTelemetry.kt` (The Data Engine)
-This is a specialized state-management engine for data-driven effects. 
-- **Purpose:** Instead of standard time-based animations (like `tween` or `spring`), `CyberTelemetry` processes raw data streams (telemetry) over time. It allows UI effects to react continuously to incoming data with mathematical operations like temporal smoothing, decay, or capacitance.
+`CyberPrimitives` → semantic tokens, colors, typography, and shapes → `CyberTheme` → components and effects
 
-### 5. `effects/CyberModifiers.kt` (The Public API)
-This is the "conductor" that ties everything else together. It contains the actual `Modifier.cyber...` extension functions that developers apply to Compose UI components.
-- **Purpose:** It is the high-level, declarative API. 
-- **Relationship:** A modifier in this file will typically check **`CyberInteraction`** to see if it should run, request a brush from **`CyberBrushes`** or a distortion from **`CyberShaders`**, and potentially drive its animation state using **`CyberTelemetry`**. 
+Components remain functional base elements. Effects and visual flair belong in reusable `Modifier.cyber...` extensions rather than component-specific copies. Public API signature rules live in [API conventions](docs/agents/api-conventions.md); rendering constraints live in [effects rules](docs/agents/effects-rules.md).
 
-### 6. Path effects (tracers & box patterns)
-Light and geometry that run *along* an outline. See `docs/PATH_EFFECTS.md`.
-- **`utils/CyberPathGeometry.kt` (the paint):** stamp building (ribbons, polygons, correctly wound holes), length fitting, corner detection, seam relocation, and dash windows. It has no UI knowledge.
-- **`effects/CyberPathEffect.kt`:** the `CyberPathEffect` contract. An effect is prepared once per outline, then returns `CyberPathLayer`s for each animation progress value.
-- **`effects/CyberPathPatterns.kt` / `effects/CyberPathTracers.kt`:** the effects themselves. Patterns are static-able border geometry; tracers are moving light.
-- **`effects/CyberPathModifiers.kt` (public API):** `cyberPathBorder` / `cyberPathDivider`. These tie an effect to a shape, the hoisted `animationSpec`, `CyberInteraction` triggers, and the glow pass (RenderEffect blur on API 31+, stroke fallback below).
+## Effects pipeline
 
-## Summary
-`Brushes` and `Shaders` are the raw graphics. `Interaction` and `Telemetry` decide when and how those graphics animate. `Modifiers` packages them all into a single line of code that you can apply to a UI element.
+1. `CyberBrushes` defines reusable gradients, including sweep gradients.
+2. Shader-backed effects use AGSL where supported.
+3. `CyberFallbacks` provides procedural high-level Compose drawing for older Android versions and tooling previews.
+4. `CyberInteraction` controls when effects respond to interaction state.
+5. `CyberTelemetry` converts external values into observable Compose state.
+6. Public modifiers compose those pieces into reusable effects.
+
+Path deformation effects are documented in [path effects](docs/PATH_EFFECTS.md).
+
+## Feedback data ownership
+
+- `docs/recorded_ratings.json` is ephemeral output from a connected device. It may be replaced after its data has been copied into the aggregate.
+- `docs/master_ratings.json` is the durable, cumulative source of truth for completed ratings.
+- The design-of-experiments inputs belong in `cyberpunkandroid/src/main/assets/`; ratings do not.
+
+See the [feedback flow](docs/agents/feedback_flow.md) for the operational steps.
