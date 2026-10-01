@@ -2,12 +2,13 @@
 
 This document outlines project-wide conventions that all agents and subagents MUST follow when modifying or creating code in the `cyberpunkandroid` library.
 
-## Strict Prohibition on Canvas & Painter
+## Strict Prohibition on Canvas
 
 - **NEVER use low-level Canvas or native Canvas drawing calls (`drawIntoCanvas`, `nativeCanvas`, `Canvas`, `@Painter` / `Painter`)**.
-- Low-level Canvas and `Painter` bypass Compose hardware acceleration pipelines, ignore `RenderEffect` AGSL runtime shaders, and break layout scaling/layering.
+- Low-level Canvas bypass Compose hardware acceleration pipelines, ignore `RenderEffect` AGSL runtime shaders, and break layout scaling/layering.
 - Always use pure Jetpack Compose layout primitives, `DrawScope` high-level drawing methods (`drawWithCache`, `drawWithContent`, `drawBehind`), `graphicsLayer`, and AGSL `RuntimeShader`s.
 - Always consult the `context7-mcp` skill for official Jetpack Compose and library API documentation before implementing drawing logic or effects.
+- Avoid using Painter when other options are available.
 
 ## Signature Ordering Convention: Composables, Effects, and Modifiers
 

@@ -19,6 +19,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.cyberpunkandroid.components.CyberTabs
+import com.example.cyberpunkandroid.components.CyberPixelTransition
 import com.example.cyberpunkandroid.components.CyberTerminalBackground
 import com.example.cyberpunkandroid.theme.CyberTheme
 import com.example.sample.screens.CommandCenterScreen
@@ -40,7 +41,7 @@ class MainActivity : ComponentActivity() {
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
                     val currentRoute = navBackStackEntry?.destination?.route ?: "sandbox"
 
-                    Box(modifier = Modifier.fillMaxSize()) {
+                    CyberPixelTransition(targetKey = currentRoute) {
                         if (currentRoute == "terminal") {
                             CyberTerminalBackground(text = TerminalBackgroundGlyphs)
                         }
