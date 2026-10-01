@@ -1,4 +1,24 @@
-### Modifier Ordering Rules
+# Effect implementation rules
+
+Use these rules when you implement or compose visual effects. See
+[Library API conventions](api-conventions.md) for public signature ordering and
+base-component boundaries.
+
+## Drawing APIs
+
+- Never use low-level Canvas or native Canvas drawing calls, including
+  `drawIntoCanvas`, `nativeCanvas`, and `Canvas`.
+- Low-level Canvas bypasses Compose hardware-accelerated effect pipelines,
+  ignores `RenderEffect` Android Graphics Shading Language (AGSL) runtime
+  shaders, and breaks layout scaling and layering.
+- Use Jetpack Compose layout primitives, high-level `DrawScope` methods such as
+  `drawWithCache`, `drawWithContent`, and `drawBehind`, `graphicsLayer`, and
+  AGSL `RuntimeShader` APIs.
+- Avoid `Painter` when another Compose API covers the task.
+- Before implementing drawing logic or effects, use the `context7-mcp` skill to
+  verify the relevant Jetpack Compose or Android API.
+
+## Modifier ordering
 
 Because Compose modifier ordering is highly effect-dependent and unpredictable for agents who cannot visually verify the screen, you MUST follow these specific ordering and composition rules based on the category of the effect you are applying. 
 
