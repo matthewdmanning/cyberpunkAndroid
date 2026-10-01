@@ -25,9 +25,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import com.example.cyberpunkandroid.components.CyberAccordion
+import com.example.cyberpunkandroid.components.CyberAlertVariant
 import com.example.cyberpunkandroid.components.CyberButton
 import com.example.cyberpunkandroid.components.CyberCard
 import com.example.cyberpunkandroid.components.CyberCheckbox
+import com.example.cyberpunkandroid.components.CyberSlider
+import com.example.cyberpunkandroid.components.CyberSnackbar
+import com.example.cyberpunkandroid.components.CyberSwitch
 import com.example.cyberpunkandroid.components.CyberTabs
 import com.example.cyberpunkandroid.components.CyberTime
 import com.example.cyberpunkandroid.config.CyberPrimitives
@@ -44,6 +49,12 @@ import com.example.cyberpunkandroid.theme.CyberTheme
 fun SandboxScreen(onBack: () -> Unit) {
     var forceFallback by remember { mutableStateOf(false) }
     var selectedMainTab by remember { mutableStateOf(0) }
+
+    // State variables for new components
+    var shieldEnabled by remember { mutableStateOf(true) }
+    var outputLevel by remember { mutableFloatStateOf(0.75f) }
+    var accordionExpanded by remember { mutableStateOf(false) }
+    var alertBannerVisible by remember { mutableStateOf(false) }
     
     Column(
         modifier = Modifier
@@ -108,6 +119,83 @@ fun SandboxScreen(onBack: () -> Unit) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Force Procedural Fallbacks", color = CyberTheme.colors.textPrimary)
                     }
+                }
+            }
+
+            // Interactive Cyber Controls Showcase (CyberSwitch & CyberSlider)
+            CyberCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Text("Interactive Controls", style = CyberTheme.typography.display, color = CyberPrimitives.Colors.Cyan500)
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (shieldEnabled) "DEFENSE SHIELD: ARMED" else "DEFENSE SHIELD: STANDBY",
+                            color = if (shieldEnabled) CyberTheme.semantics.colors.success else CyberTheme.colors.textSecondary,
+                            style = CyberTheme.typography.body
+                        )
+                        CyberSwitch(
+                            checked = shieldEnabled,
+                            onCheckedChange = { shieldEnabled = it }
+                        )
+                    }
+
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = "PRIMARY POWER OUTPUT: ${(outputLevel * 100).toInt()}%",
+                            color = CyberTheme.colors.primary,
+                            style = CyberTheme.typography.body
+                        )
+                        CyberSlider(
+                            value = outputLevel,
+                            onValueChange = { outputLevel = it },
+                            tickCount = 5,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+
+            // Cyber Accordion Section
+            CyberAccordion(
+                title = "DIAGNOSTIC TELEMETRY LOGS",
+                expanded = accordionExpanded,
+                onExpandedChange = { accordionExpanded = it },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("[00:12:04] NODE_01: CORE_TEMP NORMAL (312 K)", style = CyberTheme.typography.terminal, color = CyberTheme.colors.primary)
+                    Text("[00:12:18] NODE_04: ENCRYPTION HANDSHAKE ACK", style = CyberTheme.typography.terminal, color = CyberTheme.colors.secondary)
+                    Text("[00:12:35] NODE_07: OVERLOAD WARNING BREACH PREVENTED", style = CyberTheme.typography.terminal, color = CyberPrimitives.Colors.Yellow500)
+                }
+            }
+
+            // Transient Cyber Snackbar Banner Showcase
+            CyberCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("HUD Toast Notifications", style = CyberTheme.typography.display, color = CyberTheme.semantics.colors.warning)
+                    
+                    CyberButton(
+                        onClick = { alertBannerVisible = !alertBannerVisible },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = if (alertBannerVisible) "DISMISS ALERT BANNER" else "TRIGGER SYSTEM ALERT",
+                            color = CyberTheme.colors.background
+                        )
+                    }
+
+                    CyberSnackbar(
+                        title = "INTRUSION WARNING",
+                        message = "UNAUTHORIZED DECRYPTION DETECTED ON SECTOR 09",
+                        visible = alertBannerVisible,
+                        variant = CyberAlertVariant.Warning,
+                        critical = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
 
@@ -205,11 +293,13 @@ fun SandboxScreen(onBack: () -> Unit) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     Text("Network Uplink Stress", style = CyberTheme.typography.display, color = CyberPrimitives.Colors.Cyan500)
                     
-                    // Simple simulated slider to change "telemetry" input
-                    androidx.compose.material3.Slider(
+                    // CyberSlider for telemetry stress control
+                    CyberSlider(
                         value = simulatedStress,
                         onValueChange = { simulatedStress = it },
                         valueRange = 0f..1f,
+                        tickCount = 4,
+                        color = CyberPrimitives.Colors.Cyan500,
                         modifier = Modifier.fillMaxWidth()
                     )
                     

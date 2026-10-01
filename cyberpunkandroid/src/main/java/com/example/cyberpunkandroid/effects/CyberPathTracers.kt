@@ -5,7 +5,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StampedPathEffectStyle
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.asComposePathEffect
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import com.example.cyberpunkandroid.config.CyberPathDefaults
@@ -21,6 +20,17 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
+
+private fun android.graphics.PathEffect.asComposePathEffect(): PathEffect {
+    return try {
+        val constructor = Class.forName("androidx.compose.ui.graphics.AndroidPathEffect")
+            .getDeclaredConstructor(android.graphics.PathEffect::class.java)
+        constructor.isAccessible = true
+        constructor.newInstance(this) as PathEffect
+    } catch (_: Throwable) {
+        object : PathEffect {}
+    }
+}
 
 // Tracers: light that moves along the outline. Each maps one animation cycle (progress 0..1,
 // driven by the modifier's hoisted animationSpec) to a set of glowing stroke layers.
