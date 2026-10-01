@@ -19,7 +19,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.cyberpunkandroid.components.CyberTabs
-import com.example.cyberpunkandroid.components.CyberTerminalBackground
 import com.example.cyberpunkandroid.theme.CyberTheme
 import com.example.sample.screens.CommandCenterScreen
 import com.example.sample.screens.EffectsScreen
@@ -40,10 +39,6 @@ class MainActivity : ComponentActivity() {
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
                     val currentRoute = navBackStackEntry?.destination?.route ?: "sandbox"
 
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        if (currentRoute == "terminal") {
-                            CyberTerminalBackground(text = TerminalBackgroundGlyphs)
-                        }
                     Column(modifier = Modifier.safeDrawingPadding().fillMaxSize()) {
                         Box(modifier = Modifier.weight(1f)) {
                             NavHost(navController = navController, startDestination = "sandbox") {
@@ -60,19 +55,17 @@ class MainActivity : ComponentActivity() {
                                 }
                                 composable("feedback") { com.example.sample.screens.FeedbackFormScreen() }
                                 composable("glow_test") { com.example.sample.screens.GlowTestScreen() }
-                                composable("terminal") { /* Background is drawn beneath the navigation layer. */ }
                             }
                         }
 
                         CyberTabs(
-                            tabs = listOf("Sandbox", "Showcase", "Effects", "Command", "Glow", "Terminal"),
+                            tabs = listOf("Sandbox", "Showcase", "Effects", "Command", "Glow"),
                             selectedTabIndex = when(currentRoute) {
                                 "sandbox" -> 0
                                 "showcase" -> 1
                                 "effects" -> 2
                                 "command_center" -> 3
                                 "glow_test" -> 4
-                                "terminal" -> 5
                                 else -> 0
                             },
                             onTabSelected = { index ->
@@ -82,7 +75,6 @@ class MainActivity : ComponentActivity() {
                                     2 -> "effects"
                                     3 -> "command_center"
                                     4 -> "glow_test"
-                                    5 -> "terminal"
                                     else -> "sandbox"
                                 }
                                 navController.navigate(route) {
@@ -93,33 +85,8 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.fillMaxWidth().padding(8.dp)
                         )
                     }
-                    }
                 }
             }
         }
     }
 }
-
-// Native angular strokes form non-readable script clusters without a downloaded font.
-private val TerminalBackgroundGlyphs = """
-    ╲┤╱├ ┬╲│┴╱ ┤╲┬ ├╱┴│
-    ┴╱┤ ╲├│╱┬ ┤┴╲├ ╱│┬
-    ├╲┬│ ╱┤┴ ╲│├╱ ┬┤╲
-    ╱┴├ ╲┬┤│╱ ├│╲┴ ┤╱┬
-    ┬╲├│ ┴┤╱ ╲│┬├ ┤╱┴╲
-    ╲┤┬ ╱├│┴╲ ┤╱├ ┬│╲┴
-    ├╱┴│ ╲┬┤ ╱│├╲ ┴┤┬
-    ┴╲┤├ ╱│┬ ╲├┴│ ┤╱╲┬
-    ╱┬├ ╲┤│┴ ├╱┬╲ │┤┴
-    ┤╲│╱ ┬├┴╲ ╱┤│ ├┬╲┴
-    ╲├┬┤ ╱┴│ ├╲┤╱ ┬│┴
-    ┴┤╱│ ╲├┬ ╱│┴┤ ╲┬├╱
-    ├╲┴ ╱┬┤│ ╲├│┬ ┴╱┤
-    ╱│┤┬ ╲┴├ ╱┬│╲ ┤├┴╱
-    ┬├╲│ ┤╱┴╲ ├│┬ ╱┤┴
-    ╲┴├┤ ╱│┬ ╲┤├╱ ┴│┬
-    ┤╱┬│ ╲├┴ ┬│╱┤ ╲┴├
-    ╱├┤╲ ┴┬│ ╲┤╱├ │┬┴╲
-    ├┬╲┤ ╱│┴ ╲├╱┬ ┤│┴
-    ╲│┬├ ┴┤╱╲ ┬├│ ╱┴┤
-""".trimIndent()
