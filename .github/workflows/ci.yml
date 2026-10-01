@@ -6,10 +6,6 @@ on:
   pull_request:
     branches: [ main ]
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   fast-validation:
     name: Fast Feedback & Unit Tests
@@ -29,8 +25,11 @@ jobs:
       - name: Grant Execute Permission for Gradlew
         run: chmod +x gradlew
 
+      - name: Build & Assemble Modules
+        run: ./gradlew :cyberpunkandroid:assembleDebug :sample:assembleDebug --stacktrace
+
       - name: Run Unit Tests
-        run: ./gradlew testDebugUnitTest --stacktrace
+        run: ./gradlew :cyberpunkandroid:testDebugUnitTest :sample:testDebugUnitTest --stacktrace
 
       - name: Upload Test Reports
         if: always()
