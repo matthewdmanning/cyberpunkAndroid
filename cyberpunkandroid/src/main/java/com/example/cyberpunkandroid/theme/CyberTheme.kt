@@ -1,6 +1,9 @@
 package com.example.cyberpunkandroid.theme
 
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
+import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
@@ -28,6 +31,7 @@ val LocalCyberColors = staticCompositionLocalOf { CyberColors() }
 val LocalCyberTypography = staticCompositionLocalOf { CyberTypography() }
 val LocalCyberShapes = staticCompositionLocalOf { CyberShapes() }
 val LocalCyberSemanticTokens = staticCompositionLocalOf { CyberSemanticTokens() }
+val LocalCyberStatusColors = staticCompositionLocalOf { cyberStatusColors() }
 
 object CyberTheme {
     val colors: CyberColors
@@ -45,6 +49,10 @@ object CyberTheme {
     val semantics: CyberSemanticTokens
         @Composable
         get() = LocalCyberSemanticTokens.current
+
+    val status: CyberStatusColors
+        @Composable
+        get() = LocalCyberStatusColors.current
 }
 
 @Composable
@@ -53,18 +61,23 @@ fun CyberTheme(
     typography: CyberTypography = CyberTheme.typography,
     shapes: CyberShapes = CyberTheme.shapes,
     semantics: CyberSemanticTokens = CyberTheme.semantics,
+    materialColorScheme: ColorScheme = cyberColorScheme(colors, semantics.colors),
+    materialTypography: Typography = cyberMaterialTypography(MaterialTheme.typography),
+    materialShapes: Shapes = cyberMaterialShapes(),
+    status: CyberStatusColors = cyberStatusColors(colors, semantics.colors),
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
-        colorScheme = MaterialTheme.colorScheme,
-        typography = cyberMaterialTypography(MaterialTheme.typography),
-        shapes = MaterialTheme.shapes
+        colorScheme = materialColorScheme,
+        typography = materialTypography,
+        shapes = materialShapes
     ) {
         CompositionLocalProvider(
             LocalCyberColors provides colors,
             LocalCyberTypography provides typography,
             LocalCyberShapes provides shapes,
             LocalCyberSemanticTokens provides semantics,
+            LocalCyberStatusColors provides status,
             content = content
         )
     }
