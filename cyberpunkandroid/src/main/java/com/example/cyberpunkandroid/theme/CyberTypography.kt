@@ -1,21 +1,25 @@
 package com.example.cyberpunkandroid.theme
 
+import androidx.compose.material3.Typography
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.example.cyberpunkandroid.R
 
 /**
- * Custom Neusharp sci-fi display font family.
+ * Oare Sans Black Oblique for Material 3 display roles.
  */
-val NeusharpFontFamily = FontFamily(
-    Font(resId = R.font.neusharp_bold, weight = FontWeight.Bold),
-    Font(resId = R.font.neusharp_bold, weight = FontWeight.Normal),
-    Font(resId = R.font.neusharp_bold, weight = FontWeight.W700)
+val OareSansDisplayFontFamily = FontFamily(
+    Font(
+        resId = R.font.oare_sans_black_oblique,
+        weight = FontWeight.Black,
+        style = FontStyle.Italic
+    )
 )
 
 /**
@@ -30,8 +34,9 @@ val FastupFontFamily = FontFamily(
 @Immutable
 data class CyberTypography(
     val display: TextStyle = TextStyle(
-        fontFamily = NeusharpFontFamily,
-        fontWeight = FontWeight.W700,
+        fontFamily = OareSansDisplayFontFamily,
+        fontWeight = FontWeight.Black,
+        fontStyle = FontStyle.Italic,
         fontSize = 32.sp,
         letterSpacing = 0.1.em
     ),
@@ -46,5 +51,27 @@ data class CyberTypography(
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
         letterSpacing = 0.1.em
+    )
+)
+
+/**
+ * Applies the Cyber display face to the standard Material 3 display scale while
+ * preserving Material 3's size, line-height and tracking defaults.
+ */
+fun cyberMaterialTypography(base: Typography = Typography()): Typography = base.copy(
+    displayLarge = base.displayLarge.copy(
+        fontFamily = OareSansDisplayFontFamily,
+        fontWeight = FontWeight.Black,
+        fontStyle = FontStyle.Italic
+    ),
+    displayMedium = base.displayMedium.copy(
+        fontFamily = OareSansDisplayFontFamily,
+        fontWeight = FontWeight.Black,
+        fontStyle = FontStyle.Italic
+    ),
+    displaySmall = base.displaySmall.copy(
+        fontFamily = OareSansDisplayFontFamily,
+        fontWeight = FontWeight.Black,
+        fontStyle = FontStyle.Italic
     )
 )
