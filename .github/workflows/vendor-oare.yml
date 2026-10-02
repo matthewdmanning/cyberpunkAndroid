@@ -1,0 +1,43 @@
+name: Vendor Oare Sans
+
+on:
+  push:
+    branches:
+      - feat/oare-material3-typography
+    paths:
+      - .github/workflows/vendor-oare.yml
+
+permissions:
+  contents: write
+
+jobs:
+  vendor-font:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/oare-material3-typography
+      - name: Download Oare Sans Black Oblique and OFL
+        run: |
+          set -euo pipefail
+          mkdir -p cyberpunkandroid/src/main/res/font
+          mkdir -p cyberpunkandroid/src/main/assets/licenses
+          curl --fail --location --retry 3 \
+            https://raw.githubusercontent.com/blueset/oare-sans/master/fonts/otf/OareSans-BlackOblique.otf \
+            --output cyberpunkandroid/src/main/res/font/oare_sans_black_oblique.otf
+          curl --fail --location --retry 3 \
+            https://raw.githubusercontent.com/blueset/oare-sans/master/OFL.txt \
+            --output cyberpunkandroid/src/main/assets/licenses/OFL-OareSans.txt
+          test -s cyberpunkandroid/src/main/res/font/oare_sans_black_oblique.otf
+          test -s cyberpunkandroid/src/main/assets/licenses/OFL-OareSans.txt
+      - name: Commit vendored font
+        run: |
+          set -euo pipefail
+          rm .github/workflows/vendor-oare.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cyberpunkandroid/src/main/res/font/oare_sans_black_oblique.otf \
+                  cyberpunkandroid/src/main/assets/licenses/OFL-OareSans.txt \
+                  .github/workflows/vendor-oare.yml
+          git commit -m "chore: vendor Oare Sans Black Oblique"
+          git push origin HEAD:feat/oare-material3-typography
