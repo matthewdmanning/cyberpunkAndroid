@@ -1,0 +1,39 @@
+name: Vendor Material3 Fonts
+
+on:
+  push:
+    branches:
+      - feat/material3-theme-integration
+    paths:
+      - .github/workflows/vendor-material3-fonts.yml
+
+permissions:
+  contents: write
+
+jobs:
+  vendor-fonts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/material3-theme-integration
+          fetch-depth: 0
+      - name: Copy font assets and licenses from preserved branch
+        run: |
+          mkdir -p cyberpunkandroid/src/main/res/font
+          mkdir -p cyberpunkandroid/src/main/assets/licenses
+          base="https://raw.githubusercontent.com/matthewdmanning/cyberpunkAndroid/material3-color-scheme"
+          curl -fsSL "$base/cyberpunkandroid/src/main/res/font/orbitron_variable.ttf" -o cyberpunkandroid/src/main/res/font/orbitron_variable.ttf
+          curl -fsSL "$base/cyberpunkandroid/src/main/res/font/rajdhani_regular.ttf" -o cyberpunkandroid/src/main/res/font/rajdhani_regular.ttf
+          curl -fsSL "$base/cyberpunkandroid/src/main/res/font/rajdhani_medium.ttf" -o cyberpunkandroid/src/main/res/font/rajdhani_medium.ttf
+          curl -fsSL "$base/cyberpunkandroid/src/main/res/font/rajdhani_bold.ttf" -o cyberpunkandroid/src/main/res/font/rajdhani_bold.ttf
+          curl -fsSL "$base/cyberpunkandroid/src/main/assets/licenses/OFL-Orbitron.txt" -o cyberpunkandroid/src/main/assets/licenses/OFL-Orbitron.txt
+          curl -fsSL "$base/cyberpunkandroid/src/main/assets/licenses/OFL-Rajdhani.txt" -o cyberpunkandroid/src/main/assets/licenses/OFL-Rajdhani.txt
+          rm .github/workflows/vendor-material3-fonts.yml
+      - name: Commit vendored assets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cyberpunkandroid/src/main/res/font cyberpunkandroid/src/main/assets/licenses .github/workflows/vendor-material3-fonts.yml
+          git commit -m "chore: vendor Orbitron and Rajdhani assets"
+          git push origin HEAD:feat/material3-theme-integration
