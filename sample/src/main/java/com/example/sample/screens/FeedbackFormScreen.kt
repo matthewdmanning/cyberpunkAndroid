@@ -13,8 +13,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CutCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.ui.res.painterResource
+import com.example.cyberpunkandroid.icons.CyberIcons
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,7 +43,7 @@ import com.example.cyberpunkandroid.effects.cyberStripes
 fun FeedbackFormScreen() {
     val context = LocalContext.current
     var resetKey by remember { mutableIntStateOf(0) }
-    
+
     val configs = remember(resetKey) {
         val allFiles = context.assets.list("")?.filter { it.startsWith("test_") && it.endsWith(".json") } ?: emptyList()
         allFiles.mapNotNull { loadFeedbackConfigFromAssets(context, it) }
@@ -91,7 +91,7 @@ fun FeedbackFormScreen() {
                 config = config,
             ) { value, iconSize ->
                 val testName = config.testName
-                
+
                 val effectModifier = when {
                     testName.contains("doe_float") -> {
                         val run = DoEMatrices.floatRuns.getOrNull(value.toInt()) ?: DoEMatrices.floatRuns[0]
@@ -111,7 +111,7 @@ fun FeedbackFormScreen() {
                     }
                     else -> Modifier
                 }
-                
+
                                   val baseIconSize = iconSize
                   val actualIconSize = when {
                       testName.contains("doe_bounce") -> DoEMatrices.bounceRuns.getOrNull(value.toInt())?.size ?: baseIconSize
@@ -119,7 +119,7 @@ fun FeedbackFormScreen() {
                       else -> baseIconSize
                   }
                   val isMacroEffect = testName.contains("overload") || testName.contains("scanline") || testName.contains("stripe") || testName.contains("noise") || testName.contains("datastream")
-                
+
                 if (isMacroEffect) {
                     Box(
                         modifier = Modifier
@@ -143,8 +143,8 @@ fun FeedbackFormScreen() {
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            "SYSTEM OFFLINE\nREBOOTING...\nDATASTREAM\nWARNING", 
-                            color = CyberPrimitives.Colors.Green500, 
+                            "SYSTEM OFFLINE\nREBOOTING...\nDATASTREAM\nWARNING",
+                            color = CyberPrimitives.Colors.Green500,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             lineHeight = 16.sp,
@@ -154,7 +154,7 @@ fun FeedbackFormScreen() {
                             modifier = Modifier
                                 .size(iconSize * 1.5f)
                                 .cyberBackdropBlur(
-                                    radius = if (testName.contains("radius")) value.dp else 16.dp, 
+                                    radius = if (testName.contains("radius")) value.dp else 16.dp,
                                     tint = Color.Black.copy(alpha = if (testName.contains("opacity")) value else 0.5f)
                                 )
                                 .border(1.dp, CyberPrimitives.Colors.Cyan500.copy(alpha = 0.5f))
@@ -175,7 +175,7 @@ fun FeedbackFormScreen() {
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Settings,
+                            painter = painterResource(id = CyberIcons.Settings),
                             contentDescription = null,
                             tint = CyberPrimitives.Colors.Cyan500,
                             modifier = Modifier.size(actualIconSize).then(effectModifier)
@@ -184,7 +184,7 @@ fun FeedbackFormScreen() {
                 }
             }
         }
-        
+
         CyberButton(
             onClick = {
                 resetFeedbackFiles(context)

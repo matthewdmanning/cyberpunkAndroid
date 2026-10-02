@@ -39,8 +39,9 @@ A live catalogue is in the sample app under the **Paths** tab (`PathEffectsScree
 
 | Modifier | Draws along | Notes |
 |---|---|---|
-| `Modifier.cyberPathBorder(effect, color, shape, glowRadius, inset, steps, trigger, interactionSource, hideWhenIdle, animationSpec, …)` | the `shape` outline, over the content | Auto-insets by the effect's extent. Moves the outline's start to the middle of its longest side, so seams never sit on a corner. |
-| `Modifier.cyberPathDivider(effect, color, alignment, horizontalInset, glowRadius, steps, …)` | a horizontal line across the component | An open path, so tracers enter at the start and exit at the end. |
+| `Modifier.cyberPathBorder(effect, color, shape, glowRadius, inset, steps, trigger, interactionSource, hideWhenIdle, animationSpec, appendedA11y, customA11y)` | the `shape` outline, over the content | Auto-insets by the effect's extent. Moves the outline's start to the middle of its longest side, so seams never sit on a corner. |
+| `Modifier.cyberPathDivider(effect, color, alignment, horizontalInset, glowRadius, steps, trigger, interactionSource, hideWhenIdle, animationSpec, appendedA11y, customA11y)` | a horizontal line across the component | An open path, so tracers enter at the start and exit at the end. |
+| `Modifier.cyberWeld(weld, shape, glowRadius, trigger, interactionSource, hideWhenIdle, animationSpec, appendedA11y, customA11y)` | the `shape` outline | Shortcut for `cyberPathBorder(weld, …)` with stronger default glow (`10.dp`) and loop matching `weld.cycleMillis`. |
 
 - `animationSpec` drives progress 0 → 1. An infinite spec loops. A finite spec (for example `tween(900)`) plays once and holds; use `fadeOut = false` on `CyberDrawOn`, `CyberCornerCharge` and `CyberChargeMeter` for one-shots.
 - `steps > 0` quantizes progress into that many steps per cycle, for stepped HUD motion.

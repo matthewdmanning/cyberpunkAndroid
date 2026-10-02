@@ -7,6 +7,7 @@ import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import com.example.cyberpunkandroid.config.CyberPrimitives
@@ -67,17 +68,22 @@ fun CyberTheme(
     status: CyberStatusColors = cyberStatusColors(colors, semantics.colors),
     content: @Composable () -> Unit
 ) {
+    val rememberedColorScheme = remember(materialColorScheme) { materialColorScheme }
+    val rememberedTypography = remember(materialTypography) { materialTypography }
+    val rememberedShapes = remember(materialShapes) { materialShapes }
+    val rememberedStatus = remember(status) { status }
+
     MaterialTheme(
-        colorScheme = materialColorScheme,
-        typography = materialTypography,
-        shapes = materialShapes
+        colorScheme = rememberedColorScheme,
+        typography = rememberedTypography,
+        shapes = rememberedShapes
     ) {
         CompositionLocalProvider(
             LocalCyberColors provides colors,
             LocalCyberTypography provides typography,
             LocalCyberShapes provides shapes,
             LocalCyberSemanticTokens provides semantics,
-            LocalCyberStatusColors provides status,
+            LocalCyberStatusColors provides rememberedStatus,
             content = content
         )
     }

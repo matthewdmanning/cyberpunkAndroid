@@ -22,14 +22,14 @@ runtime behavior; the routed documents own project policy and workflow.
 
 ## Discover Android references
 
-List the available Android reference documents from the repository root:
+List the available Android reference documents in `docs/agents/` from the repository root:
 
 ```cmd
-rg --files docs -g "ANDROID*.md"
+rg --files docs/agents -g "ANDROID*.md"
 ```
 
 Read the files whose names match the task before planning or implementing the
-change. On Windows, don't pass `docs/ANDROID*.md` as a path to `rg`; the shell
+change. On Windows, don't pass `docs/agents/ANDROID*.md` as a path to `rg`; the shell
 can pass the wildcard literally instead of expanding it.
 
 ## Work safely
