@@ -27,8 +27,7 @@ val OareSansDisplayFontFamily = FontFamily(
  */
 val FastupFontFamily = FontFamily(
     Font(resId = R.font.fastup_regular, weight = FontWeight.Normal),
-    Font(resId = R.font.fastup_bold, weight = FontWeight.Bold),
-    Font(resId = R.font.fastup_bold, weight = FontWeight.W700)
+    Font(resId = R.font.fastup_bold, weight = FontWeight.Bold)
 )
 
 @Immutable
