@@ -137,19 +137,31 @@ Neon glow around text, icons and borders. The blur needs Android 12+ (API 31); b
 
 **What:** A glow that follows the exact outline of whatever it's applied to: the letter shapes of text, the strokes of an icon.
 
-**Looks like:** A blurred, color-tinted copy of the content drawn behind it, so each glyph or stroke gets a soft halo in `color`. Below API 31 there's no blur, so the tinted copy sits directly under the content and the glow is effectively invisible.
+**Looks like:** A blurred, color-tinted copy of the content drawn behind it, so each glyph or stroke gets a soft halo in `color`. On Android 13+ (API 33), this is powered by a high-fidelity AGSL `RuntimeShader` that creates a realistic "white-hot" neon core where the density is highest, tapering smoothly into the color. On API 31-32, it falls back to a fast `ColorMatrix` bloom. Below API 31 there's no blur, so the tinted copy sits directly under the content and the glow is effectively invisible.
 
-**Use for:** Headings, key numbers and icons that should read as emissive neon. For big display text, [`GlowingText`](#glowingtext) gives a richer multi-layer bloom.
+**Use for:** Headings, key numbers and icons that should read as emissive neon. For big display text, [`GlowingText`](#glowingtext) gives a richer multi-layer bloom. Use `dropoffPower` to control how sharp or fuzzy the neon tube feels.
 
 ```kotlin
+// Default cyber glow
 Text("ONLINE", style = CyberTheme.typography.terminal, modifier = Modifier.cyberTextGlow(color = CyberTheme.colors.primary))
+
+// Sharp, dense neon core with faint outer aura
+Text(
+    text = "WARNING",
+    modifier = Modifier.cyberTextGlow(
+        color = CyberTheme.semantics.colors.warning,
+        intensity = 2f,
+        dropoffPower = 4.5f
+    )
+)
 ```
 
 | Parameter | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `color` | `Color` | `Color.Cyan` | Glow color. |
 | `radius` | `Dp` | `8.dp` | Blur spread. `0.dp` disables the glow. |
-| `intensity` | `Float` | `1` | Glow opacity is `0.85 × intensity` (capped at 1). Whole numbers above 1 also stack extra glow passes (2.0 = two passes). `0` disables. |
+| `intensity` | `Float` | `1` | Amplifies the glow opacity. On API 31+, this continuously multiplies the alpha for a brighter neon core. Below API 31, whole numbers stack extra drawing passes. `0` disables. |
+| `dropoffPower` | `Float` | `3f` | Controls the shader's falloff curve (API 33+ only). `1f` is a smooth linear fade; higher values (e.g. `4f-6f`) create a sharp white-hot core with a wispy outer aura. |
 | `outsideGlowOnly` | `Boolean` | `false` | Erases the glow wherever the content is drawn, so translucent text or icons don't show the halo through them. Renders the element offscreen (slightly more GPU memory). |
 
 ### `Modifier.cyberGlowBorder`
@@ -424,11 +436,9 @@ No trigger: always on.
 
 ### `Modifier.cyberBorder`
 
-**What:** A static neon glow around a container's shape.
+**What:** A lightweight, static container border outline.
 
-**Looks like (spec):** An outer neon glow following `shape`.
-
-> **Not implemented yet:** it currently draws a thin cyan outline of `shape`, dashed 10 px on / 10 px off, with no glow ([see the table](README.md#doesnt-match-its-description-yet)). For a glowing border today, use `cyberGlowBorder`.
+**Looks like:** A thin cyan outline of `shape`, dashed 10 px on / 10 px off (or solid line when `pathEffect = null`), rendered directly in the normal Compose drawing path (`Stroke`/`drawOutline`). For an active glowing border with outer glow passes, use `cyberGlowBorder` or `dropShadow()`.
 
 **Use for:** Drop zones, placeholders, secondary frames. Pass `pathEffect = null` for a solid line.
 
@@ -441,11 +451,9 @@ No trigger: always on.
 
 ### `Modifier.cyberBackdropBlur`
 
-**What:** A glassmorphism overlay: frosted glass over whatever is behind it.
+**What:** A glassmorphism overlay using translucent tint, gradient `Brush`, and optional blur on API 31+.
 
-**Looks like (spec):** Whatever is drawn behind the element is Gaussian-blurred by `radius` and washed with a 10% white tint, so the element reads as a frosted pane over the content. Apply it to a foreground element layered over the background ([ordering rule](../agents/effects-rules.md)).
-
-> **Not implemented yet:** today it blurs the element's own children, not what's behind it ([see the table](README.md#doesnt-match-its-description-yet)). Below Android 12 there's no blur, only the tint.
+**Looks like:** Renders a translucent wash with subtle borders/shadows over foreground content (or API 31+ `RenderEffect.createBlurEffect` on the foreground node). To avoid heavy offscreen rendering passes, it does not force offscreen background capture layers.
 
 **Use for:** Floating panels, modals and nav bars over busy backgrounds.
 

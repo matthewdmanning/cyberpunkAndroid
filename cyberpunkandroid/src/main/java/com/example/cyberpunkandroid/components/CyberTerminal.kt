@@ -68,12 +68,13 @@ fun CyberTerminal(
                 }
             }
         }
-        
+
         // Body with CRT scanlines
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(CyberPrimitives.Spacing.dp16)
+                .cyberScanlines()
         ) {
             CompositionLocalProvider(LocalContentColor provides CyberTheme.semantics.colors.terminal) {
                 ProvideTextStyle(value = CyberTheme.typography.terminal) {

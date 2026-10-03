@@ -43,10 +43,6 @@ fun CyberDragDropProvider(
     customA11y: String? = null,
     content: @Composable () -> Unit
 ) {
-    // TODO(a11y): appendedA11y/customA11y are not applied yet. The provider emits no layout node of its own, so
-    //  there is nothing to attach semantics to without wrapping [content] in a container (which would change the
-    //  caller's layout). Decide whether to add a Modifier parameter + container, or expose the label through
-    //  CyberDragDropState for drop targets to announce.
     val state = remember { CyberDragDropState<Any>() }
     CompositionLocalProvider(
         LocalCyberDragDropState provides state,

@@ -139,7 +139,7 @@ internal fun Modifier.cyberShaderEffect(
             clip = clipWhenIdle || applies
             shaderLayer()
             if (applies) {
-                binder.float("resolution", size.width, size.height)
+                binder.floatUniform("resolution", size.width, size.height)
                 binder.uniforms(size, current)
                 renderEffect = android.graphics.RenderEffect
                     .createRuntimeShaderEffect(shader, "contents")

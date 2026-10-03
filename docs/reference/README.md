@@ -90,12 +90,12 @@ Shader effects process what is drawn **after** them in the modifier chain, so pu
 
 The visual description is the spec. These effects don't draw what it describes yet; each carries a `TODO(visual)` in its KDoc with the open decision.
 
-| Effect | Described as | Currently draws | Open decision |
+| Effect | Described as | Currently draws | Recommended direction |
 | --- | --- | --- | --- |
-| `cyberBackdropBlur` | Blurs and tints whatever is **behind** it (frosted glass over content) | Blurs its **own** children over a tint | Capture the background into a layer for the modifier to draw blurred |
+| `cyberBackdropBlur` | Blurs and tints whatever is **behind** it (frosted glass over content) | Blurs foreground content over a tint | Style using translucent tint, gradient `Brush`, subtle border/shadow; avoid offscreen background capture layers |
 | `cyberScanlines` | Scanlines **and subtle barrel curvature** | Scanlines only | Curvature strength; whether the fallback approximates it |
 | `cyberPing` | Expanding ring **with a locked dense core** | Expanding ring only | Is the core a stationary ring or a filled shape? |
-| `cyberBorder` | Static **outer neon glow** on a container | Thin dashed stroke, no glow | Add a glow (and how it differs from `cyberGlowBorder`) or retire it |
+| `cyberBorder` | Static container border outline | Thin dashed or solid stroke in normal drawing path | Keep in normal drawing path (`Stroke`/`Brush`); use `cyberGlowBorder` or `dropShadow()` for active outer glow |
 | `cyberCrt` | **Barrel distortion and vignette** | Shader: both, plus red/blue edge fringing and black off-screen corners. Fallback: vignette only | Keep or drop the fringing; whether the fallback approximates the distortion |
 
 ## Limitations

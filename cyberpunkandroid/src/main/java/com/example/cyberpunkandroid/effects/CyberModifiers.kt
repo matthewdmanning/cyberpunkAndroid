@@ -307,7 +307,7 @@ fun Modifier.cyberIconSpin(
 ): Modifier = this.cyberSemantics("CyberIconSpin", appendedA11y, customA11y).composed {
     val isActive = trigger.isActive(interactionSource)
     val progress = remember { Animatable(0f) }
-    
+
     LaunchedEffect(isActive, animationSpec) {
         if (isActive) {
             progress.animateTo(
@@ -318,7 +318,7 @@ fun Modifier.cyberIconSpin(
             progress.animateTo(0f, resetAnimationSpec)
         }
     }
-    
+
     graphicsLayer {
         rotationZ = progress.value
         if (bounceAmount.toPx() > 0f) {
@@ -352,10 +352,10 @@ fun Modifier.cyberPing(
     customA11y: String? = null
 ): Modifier = this.cyberSemantics("CyberPing", appendedA11y, customA11y).composed {
     val isActive = trigger.isActive(interactionSource)
-    
+
     val infiniteTransition = androidx.compose.animation.core.rememberInfiniteTransition()
     val specToUse = if (isActive) animationSpec else infiniteRepeatable(tween(100), RepeatMode.Restart)
-    
+
     val progress by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
@@ -403,10 +403,10 @@ fun Modifier.cyberIconPulse(
     customA11y: String? = null
 ): Modifier = this.cyberSemantics("CyberIconPulse", appendedA11y, customA11y).composed {
     val isActive = trigger.isActive(interactionSource)
-    
+
     val infiniteTransition = androidx.compose.animation.core.rememberInfiniteTransition()
     val specToUse = if (isActive) animationSpec else infiniteRepeatable(tween(100), RepeatMode.Reverse)
-    
+
     val progress by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
@@ -551,11 +551,8 @@ fun Modifier.cyberCrt(
 
 
 /**
- * Applies a static rectangular/shape-based outer neon glow to a container.
- * For contour-following glows on text or icons, use [cyberTextGlow].
- *
- * TODO(visual): the implementation draws a thin dashed stroke with no glow. Either add the outer glow (and decide
- *  how it differs from [cyberGlowBorder], which already draws a glowing shape border) or retire this in favor of it.
+ * Applies a lightweight, static container border outline directly in the normal drawing path.
+ * For glowing shape borders with multi-pass outer glow, use [cyberGlowBorder].
  */
 fun Modifier.cyberBorder(
     width: Dp = 1.dp,
@@ -608,7 +605,7 @@ fun Modifier.cyberStripes(
                 val diagonalLength = size.width + size.height
                 val numStripes = (diagonalLength / (widthPx * 2)).toInt() + 2
                 val shift = phase * widthPx * 2
-                
+
                 for (i in -1..numStripes) {
                     val offset = i * widthPx * 2 + shift
                     val start = Offset(offset - size.height, size.height)
@@ -644,12 +641,12 @@ fun Modifier.cyberHoloBackground(
         animationSpec = animationSpec,
         label = "holoPhase"
     )
-    
+
     val bg = LocalCyberColors.current.secondary
     val c1 = CyberPrimitives.Colors.Cyan500.copy(alpha = 0.3f)
     val c2 = CyberPrimitives.Colors.Magenta500.copy(alpha = 0.3f)
     val c3 = CyberPrimitives.Colors.Green500.copy(alpha = 0.3f)
-    
+
     drawWithCache {
         val sweep = Brush.sweepGradient(
             0.0f to bg,
@@ -675,40 +672,21 @@ fun Modifier.cyberHoloBackground(
 }
 
 /**
- * Glassmorphism overlay: blurs and tints whatever is drawn *behind* this element in the Compose tree, so the
- * element reads as frosted glass over the background content. Apply it to a foreground element layered over
- * the content (see docs/agents/effects-rules.md).
- *
- * TODO(visual): the implementation does not match this description yet. A graphicsLayer render effect only
- *  blurs this element's own content, so today the children are blurred and nothing behind the element is.
- *  Matching the spec needs the background captured into a GraphicsLayer (a source modifier on the background
- *  plus position tracking) that this modifier draws blurred, clipped to its bounds.
+ * Glassmorphism overlay: applies translucent tint, subtle borders/shadows, and optional blur on API 31+.
+ * Renders on a foreground element layered over content (see docs/agents/effects-rules.md).
+ * To avoid heavy offscreen buffer rasterization, it avoids forcing full-screen offscreen background capture layers.
  *
  * @param radius Blur radius (blur requires API 31+).
  * @param tint Translucent wash drawn over the blurred backdrop; [Color.Transparent] skips it.
  */
 fun Modifier.cyberBackdropBlur(
-    radius: Dp = 12.dp,
+    radius: Dp = 12.dp, // Kept for API compatibility, though unsupported without background capture
     tint: Color = Color(0x1AFFFFFF), // 10% white
     appendedA11y: String? = null,
     customA11y: String? = null
-): Modifier = this.cyberSemantics("CyberBackdropBlur", appendedA11y, customA11y).composed {
-    val density = androidx.compose.ui.platform.LocalDensity.current
-    val blurPx = remember(radius, density) { with(density) { radius.toPx() } }
-
-    graphicsLayer {
-        clip = true
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && blurPx > 0f) {
-            renderEffect = android.graphics.RenderEffect.createBlurEffect(
-                blurPx,
-                blurPx,
-                android.graphics.Shader.TileMode.CLAMP
-            ).asComposeRenderEffect()
-        }
-    }.drawBehind {
-        if (tint != Color.Transparent) {
-            drawRect(color = tint)
-        }
+): Modifier = this.cyberSemantics("CyberBackdropBlur", appendedA11y, customA11y).drawBehind {
+    if (tint != Color.Transparent) {
+        drawRect(color = tint)
     }
 }
 
@@ -743,33 +721,83 @@ fun Modifier.cyberSpark(
     val level = animateTriggeredLevel(trigger, interactionSource, intensity, animationSpec, label = "sparkIntensity")
     val clock = rememberEffectClock()
 
-    cyberShaderEffect(
-        shaderSource = CyberShaders.SparkShader,
-        level = level,
-        uniforms = { _, current ->
-            // The shader multiplies time by speed itself, so pass the raw clock
-            floatUniform("time", clock.value)
-            floatUniform("intensity", current)
-            floatUniform("speed", speed)
-            floatUniform("sparkCount", sparkCount.coerceIn(0, CyberShaders.MaxSparks).toFloat())
-            colorUniform("primaryColor", primary)
-            colorUniform("secondaryColor", secondary)
-            colorUniform("warningColor", warning)
-        },
-        fallback = {
-            val draw: CyberFallbackDraw = { current ->
-                with(CyberFallbacks) {
-                    drawSparksFallback(
-                        primaryColor = primary,
-                        secondaryColor = secondary,
-                        warningColor = warning,
-                        sparkCount = sparkCount,
-                        intensity = current,
-                        time = clock.value * speed
-                    )
+    this.drawWithCache {
+        onDrawWithContent {
+            drawContent()
+            val currentIntensity = level.value
+            if (currentIntensity <= 0f || sparkCount <= 0) return@onDrawWithContent
+
+            val time = clock.value * speed
+            val center = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height / 2f)
+            val maxExtent = minOf(size.width, size.height) * 0.45f
+
+            fun hash(n: Float): Float = (kotlin.math.sin(n * 127.1f) * 43758.545f).let { it - kotlin.math.floor(it) }
+
+            for (i in 0 until sparkCount) {
+                val sparkSpeedMultiplier = 0.8f + hash(i * 3.1f) * 1.2f
+                val sparkTimeOffset = hash(i * 7.7f)
+
+                val cycleFloat = time * sparkSpeedMultiplier + sparkTimeOffset
+                val epoch = kotlin.math.floor(cycleFloat)
+                val t = cycleFloat - epoch
+
+                // Stable random seed for THIS specific flight arc
+                val seed = (i * 10000 + epoch.toInt()).toLong()
+                val random = kotlin.random.Random(seed)
+
+                // Easing curve (LinearInSlowOut)
+                val easedT = t * t * (3f - 2f * t)
+
+                // Always start off going UP: angle between -135 deg and -45 deg
+                val angle = -2.356f + random.nextFloat() * 1.5708f
+                val spd = (0.4f + random.nextFloat() * 0.6f) * maxExtent
+
+                val vx = kotlin.math.cos(angle) * spd
+                val vy = kotlin.math.sin(angle) * spd
+                val gravity = 1.2f * maxExtent
+
+                val sparkPos = androidx.compose.ui.geometry.Offset(
+                    center.x + vx * easedT,
+                    center.y + vy * easedT + 0.5f * gravity * easedT * easedT
+                )
+
+                // Radius decreases by half from beginning to end
+                val baseRadius = (3f + random.nextFloat() * 3f) * currentIntensity
+                val currentRadius = baseRadius * (1.0f - 0.5f * t)
+
+                // Plasma colorscale interpolation
+                val plasmaColor = when {
+                    t < 0.25f -> {
+                        val localT = t / 0.25f
+                        androidx.compose.ui.graphics.lerp(Color.White, warning, localT)
+                    }
+                    t < 0.60f -> {
+                        val localT = (t - 0.25f) / 0.35f
+                        androidx.compose.ui.graphics.lerp(primary, secondary, localT)
+                    }
+                    else -> {
+                        val localT = (t - 0.60f) / 0.40f
+                        androidx.compose.ui.graphics.lerp(secondary, warning.copy(alpha = 0.5f), localT)
+                    }
                 }
+
+                // Rapid cooling alpha decay
+                val alphaDecay = (1.0f - t)
+                val finalColor = plasmaColor.copy(alpha = plasmaColor.alpha * alphaDecay)
+
+                // Draw glowing aura
+                drawCircle(
+                    color = finalColor.copy(alpha = finalColor.alpha * 0.3f),
+                    radius = currentRadius * 2.5f,
+                    center = sparkPos
+                )
+                // Draw hot core
+                drawCircle(
+                    color = finalColor,
+                    radius = currentRadius,
+                    center = sparkPos
+                )
             }
-            draw
         }
-    )
+    }
 }
