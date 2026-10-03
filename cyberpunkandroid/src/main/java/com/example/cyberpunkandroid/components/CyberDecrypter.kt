@@ -21,7 +21,7 @@ import com.example.cyberpunkandroid.effects.cyberComponentSemantics
 /**
  * A typographic progress indicator that reveals [targetText] as [progress] approaches 1f.
  * Unresolved characters rapidly cycle through random glyphs.
- * 
+ *
  * Unadorned base item: Provides text layout and logic, while exposing rich styling parameters
  * and adhering to strict semantic rules for accessibility.
  */
@@ -46,7 +46,7 @@ fun CyberDecrypter(
 ) {
     val clampedProgress = progress.coerceIn(0f, 1f)
     val resolvedCount = (targetText.length * clampedProgress).toInt()
-    
+
     val currentProgress by rememberUpdatedState(clampedProgress)
 
     // Cycle unresolved characters
@@ -57,7 +57,7 @@ fun CyberDecrypter(
             tick++
         }
     }
-    
+
     val displayText = buildAnnotatedString {
         withStyle(resolvedStyle) {
             append(targetText.take(resolvedCount))
@@ -71,7 +71,7 @@ fun CyberDecrypter(
             }
         }
     }
-    
+
     Box(
         modifier = modifier.cyberComponentSemantics("CyberDecrypter", appendedA11y, customA11y).semantics(mergeDescendants = true) {
             text = AnnotatedString(targetText)

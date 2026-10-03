@@ -36,7 +36,7 @@ fun CyberTime(
             gapAngle = 10f,
             size = size
         )
-        
+
         Text(
             text = timeText,
             color = color,

@@ -86,17 +86,17 @@ fun CyberButton(
 ) {
     val isPressed by interactionSource.collectIsPressedAsState()
     val shape = CyberTheme.shapes.cyberCutCornerShape
-    
+
     val containerColor = when (style) {
         CyberButtonStyle.Primary, CyberButtonStyle.Overload -> CyberTheme.colors.primary
         CyberButtonStyle.Outline, CyberButtonStyle.Ghost -> Color.Transparent
     }
-    
+
     val contentColor = when (style) {
         CyberButtonStyle.Primary, CyberButtonStyle.Overload -> CyberTheme.colors.background
         CyberButtonStyle.Outline, CyberButtonStyle.Ghost -> CyberTheme.colors.primary
     }
-    
+
     val baseModifier = modifier.cyberComponentSemantics("CyberButton", appendedA11y, customA11y)
         .graphicsLayer {
             alpha = if (enabled) 1f else 0.5f

@@ -1,7 +1,7 @@
 # High-Certainty Code Review: `codebase-deepening` Branch
 
-**Date**: 2026-10-03  
-**Branch Target**: `codebase-deepening` (`4dc222c` / `e0dd634`)  
+**Date**: 2026-10-03
+**Branch Target**: `codebase-deepening` (`4dc222c` / `e0dd634`)
 **Scope**: High-certainty static code audit of API signatures, architectural boundaries, graphics layer resource optimizations, material surface recipes, and accessibility semantics.
 
 ---

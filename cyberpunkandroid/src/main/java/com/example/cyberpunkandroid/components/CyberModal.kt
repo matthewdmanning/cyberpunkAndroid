@@ -77,7 +77,7 @@ fun CyberModal(
                         }
                     }
                 }
-                
+
                 // Body
                 Column(
                     modifier = Modifier

@@ -69,7 +69,7 @@ fun CyberRim(
                     y = (size.height - diameter) / 2f
                 )
                 val arcSize = Size(diameter, diameter)
-                
+
                 // Background Track
                 drawArc(
                     color = backgroundColor,
@@ -80,7 +80,7 @@ fun CyberRim(
                     size = arcSize,
                     style = Stroke(width = strokeWidth, cap = StrokeCap.Square)
                 )
-                
+
                 // Foreground Progress
                 if (sweepAngle > 0f) {
                     drawArc(

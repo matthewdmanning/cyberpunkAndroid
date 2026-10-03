@@ -51,7 +51,7 @@ fun loadFeedbackConfigFromAssets(context: Context, fileName: String): FeedbackCo
         val json = JSONObject(jsonString)
         val valuesArray = json.getJSONArray("values")
         val values = List(valuesArray.length()) { i -> valuesArray.getDouble(i).toFloat() }
-        
+
         FeedbackConfig(
             testName = json.getString("test_name"),
             iconSizeDp = json.getInt("icon_size_dp"),
@@ -104,11 +104,11 @@ fun CyberFeedbackFixture(
     val context = LocalContext.current
     val testValues = config.values
     val iconSize = config.iconSizeDp.dp
-    
+
     // Map of index -> rating (-1, 0, 1)
-    val ratings = remember(config.testName, resetKey) { 
+    val ratings = remember(config.testName, resetKey) {
         val map = mutableStateMapOf<Int, Int>()
-        
+
         // Try to load existing state from disk so we don't lose it when swiping pages
         var loaded = false
         try {
@@ -124,14 +124,14 @@ fun CyberFeedbackFixture(
         } catch (e: Exception) {
             Log.e("CyberFeedback", "Failed to load prior state", e)
         }
-        
+
         if (!loaded) {
             testValues.indices.forEach { map[it] = 0 }
         }
         map
     }
 
-    // Dynamic grid sizing based on the icon size, but clamped to a sensible minimum 
+    // Dynamic grid sizing based on the icon size, but clamped to a sensible minimum
     // (e.g. 120dp) so we never create tiny un-tappable columns or overload the screen visually.
     val minCellSize = androidx.compose.ui.unit.max((iconSize * 2.5f), 120.dp)
 
@@ -141,14 +141,14 @@ fun CyberFeedbackFixture(
     ) {
         itemsIndexed(testValues) { index, value ->
             val rating = ratings[index] ?: 0
-            
+
             // Grades: Green (+1), Red (-1), Black (0)
             val borderColor = when (rating) {
                 1 -> CyberPrimitives.Colors.Green500
                 -1 -> CyberPrimitives.Colors.Magenta500
                 else -> CyberPrimitives.Colors.Chrome600
             }
-            
+
             val bgColor = when (rating) {
                 1 -> CyberPrimitives.Colors.Green500.copy(alpha = 0.15f)
                 -1 -> CyberPrimitives.Colors.Magenta500.copy(alpha = 0.15f)
@@ -199,12 +199,12 @@ private fun recordFeedback(context: Context, testName: String, testValues: List<
             obj.put("rating", ratings[i] ?: 0)
             jsonArray.put(obj)
         }
-        
+
         val result = JSONObject()
         result.put("test_name", testName)
         result.put("results", jsonArray)
         result.put("timestamp", System.currentTimeMillis())
-        
+
         val baseConfig = JSONObject().apply {
             put("GlowPulseDuration", com.example.cyberpunkandroid.config.CyberConfig.Effects.GlowPulseDuration)
             put("PulseMinOpacity", com.example.cyberpunkandroid.config.CyberConfig.Effects.PulseMinOpacity.toDouble())
@@ -216,7 +216,7 @@ private fun recordFeedback(context: Context, testName: String, testValues: List<
         val file = File(context.filesDir, "feedback_fixture_${testName}.json")
         file.writeText(result.toString(4))
         Log.d("CyberFeedback", "Recorded test data to: ${file.absolutePath}")
-        
+
         // Also update a unified ratings.json
         val ratingsFile = File(context.filesDir, "ratings.json")
         val ratingsJson = if (ratingsFile.exists()) {

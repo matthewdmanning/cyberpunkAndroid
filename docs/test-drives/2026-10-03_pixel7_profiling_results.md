@@ -1,9 +1,9 @@
 # Physical Device Profiling Results: Google Pixel 7 (Android 17 / API 37)
 
-**Date**: 2026-10-03  
-**Device**: Google Pixel 7 (`2A151FDH200HY4`)  
-**Android OS**: Android 17 (API Level 37)  
-**Graphics Pipeline**: Skia (Vulkan)  
+**Date**: 2026-10-03
+**Device**: Google Pixel 7 (`2A151FDH200HY4`)
+**Android OS**: Android 17 (API Level 37)
+**Graphics Pipeline**: Skia (Vulkan)
 **App Target**: `com.example.sample` (`codebase-deepening` branch)
 
 ---

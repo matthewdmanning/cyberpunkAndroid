@@ -12,7 +12,7 @@ import com.example.cyberpunkandroid.effects.cyberComponentSemantics
 
 /**
  * A honeycomb layout that arranges its children in an interlocking hexagonal grid.
- * 
+ *
  * Unadorned base layout: purely calculates positional geometry for the nodes
  * and provides foundational semantics (CollectionInfo) without imposing visual flair.
  *
@@ -63,12 +63,12 @@ fun CyberHexGrid(
             placeables.forEachIndexed { index, placeable ->
                 val col = index % columns
                 val row = index / columns
-                
+
                 // Offset odd rows to create the honeycomb interlocking effect
                 val xOffset = if (row % 2 == 1) horizontalSpacing / 2f else 0f
                 val x = (col * horizontalSpacing + xOffset).toInt()
                 val y = (row * verticalSpacing).toInt()
-                
+
                 placeable.placeRelative(x = x, y = y)
             }
         }

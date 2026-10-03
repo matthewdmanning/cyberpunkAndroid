@@ -17,7 +17,7 @@ fun DrawScope.drawDatastreamGradient(
         addAll(colors)
         add(Color.Transparent)
     }
-    
+
     fun drawStream(centerOffset: Float, streamColors: List<Color>) {
         drawRect(
             brush = Brush.verticalGradient(

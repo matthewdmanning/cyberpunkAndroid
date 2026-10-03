@@ -67,7 +67,7 @@ fun CyberCard(
         }
         .clip(CyberTheme.shapes.cyberCutCornerShape)
         .background(CyberTheme.colors.surface)
-    
+
     if (interactive && (onClick != null)) {
         cardModifier = cardModifier.clickable(
             interactionSource = interactionSource,
@@ -87,7 +87,7 @@ fun CyberCard(
                 shimmerColor = CyberTheme.colors.primary.copy(alpha = 0.05f)
             )
         }
-        
+
         Column {
             if (header != null) {
                 Box(

@@ -1,8 +1,8 @@
 # Deep Code Review Plan: Complex Interactive & Stateful Components
 
-**Date**: 2026-10-03  
-**Target Module**: `com.example.cyberpunkandroid.components`  
-**Branch Target**: `codebase-deepening`  
+**Date**: 2026-10-03
+**Target Module**: `com.example.cyberpunkandroid.components`
+**Branch Target**: `codebase-deepening`
 **Scope**: In-depth code review specification for stateful UI controls, pointer gesture tracking, animation ticker loops, window overlays, and accessibility semantics.
 
 ---
@@ -106,7 +106,7 @@ This document establishes the detailed code review protocol for the seven comple
   val clampedProgress = progress.coerceIn(0f, 1f)
   val currentProgress by rememberUpdatedState(clampedProgress)
   var tick by remember { mutableIntStateOf(0) }
-  
+
   LaunchedEffect(targetText, tickDelayMs) {
       while (currentProgress < 1f) {
           delay(tickDelayMs)
