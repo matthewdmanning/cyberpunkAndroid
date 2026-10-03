@@ -31,6 +31,7 @@ import java.io.File
 
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.example.cyberpunkandroid.effects.cyberComponentSemantics
 
 /**
  * Structured configuration for a feedback test.
@@ -136,7 +137,7 @@ fun CyberFeedbackFixture(
 
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = minCellSize),
-        modifier = modifier.fillMaxSize().padding(CyberPrimitives.Spacing.dp8)
+        modifier = modifier.cyberComponentSemantics("CyberFeedbackFixture", appendedA11y, customA11y).fillMaxSize().padding(CyberPrimitives.Spacing.dp8)
     ) {
         itemsIndexed(testValues) { index, value ->
             val rating = ratings[index] ?: 0

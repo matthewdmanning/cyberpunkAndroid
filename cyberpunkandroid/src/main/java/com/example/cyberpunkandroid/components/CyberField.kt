@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.example.cyberpunkandroid.config.CyberPrimitives
 import com.example.cyberpunkandroid.theme.CyberTheme
+import com.example.cyberpunkandroid.effects.cyberComponentSemantics
 
 /**
  * Structural sci-fi form input container providing label, required indicator, animated helper/error messages, and input slots.
@@ -46,7 +47,7 @@ fun CyberField(
 ) {
     val isError = errorText != null
 
-    Column(modifier = modifier.fillMaxWidth()) {
+    Column(modifier = modifier.cyberComponentSemantics("CyberField", appendedA11y, customA11y).fillMaxWidth()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(bottom = CyberPrimitives.Spacing.dp8)

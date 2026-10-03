@@ -8,9 +8,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
+import androidx.annotation.DrawableRes
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.layout.layout
 
 /*
  * ARCHITECTURE DIAGNOSTIC & ATTEMPTS LOG FOR CyberGlowIcon / CyberGlowIconPath:
@@ -37,7 +40,7 @@ import androidx.compose.ui.unit.dp
 /**
  * Icon-type effect wrapper. Pre-applies contour glow following the exact vector object path.
  *
- * @param painter Vector icon painter asset.
+ * @param iconRes Vector drawable to draw, e.g. [com.example.cyberpunkandroid.icons.CyberIcons.Shield].
  * @param contentDescription Screen reader description.
  * @param modifier Composable modifier for icon sizing/layout.
  * @param color Primary icon tint color.
@@ -47,26 +50,51 @@ import androidx.compose.ui.unit.dp
  */
 @Composable
 fun CyberGlowIcon(
-    painter: Painter,
+    @DrawableRes iconRes: Int,
     contentDescription: String?,
     modifier: Modifier = Modifier,
     color: Color = Color.Cyan,
     glowColor: Color = color,
     radius: Dp = 12.dp,
-    intensity: Float = 1.5f
+    intensity: Float = 1.5f,
+    dropoffPower: Float = 3f
 ) {
+    val vector = ImageVector.vectorResource(iconRes)
     Box(
         modifier = modifier
             .padding(radius)
-            .cyberTextGlow(glowColor, radius, intensity),
+            .cyberTextGlow(glowColor, radius, intensity, dropoffPower),
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            painter = painter,
+            imageVector = vector,
             contentDescription = contentDescription,
             tint = color,
             modifier = Modifier.fillMaxSize()
         )
+    }
+}
+
+
+/**
+ * Expands the measurable bounds by [padding], effectively scaling the content up and out
+ * relative to its container. Opposite of padding.
+ */
+private fun Modifier.outset(padding: Dp) = this.layout { measurable, constraints ->
+    val paddingPx = padding.roundToPx()
+    val placeable = measurable.measure(
+        constraints.copy(
+            maxWidth = if (constraints.hasBoundedWidth) constraints.maxWidth + paddingPx * 2 else constraints.maxWidth,
+            maxHeight = if (constraints.hasBoundedHeight) constraints.maxHeight + paddingPx * 2 else constraints.maxHeight,
+            minWidth = constraints.minWidth + paddingPx * 2,
+            minHeight = constraints.minHeight + paddingPx * 2
+        )
+    )
+    layout(
+        if (constraints.hasBoundedWidth) constraints.maxWidth else placeable.width - paddingPx * 2,
+        if (constraints.hasBoundedHeight) constraints.maxHeight else placeable.height - paddingPx * 2
+    ) {
+        placeable.place(-paddingPx, -paddingPx)
     }
 }
 
@@ -76,7 +104,7 @@ fun CyberGlowIcon(
  */
 @Composable
 fun CyberGlowIconPath(
-    painter: Painter,
+    @DrawableRes iconRes: Int,
     contentDescription: String?,
     modifier: Modifier = Modifier,
     color: Color = Color.Cyan,
@@ -84,37 +112,39 @@ fun CyberGlowIconPath(
     outerPadding: Dp = 6.dp,
     innerPadding: Dp = 3.dp,
     radius: Dp = 16.dp,
-    intensity: Float = 2f
+    intensity: Float = 2f,
+    dropoffPower: Float = 3f
 ) {
+    val vector = ImageVector.vectorResource(iconRes)
     Box(
-        modifier = modifier.padding(),
+        modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
-        // Layer 1: Far Outer Bloom
+        // Layer 1: Far Outer Bloom (Expanded outward so it doesn't bleed into the hollow center)
         Icon(
-            painter = painter,
+            imageVector = vector,
             contentDescription = null,
             tint = glowColor.copy(alpha = 0.25f),
             modifier = Modifier
                 .fillMaxSize()
-                .padding(outerPadding)
-                .cyberTextGlow(glowColor, radius, intensity = intensity)
+                .outset(outerPadding)
+                .cyberTextGlow(glowColor, radius, intensity, dropoffPower)
         )
 
-        // Layer 2: Mid Outer Glow
+        // Layer 2: Mid Outer Glow (Expanded outward)
         Icon(
-            painter = painter,
+            imageVector = vector,
             contentDescription = null,
             tint = glowColor.copy(alpha = 0.55f),
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .cyberTextGlow(glowColor, radius * 0.5f, intensity = intensity)
+                .outset(innerPadding)
+                .cyberTextGlow(glowColor, radius * 0.5f, intensity, dropoffPower)
         )
 
         // Layer 3: Crisp Foreground Icon
         Icon(
-            painter = painter,
+            imageVector = vector,
             contentDescription = contentDescription,
             tint = color,
             modifier = Modifier.fillMaxSize()

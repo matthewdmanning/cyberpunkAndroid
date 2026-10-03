@@ -1,33 +1,9 @@
 package com.example.cyberpunkandroid.utils
 
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.Outline
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.DrawStyle
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.translate
-
-fun DrawScope.drawShapeOutline(
-    outline: Outline,
-    brush: Brush,
-    style: DrawStyle
-) {
-    when (outline) {
-        is Outline.Rectangle -> drawRect(brush = brush, topLeft = outline.rect.topLeft, size = outline.rect.size, style = style)
-        is Outline.Rounded -> {
-            val path = Path().apply { addRoundRect(outline.roundRect) }
-            drawPath(path = path, brush = brush, style = style)
-        }
-        is Outline.Generic -> drawPath(path = outline.path, brush = brush, style = style)
-    }
-}
 
 fun DrawScope.drawDatastreamGradient(
     extent: Float,

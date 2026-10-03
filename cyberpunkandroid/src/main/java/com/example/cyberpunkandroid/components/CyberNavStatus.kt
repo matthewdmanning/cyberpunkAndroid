@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.clip
 import com.example.cyberpunkandroid.config.CyberConfig
 import com.example.cyberpunkandroid.config.CyberPrimitives
 import com.example.cyberpunkandroid.theme.CyberTheme
+import com.example.cyberpunkandroid.effects.cyberComponentSemantics
 
 /**
  * Sci-fi status indicator chip with pulsating LED beacon and semantic green monospace typography.
@@ -55,7 +56,7 @@ fun CyberNavStatus(
     )
 
     Row(
-        modifier = modifier
+        modifier = modifier.cyberComponentSemantics("CyberNavStatus", appendedA11y, customA11y)
             .border(
                 width = CyberPrimitives.BorderWidths.dp1,
                 color = CyberPrimitives.Colors.Green500
