@@ -17,20 +17,60 @@ Add the dependency to your app-level `build.gradle.kts`:
 implementation("com.github.matthewdmanning:cyberpunkAndroid:1.0.5")
 ```
 
-## Using the Library
+## How do I use this to create usable components for the app?
 
-CyberpunkAndroid is designed around two main concepts:
-1. **Components**: Themed, structural building blocks (e.g., `CyberButton`, `CyberContainer`, `CyberTabs`).
-2. **Modifiers**: High-performance, shader-backed visual effects you can attach to *any* Compose layout (e.g., `Modifier.cyberOverload()`, `Modifier.cyberScanlines()`).
+The library is split into three core types of functionality. Before using them, always wrap your app content in `CyberTheme` to initialize the necessary design tokens and colors:
 
-To get started, simply wrap your application content in `CyberTheme` to initialize the design tokens, colors, and typography. From there, you can drop in structural components and seamlessly chain Cyberpunk modifiers onto them to create highly interactive, futuristic UIs.
+```kotlin
+setContent {
+    CyberTheme { /* Your app content */ }
+}
+```
+
+### 1. Ready-to-use Components
+If you need standard structural UI elements with a cyberpunk aesthetic, use the pre-built components. They are fully themed and handle their own interaction states out of the box.
+
+```kotlin
+// Example: A fully styled, interactive button
+CyberButton(
+    text = "INITIALIZE SYSTEM",
+    onClick = { launchSequence() }
+)
+```
+
+### 2. Visual Effects (Modifiers)
+If you want to apply futuristic styles to an *existing* Compose layout (like a standard `Box`, `Image`, or custom layout), attach our shader-backed modifiers.
+
+```kotlin
+// Example: Adding continuous scanlines and a press-triggered glitch to a Box
+Box(
+    modifier = Modifier
+        .size(200.dp)
+        .cyberScanlines(speed = 0.5f)
+        .cyberOverload(
+            trigger = CyberInteractionTrigger.PRESSED,
+            intensity = 0.8f
+        )
+)
+```
+
+### 3. Themed Icons
+The library includes custom cyberpunk vector icons that support built-in neon glows and varying stylistic weights.
+
+```kotlin
+// Example: A warning icon that projects a bloom effect
+CyberGlowIcon(
+    imageVector = CyberIcons.Solid.Warning,
+    contentDescription = "System Alert"
+)
+```
 
 ## Performance Tips & Best Practices
 
-- **Hardware Acceleration:** Under the hood, stateful effects (like CRT curves, overloads, and datastreams) leverage AGSL `RuntimeShader` on API 33+ devices. They execute entirely on the GPU and skip Compose recomposition phases. You can freely stack these modifiers on top-level screens without lagging the UI thread.
-- **Pre-API 33 Fallbacks:** For older devices, the library automatically falls back to procedural Canvas drawing. While optimized, applying heavy visual modifiers to dozens of items in a deeply nested `LazyColumn` on an older device may impact frame rates. Apply them strategically to focal points.
-- **Triggering Effects:** Use `CyberInteractionTrigger` effectively. Instead of running continuous animated effects (`ALWAYS`) on every single item, bind heavy effects to `PRESSED` or `FOCUSED` states using an `InteractionSource`. This ensures they only consume rendering resources when the user is actively engaging with the component.
-- **Keep it Lean:** The library's effects are built using the modern `Modifier.Node` API to guarantee zero allocations during recomposition. If you wrap these effects in your own custom modifiers, try to use `Modifier.Node` yourself or standard composable functions, avoiding the deprecated `Modifier.composed` anti-pattern to preserve these performance gains.
+- **Hardware Acceleration:** Under the hood, stateful effects (like CRT curves, overloads, and datastreams) leverage AGSL `RuntimeShader` on API 33+ devices. They execute entirely on the GPU and skip Compose recomposition phases. You can safely stack these modifiers on top-level screens.
+- **Pre-API 33 Fallbacks:** For older devices, the library falls back to procedural Canvas drawing. While optimized, applying heavy visual modifiers to dozens of items in a deeply nested `LazyColumn` on an older device may impact frame rates. Apply them strategically to focal points.
+- **Triggering Effects:** Use `CyberInteractionTrigger` effectively. Instead of running continuous animated effects (`ALWAYS`) on every item, bind heavy effects to `PRESSED` or `FOCUSED` states. This ensures they only consume rendering resources when the user is actively engaging with the component.
+- **Keep it Lean:** The library's effects are built using the modern `Modifier.Node` API to guarantee zero allocations during recomposition. If you wrap these effects in your own custom modifiers, try to use `Modifier.Node` yourself or standard composable functions to preserve these performance gains.
 
 ## Documentation
 
