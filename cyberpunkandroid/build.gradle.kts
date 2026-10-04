@@ -61,7 +61,7 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     testImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
-    testImplementation("org.robolectric:robolectric:4.14-beta-1")
+    testImplementation("org.robolectric:robolectric:4.17")
     testImplementation("androidx.test.ext:junit:1.1.5")
     implementation("androidx.compose.material3:material3:1.4.0")
 }
