@@ -99,7 +99,7 @@ Modifier.cyberCrt().background(CyberTheme.colors.surfacePrimary)
 
 Unlike the other shader effects, it clips to its bounds only while active.
 
-### `Modifier.cyberSpark` and `CyberSpark`
+### `Modifier.cyberSpark`
 
 **What:** An electrical-spark burst: glowing embers shoot up from the center, arc over and fall under gravity.
 
@@ -108,16 +108,15 @@ Unlike the other shader effects, it clips to its bounds only while active.
 **Use for:** Short-circuit / damage moments, a "powering up" accent behind an icon, or celebratory energy. The container clips sparks at its edges, so give it room.
 
 ```kotlin
-CyberSpark(Modifier.size(160.dp), intensity = 1.2f) {
+Box(modifier = Modifier.size(160.dp).cyberSpark(intensity = 1.2f)) {
     CyberIcon(CyberIcons.Zap, contentDescription = "Power surge", size = 48.dp)
 }
 ```
 
-`CyberSpark` is a `Box` with `Modifier.cyberSpark` applied and its content centered. It has the same parameters (always on, no trigger).
+
 
 | Parameter | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `modifier` | `Modifier` | `Modifier` | (`CyberSpark` only) Size/layout of the spark container. |
 | `color` | `Color` | theme `primary` | Mid-life ember color. |
 | `secondaryColor` | `Color` | theme `secondary` | Late-life ember color. |
 | `warningColor` | `Color` | semantic `warning` | Birth flash color and final dim color. |
@@ -125,7 +124,6 @@ CyberSpark(Modifier.size(160.dp), intensity = 1.2f) {
 | `intensity` | `Float` | `1` | Brightness and ember size. |
 | `speed` | `Float` | `1` | How fast bursts cycle (linear: 2 = twice as fast). |
 | `animationSpec` | `AnimationSpec<Float>` | `tween(300)` | Fade in/out when the trigger changes (modifier only). |
-| `content` | `@Composable () -> Unit` | `null` | (`CyberSpark` only) Drawn centered, under the sparks. |
 
 ---
 
@@ -271,7 +269,7 @@ GlowingText("NEON CITY", glowColor = CyberTheme.colors.secondary, fontSize = 36.
 | `radius` | `Dp` | `16.dp` | Far bloom spread (mid layer uses half). |
 | `intensity` | `Float` | `2` | Bloom strength. |
 
-### `CyberGlowContainer`
+
 
 **What:** A `Box` that applies `cyberTextGlow` to everything inside it.
 
@@ -543,4 +541,4 @@ val needle by rememberDrivenFloatState(telemetry = reading) { current, target ->
 | Loading | `cyberIconSpin`, `cyberDatastream` |
 | Entrance | `cyberBoot` |
 | Caution / locked | `cyberStripes` |
-| Energy burst | `CyberSpark` |
+| Energy burst | `Modifier.cyberSpark` |

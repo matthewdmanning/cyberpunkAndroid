@@ -4,7 +4,7 @@ Reference docs for the visual layer of the `cyberpunkandroid` library: what each
 
 | Doc | Covers |
 | --- | --- |
-| [Modifiers & effects](modifiers-and-effects.md) | Every public `Modifier.cyber…` function and the effect composables (`GlowingText`, `CyberGlowIcon`, `CyberSpark`, …) |
+| [Modifiers & effects](modifiers-and-effects.md) | Every public `Modifier.cyber…` function and the effect composables (`GlowingText`, `CyberGlowIcon`, …) |
 | [Shaders](shaders.md) | The AGSL (Android Graphics Shading Language) shaders behind the distortion effects, their fallbacks, and how to add one |
 | [Icons](icons.md) | `CyberIcon`, its four render variants, the `CyberIcons` catalog, and the dial/rim decorations |
 

@@ -111,20 +111,23 @@ Box(
 }
 ```
 
-### 5. Cyber Spark (`CyberSpark` / `Modifier.cyberSpark`)
+### 5. Cyber Spark (`Modifier.cyberSpark`)
 AGSL popcorn spark particles with parabolic downward gravity trajectories and initial high-luminosity flashes.
 
 ```kotlin
-CyberSpark(
+Box(
     modifier = Modifier
         .fillMaxWidth()
         .height(200.dp)
         .background(CyberTheme.colors.surfaceSecondary)
-        .padding(16.dp),
-    sparkCount = 32,
-    intensity = 1.0f,
-    speed = 1.2f,
-    color = CyberTheme.colors.primary
+        .padding(16.dp)
+        .cyberSpark(
+            sparkCount = 32,
+            intensity = 1.0f,
+            speed = 1.2f,
+            color = CyberTheme.colors.primary
+        ),
+    contentAlignment = Alignment.Center
 ) {
     CyberIcon(
         iconRes = CyberIcons.Zap,
@@ -262,4 +265,3 @@ CyberRim(
         )
 )
 ```
-

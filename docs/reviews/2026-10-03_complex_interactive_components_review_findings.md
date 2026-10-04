@@ -54,7 +54,7 @@ Following up on the initial components review, a deep dive into the graphics and
 ### 3. Non-Linear Glow Dropoff (AGSL Runtime Shader)
 - **Finding**: The user requested a max-visual-performance, high-fidelity glow effect with control over the shading dropoff to create a realistic "white-hot" neon core, which the previous ColorMatrix could not natively support.
 - **Action**: Implemented GlowShader, a custom AGSL RuntimeShader for API 33+ targets (like Pixel 7). Added a new dropoffPower uniform parameter to calculate a non-linear power curve for the core intensity.
-- **Action**: Exposed dropoffPower across cyberTextGlow, CyberGlowContainer, CyberGlowIcon, and CyberGlowIconPath. Updated docs/reference/modifiers-and-effects.md to document the new parameter and its usage.
+- **Action**: Exposed dropoffPower across cyberTextGlow, CyberGlowIcon, and CyberGlowIconPath. Updated docs/reference/modifiers-and-effects.md to document the new parameter and its usage.
 
 ### 4. Hollow Icon Interior Illumination (CyberGlowIconPath.kt)
 - **Finding**: Hollow icons were having their empty interiors illuminated. The component used a standard positive padding() which caused the icon to shrink inward, pushing the strokes into the center cavity.

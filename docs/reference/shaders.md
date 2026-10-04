@@ -107,7 +107,7 @@ Modifier.cyberOverload(…)            public API, CyberModifiers.kt
 
 ## `SparkShader`
 
-**Effect:** Particle sparks drawn analytically: no particle objects, and each pixel sums the light from every spark. Used by `Modifier.cyberSpark` / `CyberSpark`.
+**Effect:** Particle sparks drawn analytically: no particle objects, and each pixel sums the light from every spark. Used by `Modifier.cyberSpark`.
 
 **What it computes, for each of `sparkCount` sparks (`i`, up to `MaxSparks` = 64)**
 1. **Life cycle:** each spark has its own staggered 0…1 life, `t = fract(time × speed × (0.8…2.0) + offset)`, with smoothstep easing for position.
@@ -194,4 +194,3 @@ fun Modifier.cyberExample(
 - Read `clock.value` and the `level` state inside `uniforms`/`fallback` lambdas, never in the composable body. That keeps per-frame updates in the draw phase, with no recomposition.
 - Use `colorUniform` (not `floatUniform`) for `layout(color)` uniforms so colors are converted to the right color space.
 - Keep loops bounded by constants; AGSL requires it.
-
