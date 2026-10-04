@@ -42,6 +42,8 @@ import com.example.cyberpunkandroid.effects.cyberComponentSemantics
  * @param selectedTabIndex Zero-based index of the currently active tab.
  * @param onTabSelected Callback invoked when a tab segment is tapped.
  * @param modifier Modifier applied to the tab bar container.
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 @Composable
 fun CyberTabs(

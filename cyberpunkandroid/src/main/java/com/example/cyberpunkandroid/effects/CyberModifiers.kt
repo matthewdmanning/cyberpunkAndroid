@@ -79,6 +79,10 @@ import com.example.cyberpunkandroid.theme.CyberRadius
  *
  * @param enabled Controls whether the overload shader is active. When false, acts as a no-op identity modifier.
  * @param intensity Overload displacement multiplier. Defaults to [com.example.cyberpunkandroid.config.CyberConfig.Shaders.OverloadCoefficient].
+  * @param timeScale TODO: document this
+  * @param bounceAmount TODO: document this
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 fun Modifier.cyberOverload(
     enabled: Boolean = true,
@@ -143,6 +147,9 @@ fun Modifier.cyberOverload(
  * @param spacing Vertical distance between adjacent scanline bars. Defaults to [com.example.cyberpunkandroid.config.CyberPrimitives.Spacing.dp4].
  * @param opacity Alpha transparency of the scanline pattern. Defaults to [com.example.cyberpunkandroid.config.CyberConfig.Shaders.ScanlineOpacity].
  * @param speed Frequency multiplier for vertical scanline translation.
+  * @param color TODO: document this
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 fun Modifier.cyberScanlines(
     spacing: Dp = CyberPrimitives.Spacing.dp4,
@@ -253,6 +260,9 @@ fun Modifier.cyberDatastream(
  * @param enabled Controls whether the noise overlay is active. When `false`, acts as a no-op identity modifier.
  * @param opacity Alpha intensity of the noise grain. Defaults to [CyberConfig.Shaders.NoiseOpacity].
  * @param animated When `true`, animates noise grain dynamically on each frame. When `false`, renders static grain.
+  * @param speed TODO: document this
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 fun Modifier.cyberNoise(
     enabled: Boolean = true,
@@ -292,6 +302,9 @@ fun Modifier.cyberNoise(
 
 /**
  * Rotates the composable continuously to indicate loading or active processing states.
+  * @param bounceAmount TODO: document this
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 fun Modifier.cyberIconSpin(
     bounceAmount: Dp = 0.dp,
@@ -333,6 +346,14 @@ fun Modifier.cyberIconSpin(
  *
  * TODO(visual): only the diffuse expanding ring is drawn; there is no "locked dense core". Needs a decision on what
  *  the core is (a stationary full-opacity ring at [startScale], or a filled [shape]) before implementing.
+  * @param color TODO: document this
+  * @param durationMillis TODO: document this
+  * @param startScale TODO: document this
+  * @param maxDiffuseScale TODO: document this
+  * @param alphaDecayExponent TODO: document this
+  * @param borderWidth TODO: document this
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 fun Modifier.cyberPing(
     color: Color = Color.Unspecified,
@@ -388,6 +409,11 @@ fun Modifier.cyberPing(
 
 /**
  * Pulses the opacity of the composable to draw attention, staying the same size.
+  * @param durationMillis TODO: document this
+  * @param minOpacity TODO: document this
+  * @param maxOpacity TODO: document this
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 fun Modifier.cyberIconPulse(
     durationMillis: Int = 600,
@@ -421,6 +447,10 @@ fun Modifier.cyberIconPulse(
 
 /**
  * Smooth vertical hover translation.
+  * @param height TODO: document this
+  * @param durationMillis TODO: document this
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 fun Modifier.cyberFloat(
     height: Dp = CyberPrimitives.Spacing.dp12,
@@ -445,6 +475,8 @@ fun Modifier.cyberFloat(
 
 /**
  * Flicker-in opacity sequence for bootups.
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 fun Modifier.cyberBoot(
     trigger: CyberInteractionTrigger = CyberInteractionTrigger.ALWAYS,
@@ -484,6 +516,9 @@ fun Modifier.cyberBoot(
 
 /**
  * Cubic bezier vertical bouncing.
+  * @param height TODO: document this
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 fun Modifier.cyberBounce(
     height: Dp = CyberPrimitives.Spacing.dp16,
@@ -515,6 +550,9 @@ fun Modifier.cyberBounce(
  *  description doesn't mention; keep or remove?
  * TODO(defaults): no quality parameter set has been rated for CRT yet; curvature (0.20), vignette (1.6 / 0.3) and
  *  fringing (0.015) are hard-coded in CrtShader. Hoist and set defaults once rated.
+  * @param enabled TODO: document this
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 fun Modifier.cyberCrt(
     enabled: Boolean = true,
@@ -553,6 +591,10 @@ fun Modifier.cyberCrt(
 /**
  * Applies a lightweight, static container border outline directly in the normal drawing path.
  * For glowing shape borders with multi-pass outer glow, use [cyberGlowBorder].
+  * @param width TODO: document this
+  * @param color TODO: document this
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 fun Modifier.cyberBorder(
     width: Dp = 1.dp,
@@ -577,6 +619,11 @@ fun Modifier.cyberBorder(
 
 /**
  * Animated diagonal hazard stripes background.
+  * @param color TODO: document this
+  * @param stripeWidth TODO: document this
+  * @param speed TODO: document this
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 fun Modifier.cyberStripes(
     color: Color = Color(0x26FFFFFF), // 15% white
@@ -625,6 +672,8 @@ fun Modifier.cyberStripes(
 
 /**
  * 4-Phase Holographic Shifting Background.
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 fun Modifier.cyberHoloBackground(
     animationSpec: InfiniteRepeatableSpec<Float> = infiniteRepeatable(
@@ -678,6 +727,10 @@ fun Modifier.cyberHoloBackground(
  *
  * @param radius Blur radius (blur requires API 31+).
  * @param tint Translucent wash drawn over the blurred backdrop; [Color.Transparent] skips it.
+  * @param though unsupported without background capture
+    tint TODO: document this
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 fun Modifier.cyberBackdropBlur(
     radius: Dp = 12.dp, // Kept for API compatibility, though unsupported without background capture
@@ -700,6 +753,8 @@ fun Modifier.cyberBackdropBlur(
  * @param sparkCount Number of spark particles rendered.
  * @param intensity Brightness and radius multiplier.
  * @param speed Frequency multiplier for particle movement.
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 fun Modifier.cyberSpark(
     color: Color = Color.Unspecified,
@@ -731,6 +786,7 @@ fun Modifier.cyberSpark(
             val center = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height / 2f)
             val maxExtent = minOf(size.width, size.height) * 0.45f
 
+            // TODO: document this
             fun hash(n: Float): Float = (kotlin.math.sin(n * 127.1f) * 43758.545f).let { it - kotlin.math.floor(it) }
 
             for (i in 0 until sparkCount) {

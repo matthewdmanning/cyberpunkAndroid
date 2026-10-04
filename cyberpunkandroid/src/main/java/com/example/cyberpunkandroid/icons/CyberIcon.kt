@@ -136,6 +136,7 @@ private fun ImageVector.toSolid(): ImageVector {
         tintBlendMode = tintBlendMode
     )
     
+    // TODO: document this
     fun traverse(node: VectorNode) {
         when (node) {
             is VectorGroup -> {

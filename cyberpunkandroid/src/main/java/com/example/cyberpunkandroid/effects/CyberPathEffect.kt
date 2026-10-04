@@ -38,7 +38,10 @@ class CyberPathLayer(
 
 /** A [CyberPathEffect] resolved against one concrete outline. */
 fun interface CyberPathRenderer {
-    /** Layers to draw at [progress] (0..1, one animation cycle). */
+    /**
+     * Layers to draw at [progress] (0..1, one animation cycle).
+     * @param progress TODO: document this
+     */
     fun layers(progress: Float): List<CyberPathLayer>
 }
 

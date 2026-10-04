@@ -25,9 +25,11 @@ internal object CyberShaders {
         }
     """
 
+    // TODO: document this
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     fun createPixelateShader() = RuntimeShader(PixelateShader)
 
+    // TODO: document this
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     fun pixelateEffect(shader: RuntimeShader, width: Float, height: Float, pixelSize: Float): androidx.compose.ui.graphics.RenderEffect {
         shader.setFloatUniform("resolution", width, height)
@@ -274,9 +276,11 @@ internal object CyberShaders {
         }
     """
 
+    // TODO: document this
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     fun createOverloadShader(): RuntimeShader = RuntimeShader(OverloadShader)
 
+    // TODO: document this
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     fun overloadEffect(
         shader: RuntimeShader,
@@ -293,9 +297,11 @@ internal object CyberShaders {
         ).asComposeRenderEffect()
     }
 
+    // TODO: document this
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     fun createScanlinesShader(): RuntimeShader = RuntimeShader(ScanlinesShader)
 
+    // TODO: document this
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     fun scanlinesEffect(
         shader: RuntimeShader,
@@ -316,9 +322,11 @@ internal object CyberShaders {
         ).asComposeRenderEffect()
     }
 
+    // TODO: document this
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     fun createNoiseShader(): RuntimeShader = RuntimeShader(NoiseShader)
 
+    // TODO: document this
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     fun noiseEffect(
         shader: RuntimeShader,
@@ -335,9 +343,11 @@ internal object CyberShaders {
         ).asComposeRenderEffect()
     }
 
+    // TODO: document this
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     fun createSparkShader(): RuntimeShader = RuntimeShader(SparkShader)
 
+    // TODO: document this
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     fun sparkEffect(
         shader: RuntimeShader,

@@ -27,6 +27,8 @@ import com.example.cyberpunkandroid.effects.cyberComponentSemantics
  * @param headers List of column header title strings.
  * @param rows List of data rows, where each row is a list of cell string values.
  * @param modifier Modifier applied to the outer table container.
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 @Composable
 fun CyberTable(

@@ -34,6 +34,65 @@ import kotlinx.coroutines.launch
  * @param backgroundColor Color tint applied to the background track ring.
  * @param appendedA11y Optional text to append to the default component accessibility name.
  * @param customA11y Optional custom accessibility description that completely overrides the default name.
+  * @param ) {
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress.coerceIn(0f, 1f),
+        animationSpec = animationSpec,
+        label = "RimProgress"
+    )
+
+    Spacer(
+        modifier = modifier
+            .cyberSemantics("CyberRim", appendedA11y, customA11y)
+            .semantics(mergeDescendants = true) {
+                progressBarRangeInfo = ProgressBarRangeInfo(
+                    current = progress.coerceIn(0f, 1f),
+                    range = 0f..1f
+                )
+            }
+            .drawBehind {
+                val sweepAngle = animatedProgress * 360f
+                val diameter = minOf(size.width, size.height)
+                val topLeftOffset = Offset(
+                    x = (size.width - diameter) / 2f,
+                    y = (size.height - diameter) / 2f
+                )
+                val arcSize = Size(diameter, diameter)
+
+                
+                drawArc(
+                    color = backgroundColor,
+                    startAngle = 0f,
+                    sweepAngle = 360f,
+                    useCenter = false,
+                    topLeft = topLeftOffset,
+                    size = arcSize,
+                    style = Stroke(width = strokeWidth, cap = StrokeCap.Square)
+                )
+
+                
+                if (sweepAngle > 0f) {
+                    drawArc(
+                        color = color,
+                        startAngle = -90f,
+                        sweepAngle = sweepAngle,
+                        useCenter = false,
+                        topLeft = topLeftOffset,
+                        size = arcSize,
+                        style = Stroke(width = strokeWidth, cap = StrokeCap.Square)
+                    )
+                }
+            }
+    )
+}
+
+/**
+ * Modifier for tactical long-press interactions.
+ * Incrementally fills over [durationMillis] while held down.
+ * Reverts to 0f if released early. Triggers [onComplete] when fully charged.
+ */
+fun Modifier.cyberLongPressFill(
+    durationMillis TODO: document this
  */
 @Composable
 fun CyberRim(
@@ -101,6 +160,10 @@ fun CyberRim(
  * Modifier for tactical long-press interactions.
  * Incrementally fills over [durationMillis] while held down.
  * Reverts to 0f if released early. Triggers [onComplete] when fully charged.
+  * @param durationMillis TODO: document this
+  * @param pollingDelayMillis TODO: document this
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 fun Modifier.cyberLongPressFill(
     durationMillis: Long = 1500L,

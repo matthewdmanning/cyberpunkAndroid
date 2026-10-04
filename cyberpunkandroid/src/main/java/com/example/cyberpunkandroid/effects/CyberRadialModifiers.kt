@@ -66,6 +66,7 @@ import com.example.cyberpunkandroid.utils.CyberPathGeometry
  * @param showWedge Draw the fading wedge. False leaves only the head line (a line-only radar).
  * @param appendedA11y Text appended to the accessibility name; gives the modifier a semantics node.
  * @param customA11y Replaces the accessibility name; gives the modifier a semantics node.
+  * @param ) TODO: document this
  */
 fun Modifier.cyberRadarSweep(
     sweep: CyberRadarSweep,
@@ -159,6 +160,7 @@ fun Modifier.cyberRadarSweep(
  * @param glowRadius Blur radius of the ring's glow. Zero disables the glow.
  * @param appendedA11y Text appended to the accessibility name; gives the modifier a semantics node.
  * @param customA11y Replaces the accessibility name; gives the modifier a semantics node.
+  * @param ) TODO: document this
  */
 fun Modifier.cyberRadialPulse(
     pulse: CyberRadialPulse,
@@ -259,6 +261,7 @@ fun Modifier.cyberRadialPulse(
  * @param maxIntensity Glow strength at full brightness; 1 is the standard `cyberTextGlow` strength.
  * @param appendedA11y Text appended to the accessibility name; gives the modifier a semantics node.
  * @param customA11y Replaces the accessibility name; gives the modifier a semantics node.
+  * @param ) TODO: document this
  */
 fun Modifier.cyberRadialIllumination(
     field: CyberRadialField,

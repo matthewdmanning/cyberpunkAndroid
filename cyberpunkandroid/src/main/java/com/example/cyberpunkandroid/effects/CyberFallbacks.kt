@@ -86,6 +86,7 @@ internal object CyberFallbacks {
      * @param spacingPx Pixel distance between adjacent scanline bars.
      * @param opacity Alpha transparency of the scanline strokes.
      * @param offset Pixel vertical phase translation.
+      * @param color TODO: document this
      */
     fun ContentDrawScope.drawScanlinesFallback(
         spacingPx: Float,

@@ -26,6 +26,7 @@ val FastupFontFamily = FontFamily(
     Font(resId = R.font.fastup_bold, weight = FontWeight.Bold)
 )
 
+// TODO: document this
 @Immutable
 data class CyberTypography(
     val display: TextStyle = TextStyle(

@@ -69,6 +69,14 @@ private val DefaultPathLoop: AnimationSpec<Float> =
  * @param interactionSource Source for HOVER / PRESS / FOCUS triggers.
  * @param hideWhenIdle Draw nothing while the trigger is inactive (for tracers that should only run on interaction).
  * @param animationSpec Drives progress 0 -> 1. Infinite specs loop; a finite spec plays once and holds.
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
+  * @param customA11y
+)
+
+/** [cyberPathBorder] with a custom accessibility name, for effect-specific shortcuts such as [cyberWeld]. */
+internal fun Modifier.cyberPathBorderNamed(
+    a11yName TODO: document this
  */
 fun Modifier.cyberPathBorder(
     effect: CyberPathEffect,
@@ -87,7 +95,17 @@ fun Modifier.cyberPathBorder(
     "CyberPathBorder", effect, color, shape, glowRadius, inset, steps, trigger, interactionSource, hideWhenIdle, animationSpec, appendedA11y, customA11y
 )
 
-/** [cyberPathBorder] with a custom accessibility name, for effect-specific shortcuts such as [cyberWeld]. */
+/**
+ * [cyberPathBorder] with a custom accessibility name, for effect-specific shortcuts such as [cyberWeld].
+ * @param a11yName TODO: document this
+ * @param color TODO: document this
+ * @param glowRadius TODO: document this
+ * @param inset TODO: document this
+ * @param steps TODO: document this
+ * @param hideWhenIdle TODO: document this
+ * @param appendedA11y TODO: document this
+ * @param customA11y TODO: document this
+ */
 internal fun Modifier.cyberPathBorderNamed(
     a11yName: String,
     effect: CyberPathEffect,
@@ -139,6 +157,8 @@ internal fun Modifier.cyberPathBorderNamed(
  * @param interactionSource Source for HOVER / PRESS / FOCUS triggers.
  * @param hideWhenIdle Draw nothing while the trigger is inactive.
  * @param animationSpec Drives progress 0 -> 1. Infinite specs loop; a finite spec plays once and holds.
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 fun Modifier.cyberPathDivider(
     effect: CyberPathEffect,
@@ -235,7 +255,10 @@ fun Modifier.cyberPathAlong(
     }
 }
 
-/** Progress 0 -> 1 driven by [animationSpec] while [isActive]; snaps back to 0 when inactive. */
+/**
+ * Progress 0 -> 1 driven by [animationSpec] while [isActive]; snaps back to 0 when inactive.
+ * @param isActive TODO: document this
+ */
 @Composable
 internal fun rememberPathProgress(isActive: Boolean, animationSpec: AnimationSpec<Float>): State<Float> {
     val progress = remember { Animatable(0f) }
@@ -246,6 +269,7 @@ internal fun rememberPathProgress(isActive: Boolean, animationSpec: AnimationSpe
     return progress.asState()
 }
 
+// TODO: document this
 internal fun quantize(p: Float, steps: Int): Float = if (steps > 0) floor(p * steps) / steps else p
 
 /** The layer's own color, or the modifier color when the layer doesn't set one. */
@@ -254,6 +278,8 @@ private fun CyberPathLayer.baseColor(modifierColor: Color): Color = if (color ==
 /**
  * Draws [layers] along [outline]: glow passes first (blurred on API 31+, widened strokes below),
  * then the crisp passes. Each layer's `hot` mixes its color toward white.
+  * @param color TODO: document this
+  * @param glowRadiusPx TODO: document this
  */
 internal fun DrawScope.drawPathLayers(
     outline: Path,

@@ -89,6 +89,9 @@ fun CyberPixelTransition(
 /** Use this function to decide if a tile remains covered during a pixel reveal.
  * Inputs: column and row identify a tile; coverage is the fraction still hidden.
  * Dependencies: None.
+  * @param column TODO: document this
+  * @param row TODO: document this
+  * @param coverage TODO: document this
  */
 internal fun pixelTileCovered(column: Int, row: Int, coverage: Float): Boolean {
     // Stable bit mixing prevents obvious horizontal bands without storing a tile map.

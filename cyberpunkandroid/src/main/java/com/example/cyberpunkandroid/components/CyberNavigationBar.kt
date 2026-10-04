@@ -38,6 +38,8 @@ import com.example.cyberpunkandroid.effects.cyberComponentSemantics
  * @param statusText Optional status copy (e.g. `"SYS_OK"`, `"ONLINE"`) rendered in an LED status badge.
  * @param brandContent Optional custom composable slot overriding the default [brand] text presentation.
  * @param actions Optional trailing composable slot for auxiliary controls or action icons.
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 @Composable
 fun CyberNavigationBar(

@@ -54,6 +54,8 @@ import kotlinx.coroutines.currentCoroutineContext
  * @param title Terminal window header title string.
  * @param modifier Composable modifier applied to the outer terminal frame.
  * @param content Body slot displaying terminal output or interactive input prompts.
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 @Composable
 fun CyberTerminal(
@@ -183,6 +185,7 @@ fun CyberTerminalBackground(
 /**
  * Use this function to obtain safe substring boundaries for terminal output without splitting
  * surrogate pairs or combining marks. Input: text to reveal. Dependencies: None.
+  * @param text TODO: document this
  */
 internal fun terminalGlyphBoundaries(text: String): List<Int> {
     val iterator = BreakIterator.getCharacterInstance().apply { setText(text) }

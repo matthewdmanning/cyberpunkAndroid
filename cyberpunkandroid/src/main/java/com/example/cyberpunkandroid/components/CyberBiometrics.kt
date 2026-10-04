@@ -21,6 +21,12 @@ import com.example.cyberpunkandroid.effects.cyberComponentSemantics
  *
  * Exposes core semantic descriptions for accessibility and focuses strictly on
  * rendering the waveform, leaving the background and container decisions to the caller.
+  * @param modifier TODO: document this
+  * @param strokeWidth TODO: document this
+  * @param contentDescriptionText TODO: document this
+  * @param color TODO: document this
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 @Composable
 fun CyberBiometrics(
@@ -68,6 +74,7 @@ fun CyberBiometrics(
     )
 }
 
+// TODO: document this
 internal fun biometricValueAt(data: List<Float>, position: Float): Float {
     if (data.isEmpty()) return 0f
     val wrapped = ((position % data.size) + data.size) % data.size

@@ -33,6 +33,8 @@ import com.example.cyberpunkandroid.effects.cyberComponentSemantics
  * @param title Uppercase dialog title displayed in display typography.
  * @param modifier Modifier applied to the inner modal surface.
  * @param content Composable body slot for dialog content and actions.
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 @Composable
 fun CyberModal(

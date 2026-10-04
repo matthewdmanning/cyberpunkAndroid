@@ -49,6 +49,7 @@ import androidx.compose.ui.layout.layout
  * @param glowColor Emissive bloom tint color.
  * @param radius Glow spread radius.
  * @param intensity Bloom intensity multiplier.
+  * @param dropoffPower TODO: document this
  */
 @Composable
 fun CyberGlowIcon(
@@ -103,6 +104,16 @@ private fun Modifier.outset(padding: Dp) = this.layout { measurable, constraints
 /**
  * Contour-only vector path glow icon that projects an intense outer emissive bloom strictly along the vector path outlines.
  * Preserves the hollow interior of closed shape paths.
+  * @param iconRes TODO: document this
+  * @param contentDescription TODO: document this
+  * @param modifier TODO: document this
+  * @param color TODO: document this
+  * @param glowColor TODO: document this
+  * @param outerPadding TODO: document this
+  * @param innerPadding TODO: document this
+  * @param radius TODO: document this
+  * @param intensity TODO: document this
+  * @param dropoffPower TODO: document this
  */
 @Composable
 fun CyberGlowIconPath(

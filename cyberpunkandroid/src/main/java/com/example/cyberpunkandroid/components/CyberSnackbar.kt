@@ -38,6 +38,13 @@ enum class CyberSnackbarEdge {
  *
  * The component does not dismiss itself. Keep [visible] in the caller's state and set it to false when the notification
  * has been acknowledged or its lifecycle has ended.
+  * @param title TODO: document this
+  * @param message TODO: document this
+  * @param visible TODO: document this
+  * @param modifier TODO: document this
+  * @param critical TODO: document this
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 @Composable
 fun CyberSnackbar(
@@ -103,7 +110,16 @@ fun CyberSnackbar(
     }
 }
 
-/** Alias with toast terminology for callers that use a toast host. */
+/**
+ * Alias with toast terminology for callers that use a toast host.
+ * @param title TODO: document this
+ * @param message TODO: document this
+ * @param visible TODO: document this
+ * @param modifier TODO: document this
+ * @param critical TODO: document this
+ * @param appendedA11y TODO: document this
+ * @param customA11y TODO: document this
+ */
 @Composable
 fun CyberToast(
     title: String,

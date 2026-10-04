@@ -45,6 +45,7 @@ data class CyberCornerBrackets(
 ) : CyberPathEffect {
     override fun extent(density: Density) = with(density) { width.toPx() / 2f }
 
+    // TODO: document this
     internal fun effectFor(outline: Path, closed: Boolean, length: Float, density: Density, armScale: Float): PathEffect? {
         val armPx = with(density) { arm.toPx() }
         if (!closed) {
@@ -103,6 +104,7 @@ data class CyberGraduatedTicks(
         val big = fit(length, spacing.toPx() * every)
         val sp = big / every
         val w = width.toPx()
+        // TODO: document this
         fun tick(len: Float) = polygon(listOf(Offset(-w / 2, 0f), Offset(w / 2, 0f), Offset(w / 2, len), Offset(-w / 2, len)))
         val shapes = buildList {
             add(Triple(tick(minor.toPx()), StampedPathEffectStyle.Rotate, sp))
@@ -135,6 +137,7 @@ data class CyberBarcode(
     /** Bar/space widths in modules, from a portable LCG so the pattern is identical everywhere. */
     internal fun units(): IntArray {
         var state = seed.toLong() and 0x7FFFFFFFL
+        // TODO: document this
         fun next(k: Int): Int {
             state = (state * 1103515245L + 12345L) and 0x7FFFFFFFL
             return (state % k).toInt()

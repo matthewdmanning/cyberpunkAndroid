@@ -24,6 +24,13 @@ import com.example.cyberpunkandroid.effects.cyberComponentSemantics
  *
  * Unadorned base item: Provides text layout and logic, while exposing rich styling parameters
  * and adhering to strict semantic rules for accessibility.
+  * @param targetText TODO: document this
+  * @param progress TODO: document this
+  * @param modifier TODO: document this
+  * @param charset TODO: document this
+  * @param tickDelayMs TODO: document this
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 @Composable
 fun CyberDecrypter(

@@ -20,7 +20,9 @@ fun cyberColorScheme(
     val onAccent = OnAccent
     val tertiary = CyberPrimitives.Colors.Yellow500
 
+    // TODO: document this
     fun container(accent: Color) = toneContainer(background, accent)
+    // TODO: document this
     fun onContainer(accent: Color) = toneOnContainer(accent)
 
     return darkColorScheme(
@@ -77,5 +79,7 @@ fun cyberColorScheme(
 
 internal val ToneLight = CyberPrimitives.Colors.Chrome100
 internal val OnAccent = CyberPrimitives.Colors.Void500
+// TODO: document this
 internal fun toneContainer(background: Color, accent: Color): Color = lerp(background, accent, 0.3f)
+// TODO: document this
 internal fun toneOnContainer(accent: Color): Color = lerp(accent, ToneLight, 0.5f)

@@ -42,7 +42,10 @@ private const val AMBIENT_KELVIN = 300f
 /** Deterministic per-particle random value; salts keep each property independent. */
 private fun rand(index: Int, salt: Int): Float = hash01(index * 3.1 + salt * 17.7)
 
-/** Color at [kelvin] from (kelvin, color) stops sorted by kelvin, clamped at both ends. */
+/**
+ * Color at [kelvin] from (kelvin, color) stops sorted by kelvin, clamped at both ends.
+ * @param kelvin TODO: document this
+ */
 internal fun colorAtKelvin(stops: List<Pair<Float, Color>>, kelvin: Float): Color {
     if (kelvin <= stops.first().first) return stops.first().second
     for (i in 0 until stops.size - 1) {
@@ -190,7 +193,17 @@ data class CyberWeld(
             var fizzHotN = 0; var fizzWarmN = 0; var fizzCoolN = 0; var popHotN = 0; var popCoolN = 0
             var popFlash = 0f
 
-            /** Ballistic spark born at [birth]; returns (age, life, origin, direction, speed) or null if not alive. */
+            /**
+             * Ballistic spark born at [birth]; returns (age, life, origin, direction, speed) or null if not alive.
+             * @param birth TODO: document this
+             * @param index TODO: document this
+             * @param salt TODO: document this
+             * @param v0 TODO: document this
+             * @param v1 TODO: document this
+             * @param life0 TODO: document this
+             * @param life1 TODO: document this
+             * @param coneDeg TODO: document this
+             */
             fun spark(birth: Double, index: Int, salt: Int, v0: Float, v1: Float, life0: Float, life1: Float, coneDeg: Float): Spark? {
                 val age = t - birth
                 val life = life0 + (life1 - life0) * rand(index, salt + 1)
@@ -209,6 +222,7 @@ data class CyberWeld(
                 return Spark(age.toFloat(), life, o.x, o.y, dx * sp, dy * sp)
             }
 
+            // TODO: document this
             fun Spark.at(a: Float) = floatArrayOf(x0 + vx * a, y0 + vy * a + 0.5f * gravity * a * a)
 
             // fizz: steady emission, index repeats every cycle so the loop is seamless
@@ -288,6 +302,8 @@ data class CyberWeld(
  * @param interactionSource Source for HOVER / PRESS / FOCUS triggers.
  * @param hideWhenIdle Draw nothing while the trigger is inactive.
  * @param animationSpec One pass round the outline; defaults to a constant-speed loop of `weld.cycleMillis`.
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 fun Modifier.cyberWeld(
     weld: CyberWeld = CyberWeld(),

@@ -54,6 +54,7 @@ enum class CyberBadgeVariant {
  *   [CyberBadgeVariant.Success], [CyberBadgeVariant.Info], [CyberBadgeVariant.Outline]). Defaults to [CyberBadgeVariant.Info].
  * @param appendedA11y Optional text to append to the default component accessibility name.
  * @param customA11y Optional custom accessibility description that completely overrides the default name.
+  * @param minAlpha TODO: document this
  */
 @Composable
 fun CyberBadge(

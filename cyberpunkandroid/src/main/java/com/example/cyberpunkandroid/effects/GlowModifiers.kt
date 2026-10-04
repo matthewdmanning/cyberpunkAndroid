@@ -48,6 +48,9 @@ enum class CyberBorderAlignment {
  * @param intensity Glow opacity is 0.85 × intensity (capped at 1); whole numbers above 1 stack extra passes.
  * @param outsideGlowOnly Removes the glow wherever the content itself is drawn, so translucent content doesn't
  *   show the halo through it. Renders this element into an offscreen layer.
+  * @param dropoffPower TODO: document this
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 fun Modifier.cyberTextGlow(
     color: Color = Color.Cyan,
@@ -89,6 +92,7 @@ fun Modifier.cyberTextGlow(
  * @param color Glow color.
  * @param blurRadiusPx Blur radius in pixels. Zero or less skips the blur (tint only).
  * @param intensity Glow strength: 1 is the standard strength, values above 1 draw the glow that many extra times.
+  * @param dropoffPower TODO: document this
  */
 internal fun ContentDrawScope.drawContourGlow(
     graphicsLayer: GraphicsLayer,
@@ -144,6 +148,11 @@ internal fun ContentDrawScope.drawContourGlow(
 
 /**
  * Static neon glow border.
+  * @param color TODO: document this
+  * @param glowRadius TODO: document this
+  * @param width TODO: document this
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 fun Modifier.cyberGlowBorder(
     color: Color = Color.Cyan,
@@ -158,6 +167,13 @@ fun Modifier.cyberGlowBorder(
 
 /**
  * Static neon glow border with a rounded corner profile shape.
+  * @param color TODO: document this
+  * @param cornerRadius TODO: document this
+  * @param glowRadius TODO: document this
+  * @param width TODO: document this
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
+  * @param speed TODO: document this
  */
 fun Modifier.cyberGlowBorderRounded(
     color: Color = Color.Cyan,
@@ -179,6 +195,11 @@ fun Modifier.cyberGlowBorderRounded(
 
 /**
  * Animated flowing neon glow border.
+  * @param glowRadius TODO: document this
+  * @param width TODO: document this
+  * @param speed TODO: document this
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 fun Modifier.cyberGlowBorderFlow(
     colors: List<Color> = listOf(Color.Cyan, Color.Magenta),
@@ -269,6 +290,7 @@ private fun Modifier.cyberGlowStroke(
     }
 }
 
+// TODO: document this
 @Deprecated("Use cyberGlowBorder instead", ReplaceWith("cyberGlowBorder(color, shape, glowRadius, width, appendedA11y=appendedA11y, customA11y=customA11y)"))
 fun Modifier.cyberNeonBorder(
     color: Color = Color.Cyan,
@@ -279,6 +301,7 @@ fun Modifier.cyberNeonBorder(
     customA11y: String? = null
 ): Modifier = cyberGlowBorder(color = color, shape = shape, glowRadius = glowRadius, width = width, appendedA11y = appendedA11y, customA11y = customA11y)
 
+// TODO: document this
 @Deprecated("Use cyberGlowBorderFlow instead", ReplaceWith("cyberGlowBorderFlow(colors, shape, glowRadius, width, speed, appendedA11y=appendedA11y, customA11y=customA11y)"))
 fun Modifier.cyberNeonBorderFlow(
     enabled: Boolean = true,
