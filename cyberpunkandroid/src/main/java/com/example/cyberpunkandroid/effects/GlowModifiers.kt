@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
@@ -39,33 +40,53 @@ fun Modifier.cyberTextGlow(
 
     onDrawWithContent {
         if (radius > 0.dp && intensity > 0f) {
-            graphicsLayer.record {
-                this@onDrawWithContent.drawContent()
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && blurRadius > 0f) {
-                val colorFilter = android.graphics.PorterDuffColorFilter(
-                    color.toArgb(),
-                    android.graphics.PorterDuff.Mode.SRC_IN
-                )
-                val colorEffect = android.graphics.RenderEffect.createColorFilterEffect(colorFilter)
-                val blurEffect = android.graphics.RenderEffect.createBlurEffect(
-                    blurRadius,
-                    blurRadius,
-                    colorEffect,
-                    android.graphics.Shader.TileMode.DECAL
-                )
-                graphicsLayer.renderEffect = blurEffect.asComposeRenderEffect()
-            } else {
-                graphicsLayer.colorFilter = ColorFilter.tint(color, BlendMode.SrcIn)
-            }
-            graphicsLayer.alpha = (0.85f * intensity).coerceIn(0f, 1f)
-
-            val drawCount = intensity.toInt().coerceAtLeast(1)
-            for (i in 0 until drawCount) {
-                drawLayer(graphicsLayer)
-            }
+            drawContourGlow(graphicsLayer, color, blurRadius, intensity)
         }
         drawContent()
+    }
+}
+
+/**
+ * Draws a blurred, recolored copy of the content: the contour glow behind text or an icon. The content itself is
+ * not drawn here; call `drawContent()` afterwards. Shared by [cyberTextGlow] and `cyberRadialIllumination`.
+ *
+ * On Android 12+ (API 31+) the copy is blurred with a `RenderEffect`; below that it is only tinted, because no blur is available.
+ *
+ * @param graphicsLayer Layer that records the content; obtain it once with `obtainGraphicsLayer()` inside `drawWithCache`.
+ * @param color Glow color.
+ * @param blurRadiusPx Blur radius in pixels. Zero or less skips the blur (tint only).
+ * @param intensity Glow strength: 1 is the standard strength, values above 1 draw the glow that many extra times.
+ */
+internal fun ContentDrawScope.drawContourGlow(
+    graphicsLayer: GraphicsLayer,
+    color: Color,
+    blurRadiusPx: Float,
+    intensity: Float,
+) {
+    graphicsLayer.record {
+        this@drawContourGlow.drawContent()
+    }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && blurRadiusPx > 0f) {
+        val colorFilter = android.graphics.PorterDuffColorFilter(
+            color.toArgb(),
+            android.graphics.PorterDuff.Mode.SRC_IN
+        )
+        val colorEffect = android.graphics.RenderEffect.createColorFilterEffect(colorFilter)
+        val blurEffect = android.graphics.RenderEffect.createBlurEffect(
+            blurRadiusPx,
+            blurRadiusPx,
+            colorEffect,
+            android.graphics.Shader.TileMode.DECAL
+        )
+        graphicsLayer.renderEffect = blurEffect.asComposeRenderEffect()
+    } else {
+        graphicsLayer.colorFilter = ColorFilter.tint(color, BlendMode.SrcIn)
+    }
+    graphicsLayer.alpha = (0.85f * intensity).coerceIn(0f, 1f) // 0.85: the glow stays just under the crisp content
+
+    val drawCount = intensity.toInt().coerceAtLeast(1)
+    for (i in 0 until drawCount) {
+        drawLayer(graphicsLayer)
     }
 }
 

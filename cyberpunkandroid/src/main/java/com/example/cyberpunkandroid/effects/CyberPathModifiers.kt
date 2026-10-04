@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.RectangleShape
@@ -27,6 +28,7 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
@@ -175,9 +177,67 @@ fun Modifier.cyberPathDivider(
     }
 }
 
+/**
+ * Draws a [CyberPathEffect] along a path you supply: the way to run a tracer or a particle shower along an arc,
+ * a circle, a spiral or any other line that is not the component's outline or a straight divider.
+ *
+ * The path is built once per size, so build it from the size you are given; it is drawn over the content with
+ * the same neon glow as [cyberPathBorder]. A closed path loops the effect round it; an open path has a start and an end.
+ *
+ * ```
+ * Modifier.size(160.dp).cyberPathAlong(CyberParticleShower(), path = { size ->
+ *     Path().apply { addArc(Rect(Offset.Zero, size.minDimension / 2f), 150f, 240f) }  // open arc, centered
+ * })
+ * ```
+ *
+ * @param effect The path effect to draw.
+ * @param path Builds the path for a component of the given size, in pixels from the component's top-left corner.
+ *   It is a `Density` extension so you can convert `Dp` values with `toPx()`.
+ * @param closed Whether [path] is a closed contour (the effect loops round it) or an open line.
+ * @param color Stroke and glow color. Defaults to `CyberTheme.colors.primary`.
+ * @param glowRadius Blur radius of the glow. Zero disables glow.
+ * @param steps When > 0, quantizes progress into this many steps per cycle.
+ * @param trigger When the effect animates; while inactive it is drawn at progress 0 (or hidden, see [hideWhenIdle]).
+ * @param interactionSource Source for HOVER / PRESS / FOCUS triggers.
+ * @param hideWhenIdle Draw nothing while the trigger is inactive.
+ * @param animationSpec Drives progress 0 -> 1. Infinite specs loop; a finite spec plays once and holds.
+ */
+fun Modifier.cyberPathAlong(
+    effect: CyberPathEffect,
+    path: Density.(size: Size) -> Path,
+    closed: Boolean = false,
+    color: Color = Color.Unspecified,
+    glowRadius: Dp = CyberPathDefaults.Modifiers.BorderGlow,
+    steps: Int = 0,
+    trigger: CyberInteractionTrigger = CyberInteractionTrigger.ALWAYS,
+    interactionSource: InteractionSource? = null,
+    hideWhenIdle: Boolean = false,
+    animationSpec: AnimationSpec<Float> = DefaultPathLoop,
+    appendedA11y: String? = null,
+    customA11y: String? = null
+): Modifier = this.cyberSemantics("CyberPathAlong", appendedA11y, customA11y).composed {
+    val isActive = trigger.isActive(interactionSource)
+    val resolved = if (color == Color.Unspecified) CyberTheme.colors.primary else color
+    val progress = rememberPathProgress(isActive, animationSpec)
+
+    drawWithCache {
+        val line = path(this, size)
+        // a path shorter than a pixel (or not yet laid out) would give zero-length dash periods
+        val renderer = if (CyberPathGeometry.length(line) < 1f) CyberPathRenderer { emptyList() }
+        else effect.prepare(line, closed, this)
+        val glowLayer = obtainGraphicsLayer()
+        val glowPx = glowRadius.toPx()
+        onDrawWithContent {
+            drawContent()
+            if (hideWhenIdle && !isActive) return@onDrawWithContent
+            drawPathLayers(line, renderer.layers(quantize(progress.value, steps)), resolved, glowPx, glowLayer)
+        }
+    }
+}
+
 /** Progress 0 -> 1 driven by [animationSpec] while [isActive]; snaps back to 0 when inactive. */
 @Composable
-private fun rememberPathProgress(isActive: Boolean, animationSpec: AnimationSpec<Float>): State<Float> {
+internal fun rememberPathProgress(isActive: Boolean, animationSpec: AnimationSpec<Float>): State<Float> {
     val progress = remember { Animatable(0f) }
     LaunchedEffect(isActive, animationSpec) {
         progress.snapTo(0f)
@@ -186,7 +246,7 @@ private fun rememberPathProgress(isActive: Boolean, animationSpec: AnimationSpec
     return progress.asState()
 }
 
-private fun quantize(p: Float, steps: Int): Float = if (steps > 0) floor(p * steps) / steps else p
+internal fun quantize(p: Float, steps: Int): Float = if (steps > 0) floor(p * steps) / steps else p
 
 /** The layer's own color, or the modifier color when the layer doesn't set one. */
 private fun CyberPathLayer.baseColor(modifierColor: Color): Color = if (color == Color.Unspecified) modifierColor else color
