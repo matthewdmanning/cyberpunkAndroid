@@ -1,0 +1,206 @@
+diff --git a/cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/config/CyberRadialDefaults.kt b/cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/config/CyberRadialDefaults.kt
+index 068900b..65132c2 100644
+--- a/cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/config/CyberRadialDefaults.kt
++++ b/cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/config/CyberRadialDefaults.kt
+@@ -18,8 +18,8 @@ object CyberRadialDefaults {
+         /** Length of the fading trail behind the beam head, in degrees. A quarter turn reads as a classic radar wedge. */
+         const val TrailDegrees: Float = 90f
+ 
+-        /** One revolution (or one there-and-back in bounce mode) per 2.4 s, the same loop the path effects use. */
+-        const val LoopMillis: Int = 2400
++        /** One revolution (or one there-and-back in bounce mode) per 0.6 s, the same loop the path effects use. */
++        const val LoopMillis: Int = 600
+ 
+         /** Thickness of the bright line drawn at the head of the beam. Set the modifier's `headWidth` to 0 to hide it. */
+         val HeadWidth: Dp = 1.5.dp
+@@ -42,8 +42,8 @@ object CyberRadialDefaults {
+ 
+     /** Defaults for `rememberCyberRadialPulse` and `Modifier.cyberRadialPulse`. */
+     object Pulse {
+-        /** One pulse per 1.8 s. Ambient loop only: tap feedback must stay under 250 ms, so pass a shorter spec for that. */
+-        const val LoopMillis: Int = 1800
++        /** One pulse per 0.8 s. Ambient loop only: tap feedback must stay under 250 ms, so pass a shorter spec for that. */
++        const val LoopMillis: Int = 800
+ 
+         /** Length of the fading trail behind the ring head (the soft rim of a disc wipe). */
+         val Trail: Dp = 24.dp
+diff --git a/cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/effects/CyberRadial.kt b/cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/effects/CyberRadial.kt
+index 6ade499..dbc559b 100644
+--- a/cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/effects/CyberRadial.kt
++++ b/cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/effects/CyberRadial.kt
+@@ -1,5 +1,6 @@
+ package com.example.cyberpunkandroid.effects
+ 
++import com.example.cyberpunkandroid.utils.*
+ import androidx.compose.animation.core.AnimationSpec
+ import androidx.compose.animation.core.LinearEasing
+ import androidx.compose.animation.core.RepeatMode
+@@ -187,6 +188,37 @@ private val DefaultSweepLoop: AnimationSpec<Float> =
+ private val DefaultPulseLoop: AnimationSpec<Float> =
+     infiniteRepeatable(tween(CyberRadialDefaults.Pulse.LoopMillis, easing = LinearEasing), RepeatMode.Restart)
+ 
++/**
++ * Shared state and hit-testing logic for radial effects.
++ */
++@Stable
++abstract class CyberRadialDriver(
++    val sector: CyberRadialSector,
++    val hideWhenIdle: Boolean,
++    private val progressState: State<Float>,
++    private val activeState: State<Boolean>,
++) : CyberRadialField {
++
++    /** Where the effect was last drawn, published by its modifier. Null until the first layout. Observable state, so lit icons redraw when it appears. */
++    internal var placement: CyberRadialPlacement? by mutableStateOf(null)
++
++    /** Whether the trigger is active right now. */
++    val isActive: Boolean get() = activeState.value
++
++    /** Position in the loop, 0..1. Reading it in a draw block redraws every frame. */
++    val progress: Float get() = progressState.value
++
++    override fun intensityAt(pointInRoot: Offset): Float {
++        val g = placement?.geometry() ?: return 0f
++        if (hideWhenIdle && !isActive) return 0f
++        val hit = g.sample(pointInRoot, sector) ?: return 0f
++        return intensityAtHit(g, hit)
++    }
++
++    /** Calculates the intensity for a point that is known to be within the sector and radii. */
++    internal abstract fun intensityAtHit(geometry: CyberRadialGeometry, hit: CyberRadialSample): Float
++}
++
+ /**
+  * The state of a radar sweep: its sector, motion and fade, plus the animation clock. Create it with
+  * [rememberCyberRadarSweep], draw it with [cyberRadarSweep] and light icons from it with
+@@ -204,25 +236,16 @@ private val DefaultPulseLoop: AnimationSpec<Float> =
+  */
+ @Stable
+ class CyberRadarSweep internal constructor(
+-    val sector: CyberRadialSector,
++    sector: CyberRadialSector,
+     val mode: CyberSweepMode,
+     val clockwise: Boolean,
+     val tailDegrees: Float,
+     val fadeSteps: Int,
+     val edgeFadeDegrees: Float,
+-    val hideWhenIdle: Boolean,
+-    private val progressState: State<Float>,
+-    private val activeState: State<Boolean>,
+-) : CyberRadialField {
+-
+-    /** Where the sweep was last drawn, published by its modifier. Null until the first layout. Observable state, so lit icons redraw when it appears. */
+-    internal var placement: CyberRadialPlacement? by mutableStateOf(null)
+-
+-    /** Whether the trigger is active right now. */
+-    val isActive: Boolean get() = activeState.value
+-
+-    /** Position in the loop, 0..1. Reading it in a draw block redraws every frame. */
+-    val progress: Float get() = progressState.value
++    hideWhenIdle: Boolean,
++    progressState: State<Float>,
++    activeState: State<Boolean>,
++) : CyberRadialDriver(sector, hideWhenIdle, progressState, activeState) {
+ 
+     /** Current head position (see [SweepPose]). Reads the animation clock. */
+     internal fun pose(): SweepPose =
+@@ -231,10 +254,7 @@ class CyberRadarSweep internal constructor(
+     /** Where the head is now, in degrees clockwise from 12 o'clock (0..360). Use it to drive your own indicators. */
+     val headDegrees: Float get() = (sector.startDegrees + pose().offset).mod(CyberRadialMath.FULL_TURN)
+ 
+-    override fun intensityAt(pointInRoot: Offset): Float {
+-        val g = placement?.geometry() ?: return 0f
+-        if (hideWhenIdle && !isActive) return 0f
+-        val hit = g.sample(pointInRoot, sector) ?: return 0f
++    override fun intensityAtHit(geometry: CyberRadialGeometry, hit: CyberRadialSample): Float {
+         val pose = pose()
+         val distance = CyberRadialMath.trailDistance(hit.offset, pose, sector.span)
+         val trail = max(tailDegrees * pose.tailScale, CyberRadialDefaults.Sweep.MinLitDegrees)
+@@ -306,25 +326,16 @@ fun rememberCyberRadarSweep(
+ class CyberRadialPulse internal constructor(
+     val style: CyberPulseStyle,
+     val direction: CyberRadialDirection,
+-    val sector: CyberRadialSector,
++    sector: CyberRadialSector,
+     val trail: Dp,
+     val fadeSteps: Int,
+     val ringCount: Int,
+     val fadeStart: Float,
+     val discFill: Float,
+-    val hideWhenIdle: Boolean,
+-    private val progressState: State<Float>,
+-    private val activeState: State<Boolean>,
+-) : CyberRadialField {
+-
+-    /** Where the pulse was last drawn, published by its modifier. Null until the first layout. Observable state, so lit icons redraw when it appears. */
+-    internal var placement: CyberRadialPlacement? by mutableStateOf(null)
+-
+-    /** Whether the trigger is active right now. */
+-    val isActive: Boolean get() = activeState.value
+-
+-    /** Position in the loop, 0..1. Reading it in a draw block redraws every frame. */
+-    val progress: Float get() = progressState.value
++    hideWhenIdle: Boolean,
++    progressState: State<Float>,
++    activeState: State<Boolean>,
++) : CyberRadialDriver(sector, hideWhenIdle, progressState, activeState) {
+ 
+     /** Rings in flight: [ringCount] for sonar, otherwise one. */
+     internal val rings: Int get() = if (style == CyberPulseStyle.SONAR) ringCount.coerceAtLeast(1) else 1
+@@ -340,15 +351,12 @@ class CyberRadialPulse internal constructor(
+     internal fun lifeProgress(index: Int): Float =
+         if (rings > 1) CyberRadialMath.ringProgress(progress, index, rings) else progress.coerceIn(0f, 1f)
+ 
+-    override fun intensityAt(pointInRoot: Offset): Float {
+-        val g = placement?.geometry() ?: return 0f
+-        if (hideWhenIdle && !isActive) return 0f
+-        val hit = g.sample(pointInRoot, sector) ?: return 0f
+-        val trailPx = trail.value * g.pxPerDp
++    override fun intensityAtHit(geometry: CyberRadialGeometry, hit: CyberRadialSample): Float {
++        val trailPx = trail.value * geometry.pxPerDp
+         var strongest = 0f
+         for (ring in 0 until rings) {
+             val life = lifeProgress(ring)
+-            val headRadius = g.innerPx + CyberRadialMath.pulseHead(life, direction) * (g.outerPx - g.innerPx)
++            val headRadius = geometry.innerPx + CyberRadialMath.pulseHead(life, direction) * (geometry.outerPx - geometry.innerPx)
+             val distance = if (direction == CyberRadialDirection.OUTWARD) headRadius - hit.radius else hit.radius - headRadius
+             val level = CyberRadialMath.trailAlpha(distance, trailPx, fadeSteps, fill) * CyberRadialMath.pulseFade(life, fadeStart)
+             if (level > strongest) strongest = level
+diff --git a/cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/effects/CyberRadialModifiers.kt b/cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/effects/CyberRadialModifiers.kt
+index f4eabb6..d468d3d 100644
+--- a/cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/effects/CyberRadialModifiers.kt
++++ b/cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/effects/CyberRadialModifiers.kt
+@@ -1,5 +1,6 @@
+ package com.example.cyberpunkandroid.effects
+ 
++import com.example.cyberpunkandroid.utils.*
+ import androidx.compose.runtime.getValue
+ import androidx.compose.runtime.mutableStateOf
+ import androidx.compose.runtime.remember
+@@ -269,15 +270,22 @@ fun Modifier.cyberRadialIllumination(
+     .radialSemantics("CyberRadialIllumination", appendedA11y, customA11y)
+     .composed {
+         val resolvedColor = if (color == Color.Unspecified) CyberTheme.colors.primary else color
+-        var center: Offset? by remember { mutableStateOf<Offset?>(null) } // component center in root coordinates
++        var bounds: Rect? by remember { mutableStateOf<Rect?>(null) } // component bounds in root coordinates
+         Modifier
+-            .onGloballyPositioned { center = it.positionInRoot() + it.size.toSize().toRect().center }
++            .onGloballyPositioned { bounds = Rect(it.positionInRoot(), it.size.toSize()) }
+             .drawWithCache {
+                 val glowLayer = obtainGraphicsLayer()
+                 val blurPx = radius.toPx()
+                 onDrawWithContent {
+-                    val at = center
+-                    val level = if (at == null) 0f else field.intensityAt(at).coerceIn(0f, 1f) * maxIntensity
++                    val b = bounds
++                    val level = if (b == null) 0f else {
++                        val c = field.intensityAt(b.center)
++                        val tl = field.intensityAt(b.topLeft)
++                        val tr = field.intensityAt(b.topRight)
++                        val bl = field.intensityAt(b.bottomLeft)
++                        val br = field.intensityAt(b.bottomRight)
++                        maxOf(c, tl, tr, bl, br).coerceIn(0f, 1f) * maxIntensity
++                    }
+                     if (level >= CyberRadialDefaults.Illumination.MinVisible) drawContourGlow(glowLayer, resolvedColor, blurPx, level)
+                     drawContent()
+                 }

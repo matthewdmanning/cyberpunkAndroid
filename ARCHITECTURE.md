@@ -38,7 +38,7 @@ Components remain functional base elements. Effects and visual flair belong in r
 5. `CyberTelemetry` converts external values into observable Compose state.
 6. Public modifiers compose those pieces into reusable effects.
 
-Path deformation effects are documented in [path effects](docs/PATH_EFFECTS.md).
+Path deformation effects are documented in [path effects](docs/PATH_EFFECTS.md). Radial effects (sweep, pulse, icon illumination, particle shower) are documented in [radial effects](docs/RADIAL_EFFECTS.md).
 
 ## Feedback data ownership
 

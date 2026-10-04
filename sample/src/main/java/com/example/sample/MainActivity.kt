@@ -60,11 +60,12 @@ class MainActivity : ComponentActivity() {
                                 composable("glow_test") { com.example.sample.screens.GlowTestScreen() }
                                 composable("terminal") { /* Background is drawn beneath the navigation layer. */ }
                                 composable("paths") { com.example.sample.screens.PathEffectsScreen() }
+                                composable("radial") { com.example.sample.screens.RadialEffectsScreen() }
                             }
                         }
 
                         CyberTabs(
-                            tabs = listOf("Sandbox", "Showcase", "Effects", "Command", "Glow", "Terminal", "Paths"),
+                            tabs = listOf("Sandbox", "Showcase", "Effects", "Command", "Glow", "Terminal", "Paths", "Radial"),
                             selectedTabIndex = when(currentRoute) {
                                 "sandbox" -> 0
                                 "showcase" -> 1
@@ -73,6 +74,7 @@ class MainActivity : ComponentActivity() {
                                 "glow_test" -> 4
                                 "terminal" -> 5
                                 "paths" -> 6
+                                "radial" -> 7
                                 else -> 0
                             },
                             onTabSelected = { index ->
@@ -84,6 +86,7 @@ class MainActivity : ComponentActivity() {
                                     4 -> "glow_test"
                                     5 -> "terminal"
                                     6 -> "paths"
+                                    7 -> "radial"
                                     else -> "sandbox"
                                 }
                                 navController.navigate(route) {
