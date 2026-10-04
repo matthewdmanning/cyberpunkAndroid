@@ -8,6 +8,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -39,6 +40,13 @@ import com.example.cyberpunkandroid.theme.CyberTheme
 
 /**
  * Controlled terminal-style expandable section with a neon chevron and a decryption flash on opening.
+ *
+ * @param title Fallback header text used when [headerContent] is not provided.
+ * @param expanded Whether the accordion body is currently visible.
+ * @param headerContent Optional custom header content rendered inside the accordion's primary header box. When supplied,
+ * the chevron remains the expansion control so interactive header content such as [CyberTextField] can receive input.
+ * @param onExpandedChange Called when the header or chevron requests an expansion-state change.
+ * @param content Expanded body content.
  */
 @Composable
 fun CyberAccordion(
@@ -50,6 +58,7 @@ fun CyberAccordion(
     borderColor: Color = CyberTheme.colors.primary.copy(alpha = 0.45f),
     appendedA11y: String? = null,
     customA11y: String? = null,
+    headerContent: (@Composable (expanded: Boolean) -> Unit)? = null,
     onExpandedChange: (Boolean) -> Unit = {},
     content: @Composable () -> Unit,
 ) {
@@ -77,20 +86,39 @@ fun CyberAccordion(
             modifier = Modifier
                 .fillMaxWidth()
                 .cyberSemantics("CyberAccordion", appendedA11y, customA11y)
-                .toggleable(value = expanded, role = Role.Button, onValueChange = onExpandedChange)
+                .then(
+                    if (headerContent == null) {
+                        Modifier.toggleable(value = expanded, role = Role.Button, onValueChange = onExpandedChange)
+                    } else {
+                        Modifier
+                    },
+                )
                 .semantics { stateDescription = if (expanded) "Expanded" else "Collapsed" }
                 .padding(CyberPrimitives.Spacing.dp12),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            CompositionLocalProvider(LocalContentColor provides CyberTheme.colors.primary) {
-                ProvideTextStyle(value = CyberTheme.typography.terminal) {
-                    Text(text = title.uppercase(), modifier = Modifier.weight(1f))
+            Box(modifier = Modifier.weight(1f)) {
+                if (headerContent != null) {
+                    headerContent(expanded)
+                } else {
+                    CompositionLocalProvider(LocalContentColor provides CyberTheme.colors.primary) {
+                        ProvideTextStyle(value = CyberTheme.typography.terminal) {
+                            Text(text = title.uppercase())
+                        }
+                    }
                 }
             }
             Text(
                 text = if (expanded) "⌃" else "⌄",
                 modifier = Modifier
                     .size(CyberPrimitives.IconSizes.dp24)
+                    .then(
+                        if (headerContent != null) {
+                            Modifier.toggleable(value = expanded, role = Role.Button, onValueChange = onExpandedChange)
+                        } else {
+                            Modifier
+                        },
+                    )
                     .graphicsLayer { alpha = 0.95f }
                     .cyberTextGlow(color = CyberTheme.colors.primary, intensity = if (expanded) 1f else 0.75f)
                     .cyberSemantics("CyberAccordionChevron"),
