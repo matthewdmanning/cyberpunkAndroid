@@ -4,9 +4,9 @@ A Cyberpunk-themed UI component and effects library for Jetpack Compose.
 
 ## Installation
 
-Add the JitPack repository to your settings.gradle.kts file:
+Add the JitPack repository to your `settings.gradle.kts` file:
 
-`kotlin
+```kotlin
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -15,15 +15,15 @@ dependencyResolutionManagement {
         maven { url = uri("https://jitpack.io") }
     }
 }
-`
+```
 
-Add the dependency to your app-level uild.gradle.kts:
+Add the dependency to your app-level `build.gradle.kts`:
 
-`kotlin
+```kotlin
 dependencies {
-    implementation("com.github.matthewdmanning:cyberpunkAndroid:363193e")
+    implementation("com.github.matthewdmanning:cyberpunkAndroid:1.0.5")
 }
-`
+```
 
 ## Documentation
 

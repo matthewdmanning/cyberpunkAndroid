@@ -74,7 +74,6 @@ fun CyberBiometrics(
     )
 }
 
-// TODO: document this
 internal fun biometricValueAt(data: List<Float>, position: Float): Float {
     if (data.isEmpty()) return 0f
     val wrapped = ((position % data.size) + data.size) % data.size

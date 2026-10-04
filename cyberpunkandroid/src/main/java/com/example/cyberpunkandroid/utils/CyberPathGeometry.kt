@@ -186,7 +186,6 @@ object CyberPathGeometry {
         return polygon(pts, step = edgeStep, hole = hole)
     }
 
-    // TODO: document this
     fun merge(vararg paths: Path): Path = Path().apply { paths.forEach { addPath(it) } }
 
     // ------------------------------------------------------------------ measuring
@@ -236,7 +235,6 @@ object CyberPathGeometry {
         val start = hot.indexOfFirst { !it }
         val result = ArrayList<Float>()
         val group = ArrayList<Int>()
-        // TODO: document this
         fun flush() {
             if (group.isEmpty()) return
             var total = 0f
@@ -408,7 +406,6 @@ object CyberPathGeometry {
 
     // ------------------------------------------------------------------ timing helpers
 
-    // TODO: document this
     fun smoothstep(edge0: Float, edge1: Float, x: Float): Float {
         val t = ((x - edge0) / (edge1 - edge0)).coerceIn(0f, 1f)
         return t * t * (3f - 2f * t)
@@ -417,7 +414,6 @@ object CyberPathGeometry {
     /** Deterministic pseudo-random value in [0, 1) for frame index [n] (classic GLSL-style sine hash). */
     fun hash01(n: Double): Float = (sin(n * 12.9898) * 43758.5453).mod(1.0).toFloat()
 
-    // TODO: document this
     fun floorF(x: Float): Float = floor(x)
 }
 

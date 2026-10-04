@@ -64,7 +64,6 @@ fun loadFeedbackConfigFromAssets(context: Context, fileName: String): FeedbackCo
     }
 }
 
-// TODO: document this
 fun resetFeedbackFiles(context: Context) {
     try {
         val ratingsFile = File(context.filesDir, "ratings.json")

@@ -14,7 +14,6 @@ import com.example.cyberpunkandroid.components.CyberSectorRim
 import com.example.cyberpunkandroid.theme.CyberTheme
 import com.example.cyberpunkandroid.effects.cyberComponentSemantics
 
-// TODO: document this
 @Composable
 fun CyberTime(
     timeText: String,

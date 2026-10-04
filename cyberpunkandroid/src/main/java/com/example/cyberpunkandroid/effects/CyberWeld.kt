@@ -222,7 +222,6 @@ data class CyberWeld(
                 return Spark(age.toFloat(), life, o.x, o.y, dx * sp, dy * sp)
             }
 
-            // TODO: document this
             fun Spark.at(a: Float) = floatArrayOf(x0 + vx * a, y0 + vy * a + 0.5f * gravity * a * a)
 
             // fizz: steady emission, index repeats every cycle so the loop is seamless

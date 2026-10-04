@@ -176,7 +176,7 @@ GlowingText(
 ```
 
 ### 8. CyberGlowIcon & CyberGlowIconPath
-Outer-contour vector path glow icons in [CyberGlowIcon.kt](file:///C:/Users/mattm/AndroidStudioProjects/cyberpunkAndroid/cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/effects/CyberGlowIcon.kt) that project bloom along vector path outlines.
+Outer-contour vector path glow icons in [CyberGlowIcon.kt](../cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/effects/CyberGlowIcon.kt) that project bloom along vector path outlines.
 
 ```kotlin
 CyberGlowIconPath(
@@ -262,3 +262,4 @@ CyberRim(
         )
 )
 ```
+

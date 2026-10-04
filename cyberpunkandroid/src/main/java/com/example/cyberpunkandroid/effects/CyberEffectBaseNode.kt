@@ -22,6 +22,26 @@ import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.node.invalidateDraw
 import androidx.compose.ui.node.invalidatePlacement
 
+/**
+ * Base [Modifier.Node] architecture for stateful, shader-backed cyberpunk effects.
+ *
+ * This class abstracts the boilerplate of managing Compose interaction boundaries, 
+ * hardware-accelerated AGSL `RuntimeShader` execution (API 33+), and pre-API 33 canvas fallbacks.
+ * By inheriting from this node, complex shader modifiers avoid the deprecated `Modifier.composed` 
+ * anti-pattern, saving heavily on composition-phase allocations.
+ *
+ * ### Responsibilities
+ * - **Animation Clock:** Automatically spawns a frame-synchronized `coroutineScope` to drive the shader `time` uniform.
+ * - **State Management:** Manages an internal `Animatable` bound to the [trigger] state and [animationSpec].
+ * - **Hardware Rendering:** Binds the compiled AGSL string to the [LayoutModifierNode]'s layer configuration natively via `RenderEffect`.
+ *
+ * @param shaderSource The raw AGSL shader string (e.g., from [CyberShaders]).
+ * @param trigger Defines when the effect is active (e.g., [CyberInteractionTrigger.PRESSED]).
+ * @param interactionSource The observable event stream for the user interaction.
+ * @param targetOpacity The peak intensity/opacity the effect reaches when triggered.
+ * @param animationSpec The easing curve to use when transitioning the intensity.
+ * @param clipWhenIdle Whether the graphics layer should remain clipped to bounds when the effect is at 0 intensity.
+ */
 internal abstract class CyberEffectBaseNode(
     private val shaderSource: String,
     protected var trigger: CyberInteractionTrigger,
@@ -37,6 +57,10 @@ internal abstract class CyberEffectBaseNode(
     private var clockJob: Job? = null
     private var triggerJob: Job? = null
 
+    /**
+     * Updates the base node properties. Subclasses must call this inside their `update()` implementation
+     * to ensure the underlying coroutine bindings react to recomposition of the modifier parameters.
+     */
     protected fun updateBase(
         trigger: CyberInteractionTrigger,
         interactionSource: InteractionSource?,
@@ -126,7 +150,27 @@ internal abstract class CyberEffectBaseNode(
         }
     }
 
+    /**
+     * Injects uniform variables into the hardware AGSL shader instance (API 33+).
+     * @param shader The compiled runtime shader.
+     * @param size The physical dimensions of the layout node.
+     * @param clock The continuously incrementing animation clock time.
+     * @param current The interpolated intensity value of the effect.
+     */
     protected abstract fun applyShaderUniforms(shader: RuntimeShader, size: Size, clock: Float, current: Float)
+    
+    /**
+     * Defines the Canvas-drawing fallback for devices below API 33 that cannot execute AGSL code.
+     * @param current The interpolated intensity value of the effect.
+     * @param clock The continuously incrementing animation clock time.
+     */
     protected abstract fun ContentDrawScope.drawFallback(current: Float, clock: Float)
+    
+    /**
+     * Allows subclasses to directly manipulate standard `graphicsLayer` properties 
+     * (e.g., [GraphicsLayerScope.rotationZ], [GraphicsLayerScope.translationX]) alongside the shader execution.
+     * @param scope The layer scope context.
+     * @param clock The animation clock time.
+     */
     protected open fun applyLayerProperties(scope: GraphicsLayerScope, clock: Float) {}
 }

@@ -18,8 +18,8 @@ This document is the architectural map for the `:cyberpunkandroid` library. Use 
 
 ## Dependency direction
 
-### 2. `effects/CyberShaders.kt` (The GPU Math)
-This file holds raw AGSL (Android Graphics Shading Language) code as string constants (like `CrtShader`). Compiling them and applying them as a `RenderEffect` (with a Compose fallback below API 33) is handled by the internal `cyberShaderEffect` in `effects/CyberEffectRuntime.kt`; see [docs/reference/shaders.md](docs/reference/shaders.md).
+### 1. `effects/CyberShaders.kt` (The GPU Math)
+This file holds raw AGSL (Android Graphics Shading Language) code as string constants (like `CrtShader`). Compiling them and applying them as a `RenderEffect` (with a Compose fallback below API 33) is handled by the individual `Modifier.Node` implementations (e.g., `CyberOverloadNode`); see [docs/reference/shaders.md](docs/reference/shaders.md).
 - **Purpose:** It handles complex pixel-by-pixel manipulations on the GPU (like barrel distortion, chromatic aberration, or overload glitches) that are too expensive or impossible to do with standard Canvas drawing.
 - **Relationship:** Like `CyberBrushes`, it is a low-level graphics tool, but for distortion rather than painting.
 
@@ -47,3 +47,4 @@ Path deformation effects are documented in [path effects](docs/PATH_EFFECTS.md).
 - The design-of-experiments inputs belong in `cyberpunkandroid/src/main/assets/`; ratings do not.
 
 See the [feedback flow](docs/agents/feedback_flow.md) for the operational steps.
+
