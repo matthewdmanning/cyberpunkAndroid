@@ -39,6 +39,9 @@ fun <T, R> rememberDrivenState(
 /**
  * Float-optimized telemetry processor for high-performance animation parameters
  * like rotation, scale, or alpha, avoiding autoboxing overhead.
+  * @param telemetry TODO: document this
+  * @param initialState TODO: document this
+  * @param updateFrequencyMs TODO: document this
  */
 @Composable
 fun rememberDrivenFloatState(

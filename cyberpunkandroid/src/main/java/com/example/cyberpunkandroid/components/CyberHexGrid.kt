@@ -19,6 +19,8 @@ import com.example.cyberpunkandroid.effects.cyberComponentSemantics
  * @param modifier Composable modifier for the grid container.
  * @param columns Number of nodes per row.
  * @param hexRadius The circumradius of a single hexagonal node (center to vertex).
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 @Composable
 fun CyberHexGrid(

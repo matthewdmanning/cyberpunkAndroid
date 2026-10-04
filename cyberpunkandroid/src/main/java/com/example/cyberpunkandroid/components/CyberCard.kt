@@ -40,6 +40,8 @@ import com.example.cyberpunkandroid.effects.cyberComponentSemantics
  * @param onClick Optional callback invoked when the card is clicked. Requires [interactive] to be true.
  * @param interactionSource Stream tracking interaction events.
  * @param content Primary composable content layout slot.
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 @Composable
 fun CyberCard(

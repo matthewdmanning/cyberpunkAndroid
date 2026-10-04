@@ -3,7 +3,9 @@ package com.example.cyberpunkandroid.config
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
+// TODO: document this
 object CyberPrimitives {
+    // TODO: document this
     object Colors {
         // Cyan Scale
         val Cyan300 = Color(0xFF87EAF2)
@@ -46,6 +48,7 @@ object CyberPrimitives {
         val Chrome600 = Color(0xFF5C647A)
     }
 
+    // TODO: document this
     object Spacing {
         val dp4 = 4.dp
         val dp8 = 8.dp
@@ -55,12 +58,14 @@ object CyberPrimitives {
         val dp32 = 32.dp
     }
 
+    // TODO: document this
     object BorderWidths {
         val dp1 = 1.dp
         val dp2 = 2.dp
         val dp4 = 4.dp
     }
 
+    // TODO: document this
     object IconSizes {
         val dp16 = 16.dp // Small/Inline
         val dp24 = 24.dp // Standard/Medium
@@ -69,13 +74,16 @@ object CyberPrimitives {
         val dp64 = 64.dp // Massive
     }
 
+    // TODO: document this
     object Durations {
         const val ms150 = 150
         const val ms300 = 300
         const val ms500 = 500
     }
 
+    // TODO: document this
     object Shadows {
+        // TODO: document this
         fun neonGlow(color: Color, radius: Float = 8f) = androidx.compose.ui.graphics.Shadow(
             color = color,
             blurRadius = radius

@@ -47,6 +47,10 @@ import com.example.cyberpunkandroid.theme.CyberTheme
  * the chevron remains the expansion control so interactive header content such as [CyberTextField] can receive input.
  * @param onExpandedChange Called when the header or chevron requests an expansion-state change.
  * @param content Expanded body content.
+  * @param modifier TODO: document this
+  * @param borderColor TODO: document this
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 @Composable
 fun CyberAccordion(

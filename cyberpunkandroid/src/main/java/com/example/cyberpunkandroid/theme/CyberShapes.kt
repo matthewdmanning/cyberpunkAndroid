@@ -6,6 +6,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 
+// TODO: document this
 object CyberRadius {
     val default: Shape = CutCornerShape(
         topStart = 0.dp,
@@ -15,6 +16,7 @@ object CyberRadius {
     )
 }
 
+// TODO: document this
 @Immutable
 data class CyberShapes(
     val cyberCutCornerShape: Shape = CyberRadius.default,

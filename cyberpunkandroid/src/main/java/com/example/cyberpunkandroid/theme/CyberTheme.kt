@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import com.example.cyberpunkandroid.config.CyberPrimitives
 import com.example.cyberpunkandroid.config.CyberSemanticTokens
 
+// TODO: document this
 @Immutable
 data class CyberColors(
     val primary: Color = CyberPrimitives.Colors.Cyan500,
@@ -34,6 +35,7 @@ val LocalCyberShapes = staticCompositionLocalOf { CyberShapes() }
 val LocalCyberSemanticTokens = staticCompositionLocalOf { CyberSemanticTokens() }
 val LocalCyberStatusColors = staticCompositionLocalOf { cyberStatusColors() }
 
+// TODO: document this
 object CyberTheme {
     val colors: CyberColors
         @Composable
@@ -56,6 +58,7 @@ object CyberTheme {
         get() = LocalCyberStatusColors.current
 }
 
+// TODO: document this
 @Composable
 fun CyberTheme(
     colors: CyberColors = CyberTheme.colors,

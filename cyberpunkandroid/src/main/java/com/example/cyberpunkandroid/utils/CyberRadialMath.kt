@@ -128,12 +128,17 @@ internal object CyberRadialMath {
     /** Midpoint of a bounce cycle: before it the beam moves out, after it back. */
     private const val BOUNCE_TURN: Float = 0.5f
 
-    /** Converts an angle measured clockwise from 12 o'clock to Compose's angle (clockwise from 3 o'clock). */
+    /**
+     * Converts an angle measured clockwise from 12 o'clock to Compose's angle (clockwise from 3 o'clock).
+     * @param degreesFromTop TODO: document this
+     */
     fun toComposeDegrees(degreesFromTop: Float): Float = degreesFromTop + TOP_OFFSET
 
     /**
      * Size of the sector `start..end` in degrees, 0 < span <= 360. An end at or before the start wraps
      * round the circle, so `(300, 60)` is 120 and `(0, 0)` is the full 360. Non-finite input gives the full circle.
+      * @param start TODO: document this
+      * @param end TODO: document this
      */
     fun sectorSpan(start: Float, end: Float): Float {
         var span = end - start
@@ -142,22 +147,40 @@ internal object CyberRadialMath {
         return min(span, FULL_TURN)
     }
 
-    /** X of the point [radius] away from [cx] at [degreesFromTop] (clockwise from 12 o'clock). */
+    /**
+     * X of the point [radius] away from [cx] at [degreesFromTop] (clockwise from 12 o'clock).
+     * @param cx TODO: document this
+     * @param radius TODO: document this
+     * @param degreesFromTop TODO: document this
+     */
     fun polarX(cx: Float, radius: Float, degreesFromTop: Float): Float =
         cx + radius * sin(degreesFromTop * PI / HALF_TURN).toFloat()
 
-    /** Y of the point [radius] away from [cy] at [degreesFromTop] (clockwise from 12 o'clock; screen Y grows downward). */
+    /**
+     * Y of the point [radius] away from [cy] at [degreesFromTop] (clockwise from 12 o'clock; screen Y grows downward).
+     * @param cy TODO: document this
+     * @param radius TODO: document this
+     * @param degreesFromTop TODO: document this
+     */
     fun polarY(cy: Float, radius: Float, degreesFromTop: Float): Float =
         cy - radius * cos(degreesFromTop * PI / HALF_TURN).toFloat()
 
     /**
      * Angle in 0..360, clockwise from 12 o'clock, of the vector ([dx], [dy]) in screen coordinates
      * (x grows right, y grows down).
+      * @param dx TODO: document this
+      * @param dy TODO: document this
      */
     fun angleFromTop(dx: Float, dy: Float): Float =
         (atan2(dx.toDouble(), -dy.toDouble()) * HALF_TURN / PI).toFloat().mod(FULL_TURN)
 
-    /** Distance from ([ox], [oy]) to the farthest corner of a [width] by [height] rectangle: the radius that reaches every pixel. */
+    /**
+     * Distance from ([ox], [oy]) to the farthest corner of a [width] by [height] rectangle: the radius that reaches every pixel.
+     * @param ox TODO: document this
+     * @param oy TODO: document this
+     * @param width TODO: document this
+     * @param height TODO: document this
+     */
     fun farthestCorner(ox: Float, oy: Float, width: Float, height: Float): Float =
         max(max(hypot(ox, oy), hypot(width - ox, oy)), max(hypot(ox, height - oy), hypot(width - ox, height - oy)))
 
@@ -225,7 +248,12 @@ internal object CyberRadialMath {
         return fill + (1f - fill) * (1f - level)
     }
 
-    /** Opacity multiplier for the edge fade at the ends of a partial sector; 1 on a full circle or when [fadeDegrees] is 0. */
+    /**
+     * Opacity multiplier for the edge fade at the ends of a partial sector; 1 on a full circle or when [fadeDegrees] is 0.
+     * @param offset TODO: document this
+     * @param span TODO: document this
+     * @param fadeDegrees TODO: document this
+     */
     fun edgeFactor(offset: Float, span: Float, fadeDegrees: Float): Float {
         if (span >= FULL_TURN || fadeDegrees <= 0f) return 1f
         val fadeIn = smoothstep(0f, fadeDegrees, offset)
@@ -317,15 +345,27 @@ internal object CyberRadialMath {
         return SweepStops(head, trailStops(head, trail, steps, 0f, behindIsLower = movingClockwise))
     }
 
-    /** How far, 0..1, a ring [index] of [count] has travelled through its life when the loop is at [progress]; rings are evenly staggered. */
+    /**
+     * How far, 0..1, a ring [index] of [count] has travelled through its life when the loop is at [progress]; rings are evenly staggered.
+     * @param progress TODO: document this
+     * @param index TODO: document this
+     * @param count TODO: document this
+     */
     fun ringProgress(progress: Float, index: Int, count: Int): Float =
         (progress + index.toFloat() / count).mod(1f)
 
-    /** Position of a ring head along the inner-to-outer travel, 0 (start) to 1 (end), after [lifeProgress] of its life. */
+    /**
+     * Position of a ring head along the inner-to-outer travel, 0 (start) to 1 (end), after [lifeProgress] of its life.
+     * @param lifeProgress TODO: document this
+     */
     fun pulseHead(lifeProgress: Float, direction: CyberRadialDirection): Float =
         if (direction == CyberRadialDirection.OUTWARD) lifeProgress else 1f - lifeProgress
 
-    /** Opacity multiplier of a ring [lifeProgress] of the way through its life: 1 until [fadeStart], then fading to 0 at the end. */
+    /**
+     * Opacity multiplier of a ring [lifeProgress] of the way through its life: 1 until [fadeStart], then fading to 0 at the end.
+     * @param lifeProgress TODO: document this
+     * @param fadeStart TODO: document this
+     */
     fun pulseFade(lifeProgress: Float, fadeStart: Float): Float =
         if (fadeStart >= 1f) 1f else 1f - smoothstep(fadeStart, 1f, lifeProgress)
 }

@@ -69,6 +69,7 @@ data class CyberCometTracer(
         val w = width.toPx()
         val headPx = head.toPx()
 
+        // TODO: document this
         fun comet(s: Float, alphaScale: Float, out: MutableList<CyberPathLayer>) {
             for (k in 1..steps) {
                 val len = tailPx * k / steps

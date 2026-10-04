@@ -74,7 +74,12 @@ data class CyberParticleShower(
 
         val membersByClass = classes.indices.map { c -> (0 until count).filter { classOf[it] == c } }
 
-        /** Turns flattened [from, to] spans into a dash layer, or null when nothing is visible. */
+        /**
+         * Turns flattened [from, to] spans into a dash layer, or null when nothing is visible.
+         * @param width TODO: document this
+         * @param alpha TODO: document this
+         * @param hot TODO: document this
+         */
         fun layer(spans: FloatArray, width: Float, cap: StrokeCap, alpha: Float, hot: Float): CyberPathLayer? {
             val dash = if (closed) CyberPathGeometry.spansDash(total, spans) else CyberPathGeometry.openSpansDash(total, spans)
             return when {

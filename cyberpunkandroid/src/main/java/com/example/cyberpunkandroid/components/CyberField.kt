@@ -31,6 +31,8 @@ import com.example.cyberpunkandroid.effects.cyberComponentSemantics
  * @param errorText Optional validation error message. When present, switches field styling to semantic danger red.
  * @param isRequired When true, renders a highlighted cyan asterisk beside the label.
  * @param content Slot rendering the child input composable, receiving the current `isError` status.
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 @Composable
 fun CyberField(

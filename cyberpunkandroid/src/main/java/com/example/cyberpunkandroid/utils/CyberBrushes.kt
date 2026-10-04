@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Shader
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.toArgb
 
+// TODO: document this
 class CyberSweepGradientBrush(
     val colors: List<Color>,
     val centerOffset: Offset = Offset.Unspecified

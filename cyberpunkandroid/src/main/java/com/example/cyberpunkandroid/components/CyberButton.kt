@@ -71,6 +71,8 @@ enum class CyberButtonStyle {
  * @param enabled Controls whether the button responds to user clicks.
  * @param interactionSource Stream tracking interaction events such as press and hover.
  * @param content Composable slot providing button label or icons.
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 @Composable
 fun CyberButton(

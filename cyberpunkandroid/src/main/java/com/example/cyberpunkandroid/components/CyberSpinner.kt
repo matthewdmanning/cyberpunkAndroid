@@ -138,6 +138,8 @@ fun CyberSpinner(
  * @param text Optional loading or progress status copy (e.g. `"INITIALIZING..."`, `"DECRYPTING DATA"`).
  * @param color Primary neon tint color for the centered [CyberSpinner]. Defaults to [CyberTheme.colors.primary].
  * @param onDismissRequest Optional callback invoked when the user taps the overlay backdrop.
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 @Composable
 fun CyberSpinnerOverlay(
@@ -199,6 +201,8 @@ fun CyberSpinnerOverlay(
  * @param color Primary neon tint color for the centered spinner. Defaults to [CyberTheme.colors.primary].
  * @param onDismissRequest Optional callback invoked when tapping the backdrop.
  * @param content Base composable content obscured by the loading overlay while active.
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 @Composable
 fun CyberSpinnerOverlay(

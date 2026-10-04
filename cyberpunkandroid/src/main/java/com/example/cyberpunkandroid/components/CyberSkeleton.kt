@@ -26,6 +26,8 @@ import com.example.cyberpunkandroid.effects.cyberComponentSemantics
  * @param modifier Composable modifier providing skeleton dimensions and positioning.
  * @param baseColor Dark resting surface fill color. Defaults to [CyberTheme.colors.surface].
  * @param shimmerColor Translucent neon highlight sweep color. Defaults to 3% alpha [CyberTheme.colors.primary].
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 @Composable
 fun CyberSkeleton(

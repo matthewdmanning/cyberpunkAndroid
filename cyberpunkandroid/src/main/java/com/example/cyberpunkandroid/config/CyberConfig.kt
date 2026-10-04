@@ -5,11 +5,14 @@ import androidx.compose.animation.core.Easing
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
+// TODO: document this
 object CyberConfig {
+    // TODO: document this
     object Invariants {
         val ViewBox: Dp = 24.dp
     }
 
+    // TODO: document this
     object Easings {
         val CyberEasing: Easing = CubicBezierEasing(0.77f, 0.0f, 0.175f, 1.0f)
         val BounceEasing: Easing = CubicBezierEasing(0.68f, -0.55f, 0.265f, 1.55f)
@@ -21,12 +24,14 @@ object CyberConfig {
         val GlowPulseEasing: Easing = CubicBezierEasing(0.4f, 0.0f, 0.6f, 1.0f)
     }
 
+    // TODO: document this
     object Icon {
         const val DuotoneAlpha: Float = 0.4f
         const val OverloadAlpha: Float = 0.8f
         const val OverloadOffset: Float = 2.0f
     }
 
+    // TODO: document this
     object Shaders {
         const val OverloadCoefficient: Float = 0.1f
         const val CrtCurvature: Float = 0.3f
@@ -34,6 +39,7 @@ object CyberConfig {
         const val NoiseOpacity: Float = 0.03f
     }
 
+    // TODO: document this
     object Effects {
         const val GlowPulseDuration: Int = 1000
         const val PulseMinOpacity: Float = 0.2f

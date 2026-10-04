@@ -44,6 +44,7 @@ data class FeedbackConfig(
 
 /**
  * Loads a FeedbackConfig from a JSON file in the assets folder.
+  * @param fileName TODO: document this
  */
 fun loadFeedbackConfigFromAssets(context: Context, fileName: String): FeedbackConfig? {
     return try {
@@ -63,6 +64,7 @@ fun loadFeedbackConfigFromAssets(context: Context, fileName: String): FeedbackCo
     }
 }
 
+// TODO: document this
 fun resetFeedbackFiles(context: Context) {
     try {
         val ratingsFile = File(context.filesDir, "ratings.json")
@@ -91,6 +93,10 @@ fun resetFeedbackFiles(context: Context) {
  * A testing fixture to gather physical device feedback on parameter values.
  * Displays an adaptive grid of items based on the provided icon size, allowing the user to tap to grade them (+1, -1, 0).
  * Results are automatically recorded to local JSON on device storage.
+  * @param modifier TODO: document this
+  * @param resetKey TODO: document this
+  * @param appendedA11y TODO: document this
+  * @param customA11y TODO: document this
  */
 @Composable
 fun CyberFeedbackFixture(

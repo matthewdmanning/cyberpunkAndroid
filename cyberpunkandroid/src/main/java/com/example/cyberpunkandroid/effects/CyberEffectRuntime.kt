@@ -36,6 +36,7 @@ import androidx.compose.ui.draw.CacheDrawScope
  *
  * Wraps every 100 s so Float precision doesn't degrade over long uptimes (the wrap is a single-frame jump).
  * When [running] is false the clock holds at 0 and no frame callbacks are scheduled.
+  * @param running TODO: document this
  */
 @Composable
 internal fun rememberEffectClock(running: Boolean = true): State<Float> = produceState(0f, running) {
@@ -56,6 +57,7 @@ internal fun rememberEffectClock(running: Boolean = true): State<Float> = produc
  * Starts at its first target without animating (so an ALWAYS effect appears immediately), then animates
  * with [enterSpec] when activating and [exitSpec] when deactivating. Read the returned state inside draw or
  * graphicsLayer lambdas so frame updates skip recomposition.
+  * @param level TODO: document this
  */
 @Composable
 internal fun animateTriggeredLevel(
@@ -78,6 +80,7 @@ internal fun animateTriggeredLevel(
  * Progress from 0 to 1 that runs [enterSpec] each time [active] becomes true and [exitSpec] back to 0 when it
  * becomes false. Always starts at 0, so entrances (boot flicker, float, bounce) play on first composition.
  * [enterSpec] may be infinite (e.g. a repeating float); it is cancelled on deactivation.
+  * @param active TODO: document this
  */
 @Composable
 internal fun animateTriggeredProgress(
@@ -98,9 +101,11 @@ internal fun animateTriggeredProgress(
 internal class ShaderUniforms @RequiresApi(Build.VERSION_CODES.TIRAMISU) constructor(
     private val shader: RuntimeShader
 ) {
+    // TODO: document this
     @SuppressLint("NewApi") // Constructor requires API 33, so every instance lives on API 33+
     fun floatUniform(name: String, vararg values: Float) = shader.setFloatUniform(name, values)
 
+    // TODO: document this
     @SuppressLint("NewApi") // Constructor requires API 33, so every instance lives on API 33+
     fun colorUniform(name: String, color: Color) = shader.setColorUniform(name, color.toArgb())
 }
