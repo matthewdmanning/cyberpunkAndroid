@@ -43,8 +43,9 @@ import com.example.cyberpunkandroid.theme.CyberTheme
  *
  * @param title Fallback header text used when [headerContent] is not provided.
  * @param expanded Whether the accordion body is currently visible.
- * @param headerContent Optional custom header content rendered inside the accordion's primary header box.
- * @param onExpandedChange Called when the header requests an expansion-state change.
+ * @param headerContent Optional custom header content rendered inside the accordion's primary header box. When supplied,
+ * the chevron remains the expansion control so interactive header content such as [CyberTextField] can receive input.
+ * @param onExpandedChange Called when the header or chevron requests an expansion-state change.
  * @param content Expanded body content.
  */
 @Composable
@@ -85,7 +86,13 @@ fun CyberAccordion(
             modifier = Modifier
                 .fillMaxWidth()
                 .cyberSemantics("CyberAccordion", appendedA11y, customA11y)
-                .toggleable(value = expanded, role = Role.Button, onValueChange = onExpandedChange)
+                .then(
+                    if (headerContent == null) {
+                        Modifier.toggleable(value = expanded, role = Role.Button, onValueChange = onExpandedChange)
+                    } else {
+                        Modifier
+                    },
+                )
                 .semantics { stateDescription = if (expanded) "Expanded" else "Collapsed" }
                 .padding(CyberPrimitives.Spacing.dp12),
             verticalAlignment = Alignment.CenterVertically,
@@ -105,6 +112,13 @@ fun CyberAccordion(
                 text = if (expanded) "⌃" else "⌄",
                 modifier = Modifier
                     .size(CyberPrimitives.IconSizes.dp24)
+                    .then(
+                        if (headerContent != null) {
+                            Modifier.toggleable(value = expanded, role = Role.Button, onValueChange = onExpandedChange)
+                        } else {
+                            Modifier
+                        },
+                    )
                     .graphicsLayer { alpha = 0.95f }
                     .cyberTextGlow(color = CyberTheme.colors.primary, intensity = if (expanded) 1f else 0.75f)
                     .cyberSemantics("CyberAccordionChevron"),
