@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.clip
 import com.example.cyberpunkandroid.config.CyberPrimitives
 
 import com.example.cyberpunkandroid.theme.CyberTheme
+import com.example.cyberpunkandroid.effects.cyberComponentSemantics
 
 /**
  * Monospace sci-fi data table featuring chamfered cut corners, neon border, tinted header row, and alternating zebra-striped rows.
@@ -36,7 +37,7 @@ fun CyberTable(
     customA11y: String? = null,
 ) {
     Column(
-        modifier = modifier
+        modifier = modifier.cyberComponentSemantics("CyberTable", appendedA11y, customA11y)
             .fillMaxWidth()
             .clip(CyberTheme.shapes.cyberCutCornerShape)
             .background(CyberTheme.colors.surface)

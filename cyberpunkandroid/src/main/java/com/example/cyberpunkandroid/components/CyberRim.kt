@@ -17,6 +17,7 @@ import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import com.example.cyberpunkandroid.config.CyberPrimitives
+import com.example.cyberpunkandroid.effects.cyberComponentSemantics
 import com.example.cyberpunkandroid.effects.cyberSemantics
 import com.example.cyberpunkandroid.theme.CyberTheme
 import kotlinx.coroutines.delay
@@ -68,7 +69,7 @@ fun CyberRim(
                     y = (size.height - diameter) / 2f
                 )
                 val arcSize = Size(diameter, diameter)
-                
+
                 // Background Track
                 drawArc(
                     color = backgroundColor,
@@ -79,7 +80,7 @@ fun CyberRim(
                     size = arcSize,
                     style = Stroke(width = strokeWidth, cap = StrokeCap.Square)
                 )
-                
+
                 // Foreground Progress
                 if (sweepAngle > 0f) {
                     drawArc(
@@ -108,7 +109,7 @@ fun Modifier.cyberLongPressFill(
     customA11y: String? = null,
     onProgressUpdate: (Float) -> Unit,
     onComplete: () -> Unit
-): Modifier = this.pointerInput(Unit) {
+): Modifier = this.cyberComponentSemantics("CyberLongPressFill", appendedA11y, customA11y).pointerInput(Unit) {
     detectTapGestures(
         onPress = {
             var isPressed = true

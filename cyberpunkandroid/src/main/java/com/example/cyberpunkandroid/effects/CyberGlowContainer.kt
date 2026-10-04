@@ -19,11 +19,12 @@ fun CyberGlowContainer(
     color: Color = Color.Cyan,
     radius: Dp = 8.dp,
     intensity: Float = 1f,
+    dropoffPower: Float = 3f,
     contentAlignment: Alignment = Alignment.Center,
     content: @Composable BoxScope.() -> Unit
 ) {
     Box(
-        modifier = modifier.cyberTextGlow(color, radius, intensity),
+        modifier = modifier.cyberTextGlow(color, radius, intensity, dropoffPower),
         contentAlignment = contentAlignment,
         content = content
     )

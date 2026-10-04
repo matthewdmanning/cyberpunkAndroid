@@ -21,6 +21,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.example.cyberpunkandroid.config.CyberPrimitives
 
 import com.example.cyberpunkandroid.theme.CyberTheme
+import com.example.cyberpunkandroid.effects.cyberComponentSemantics
 
 /**
  * High-priority popup modal dialog window featuring chamfered cut corners, intense neon perimeter glow, and uppercase title bar.
@@ -56,7 +57,7 @@ fun CyberModal(
             contentAlignment = Alignment.Center
         ) {
             Column(
-                modifier = modifier
+                modifier = modifier.cyberComponentSemantics("CyberModal", appendedA11y, customA11y)
                     .fillMaxWidth()
                     .clip(CyberTheme.shapes.cyberCutCornerShape)
                     .background(CyberTheme.colors.background)
@@ -76,7 +77,7 @@ fun CyberModal(
                         }
                     }
                 }
-                
+
                 // Body
                 Column(
                     modifier = Modifier

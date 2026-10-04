@@ -26,3 +26,20 @@ fun Modifier.cyberSemantics(
         }
     }
 }
+
+/**
+ * Component variant of [cyberSemantics]: applies the label only when the caller supplies [appendedA11y] or
+ * [customA11y]. Without them, screen readers keep announcing the component's own content (a button's text,
+ * a table's cells) instead of its type name.
+ *
+ * @param name The component name used as the label prefix (e.g., "CyberButton").
+ * @param appendedA11y Optional text appended to [name] for extra context.
+ * @param customA11y Optional text that replaces the whole label.
+ */
+fun Modifier.cyberComponentSemantics(
+    name: String,
+    appendedA11y: String? = null,
+    customA11y: String? = null
+): Modifier =
+    if (appendedA11y.isNullOrBlank() && customA11y.isNullOrBlank()) this
+    else cyberSemantics(name, appendedA11y, customA11y)

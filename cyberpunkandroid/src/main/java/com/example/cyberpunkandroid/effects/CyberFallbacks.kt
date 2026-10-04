@@ -18,7 +18,7 @@ import kotlin.random.Random
  * Procedural Compose graphics fallback implementations for visual shaders on Android API < 33 (pre-Tiramisu)
  * and tooling environments where AGSL RuntimeShader is unsupported.
  */
-object CyberFallbacks {
+internal object CyberFallbacks {
 
     /**
      * Rasterizes a multi-pass chromatic aberration overload effect by shifting R and B color channels
@@ -67,7 +67,7 @@ object CyberFallbacks {
         translate(left = bOffset) {
             drawLayer(bLayer)
         }
-        
+
         // Add horizontal slice clipping for jitter
         if (random.nextFloat() > 0.8f) {
             val sliceY = random.nextFloat() * size.height
@@ -95,9 +95,10 @@ object CyberFallbacks {
     ) {
         drawContent()
         val isClear = color == Color.Transparent
-        val drawColor = if (isClear) Color.Black.copy(alpha = opacity) else color.copy(alpha = opacity)
-        val blendMode = if (isClear) BlendMode.DstOut else BlendMode.SrcOver
-        
+        // Transparent means "darken", matching the shader's up-to-70% darkening; otherwise tint toward color
+        val drawColor = if (isClear) Color.Black.copy(alpha = opacity * 0.7f) else color.copy(alpha = opacity)
+        val blendMode = BlendMode.SrcOver
+
         var y = offset
         while (y < size.height) {
             drawLine(
