@@ -12,14 +12,14 @@ To *use* these effects, go to [Modifiers & effects](modifiers-and-effects.md#dis
 Modifier.cyberOverload(…)            public API, CyberModifiers.kt
   └─ animateTriggeredLevel(…)         trigger → animated strength (0 = off)
   └─ rememberEffectClock()            seconds since start, wraps every 100 s
-  └─ Modifier.cyberShaderEffect(      CyberEffectRuntime.kt (internal)
+  └─ CyberEffectBaseNode (abstract base class)
         shaderSource = CyberShaders.OverloadShader,
         level, uniforms = { … }, fallback = { … })
           ├─ API 33+: RuntimeShader → RenderEffect on a graphicsLayer
           └─ API < 33: drawWithCache → CyberFallbacks.draw…Fallback
 ```
 
-`cyberShaderEffect` owns everything the shader effects have in common:
+`CyberEffectBaseNode` owns everything the shader effects have in common:
 
 - **Compiling:** compiles the shader once per call site.
 - **Standard uniforms:** sets the `resolution` uniform and attaches the content as the `contents` input.
@@ -140,9 +140,39 @@ Modifier.cyberOverload(…)            public API, CyberModifiers.kt
 
 1. **Write the AGSL** as a `const val` in `CyberShaders`, annotated `@Language("AGSL")`. Declare `uniform float2 resolution;` and `uniform shader contents;`, and sample the content with `contents.eval(coord)`.
 2. **Write a fallback** in `CyberFallbacks` as a `ContentDrawScope` extension that calls `drawContent()` itself. It can be a simpler approximation.
-3. **Add the modifier** in `CyberModifiers`, following the AGENTS.md parameter order (visual params → `trigger`/`interactionSource` → animation specs → accessibility):
+3. **Add the modifier node element** in `CyberModifiers`, following the AGENTS.md parameter order:
 
 ```kotlin
+internal data class CyberExampleElement(
+    val strength: Float,
+    val trigger: CyberInteractionTrigger,
+    val interactionSource: InteractionSource?,
+    val animationSpec: AnimationSpec<Float>
+) : ModifierNodeElement<CyberExampleNode>() {
+    override fun create() = CyberExampleNode(strength, trigger, interactionSource, animationSpec)
+    override fun update(node: CyberExampleNode) = node.update(strength, trigger, interactionSource, animationSpec)
+    override fun InspectorInfo.inspectableProperties() { name = "cyberExample" }
+}
+
+internal class CyberExampleNode(
+    var strength: Float,
+    trigger: CyberInteractionTrigger,
+    interactionSource: InteractionSource?,
+    animationSpec: AnimationSpec<Float>
+) : CyberEffectBaseNode(CyberShaders.ExampleShader, trigger, interactionSource, strength, animationSpec) {
+    fun update(strength: Float, trigger: CyberInteractionTrigger, interactionSource: InteractionSource?, animationSpec: AnimationSpec<Float>) {
+        this.strength = strength
+        updateBase(trigger, interactionSource, strength, animationSpec, true)
+    }
+    override fun applyShaderUniforms(shader: RuntimeShader, size: Size, clock: Float, current: Float) {
+        shader.setFloatUniform("time", clock)
+        shader.setFloatUniform("strength", current)
+    }
+    override fun ContentDrawScope.drawFallback(current: Float, clock: Float) {
+        with(CyberFallbacks) { drawExampleFallback(current, clock) }
+    }
+}
+
 fun Modifier.cyberExample(
     strength: Float = 0.5f,
     trigger: CyberInteractionTrigger = CyberInteractionTrigger.ALWAYS,
@@ -150,26 +180,9 @@ fun Modifier.cyberExample(
     animationSpec: AnimationSpec<Float> = tween(300),
     appendedA11y: String? = null,
     customA11y: String? = null
-): Modifier = this.cyberSemantics("CyberExample", appendedA11y, customA11y).composed {
-    val level = animateTriggeredLevel(trigger, interactionSource, strength, animationSpec, label = "exampleStrength")
-    val clock = rememberEffectClock()
-
-    cyberShaderEffect(
-        shaderSource = CyberShaders.ExampleShader,
-        level = level,
-        uniforms = { _, current ->
-            floatUniform("time", clock.value)
-            floatUniform("strength", current)
-        },
-        fallback = {
-            // Build per-size resources here (brushes, graphics layers)
-            val draw: CyberFallbackDraw = { current ->
-                with(CyberFallbacks) { drawExampleFallback(current, clock.value) }
-            }
-            draw
-        }
-    )
-}
+): Modifier = this.cyberSemantics("CyberExample", appendedA11y, customA11y).then(
+    CyberExampleElement(strength, trigger, interactionSource, animationSpec)
+)
 ```
 
 4. **Document it:**
@@ -181,3 +194,4 @@ fun Modifier.cyberExample(
 - Read `clock.value` and the `level` state inside `uniforms`/`fallback` lambdas, never in the composable body. That keeps per-frame updates in the draw phase, with no recomposition.
 - Use `colorUniform` (not `floatUniform`) for `layout(color)` uniforms so colors are converted to the right color space.
 - Keep loops bounded by constants; AGSL requires it.
+
