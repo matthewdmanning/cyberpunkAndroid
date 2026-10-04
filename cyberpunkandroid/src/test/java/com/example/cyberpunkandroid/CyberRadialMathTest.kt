@@ -1,10 +1,10 @@
 package com.example.cyberpunkandroid
 
 import com.example.cyberpunkandroid.effects.AlphaStop
-import com.example.cyberpunkandroid.effects.CyberRadialDirection
-import com.example.cyberpunkandroid.effects.CyberRadialMath
-import com.example.cyberpunkandroid.effects.CyberRadialSector
-import com.example.cyberpunkandroid.effects.CyberSweepMode
+import com.example.cyberpunkandroid.utils.CyberRadialDirection
+import com.example.cyberpunkandroid.utils.CyberRadialMath
+import com.example.cyberpunkandroid.utils.CyberRadialSector
+import com.example.cyberpunkandroid.utils.CyberSweepMode
 import com.example.cyberpunkandroid.effects.SweepPose
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

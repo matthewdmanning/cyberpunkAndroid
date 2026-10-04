@@ -14,13 +14,13 @@ import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.cyberpunkandroid.effects.CyberInteractionTrigger
 import com.example.cyberpunkandroid.effects.CyberParticleShower
-import com.example.cyberpunkandroid.effects.CyberPulseStyle
+import com.example.cyberpunkandroid.utils.CyberPulseStyle
 import com.example.cyberpunkandroid.effects.CyberRadarSweep
-import com.example.cyberpunkandroid.effects.CyberRadialDirection
+import com.example.cyberpunkandroid.utils.CyberRadialDirection
 import com.example.cyberpunkandroid.effects.CyberRadialPulse
 import com.example.cyberpunkandroid.effects.CyberRadialRegion
-import com.example.cyberpunkandroid.effects.CyberRadialSector
-import com.example.cyberpunkandroid.effects.CyberSweepMode
+import com.example.cyberpunkandroid.utils.CyberRadialSector
+import com.example.cyberpunkandroid.utils.CyberSweepMode
 import com.example.cyberpunkandroid.effects.cyberPathAlong
 import com.example.cyberpunkandroid.effects.cyberPathBorder
 import com.example.cyberpunkandroid.effects.cyberRadarSweep

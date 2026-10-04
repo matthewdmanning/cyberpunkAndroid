@@ -68,14 +68,14 @@ fun SandboxScreen(onBack: () -> Unit) {
 
         Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
             // Raw CyberDialTicks with Glow Modifier
-            com.example.cyberpunkandroid.icons.CyberDialTicks(
+            com.example.cyberpunkandroid.components.CyberDialTicks(
                 modifier = Modifier.cyberTextGlow(color = CyberTheme.colors.secondary, radius = 8.dp),
                 color = CyberTheme.colors.secondary,
                 size = 120.dp
             )
 
             // Raw CyberSectorRim with Pulse Effect
-            com.example.cyberpunkandroid.icons.CyberSectorRim(
+            com.example.cyberpunkandroid.components.CyberSectorRim(
                 modifier = Modifier.cyberIconPulse(),
                 color = CyberTheme.colors.primary,
                 sectorAngles = listOf(180f, 45f, 45f), // Asymmetrical sectors
