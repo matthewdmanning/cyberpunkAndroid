@@ -1,5 +1,6 @@
 package com.example.cyberpunkandroid.effects
 
+import com.example.cyberpunkandroid.utils.*
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode

@@ -16,8 +16,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.cyberpunkandroid.components.CyberCard
-import com.example.cyberpunkandroid.effects.CyberGlowContainer
-import com.example.cyberpunkandroid.effects.GlowingText
+import com.example.cyberpunkandroid.effects.cyberTextGlow
+import androidx.compose.foundation.layout.Box
+import com.example.cyberpunkandroid.components.GlowingText
 import com.example.cyberpunkandroid.effects.cyberTextGlow
 import com.example.cyberpunkandroid.theme.CyberTheme
 
@@ -89,11 +90,9 @@ fun GlowTestScreen() {
                     .padding(32.dp),
                 contentAlignment = Alignment.Center
             ) {
-                CyberGlowContainer(
-                    color = Color.Green,
-                    radius = 24.dp,
+                Box(modifier = Modifier.cyberTextGlow(color = Color.Green, radius = 24.dp,
                     intensity = 2f
-                ) {
+                ), contentAlignment = androidx.compose.ui.Alignment.Center) {
                     Text(
                         text = "CONTAINER GLOW",
                         style = CyberTheme.typography.display,

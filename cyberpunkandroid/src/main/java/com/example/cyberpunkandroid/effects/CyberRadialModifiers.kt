@@ -1,5 +1,6 @@
 package com.example.cyberpunkandroid.effects
 
+import com.example.cyberpunkandroid.utils.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember

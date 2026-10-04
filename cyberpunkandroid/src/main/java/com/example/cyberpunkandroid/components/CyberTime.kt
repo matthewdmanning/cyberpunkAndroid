@@ -10,7 +10,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.example.cyberpunkandroid.icons.CyberSectorRim
+import com.example.cyberpunkandroid.components.CyberSectorRim
 import com.example.cyberpunkandroid.theme.CyberTheme
 import com.example.cyberpunkandroid.effects.cyberComponentSemantics
 

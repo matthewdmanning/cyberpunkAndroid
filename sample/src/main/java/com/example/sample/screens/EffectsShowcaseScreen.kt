@@ -23,9 +23,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.cyberpunkandroid.components.CyberCard
 import com.example.cyberpunkandroid.config.CyberPrimitives
-import com.example.cyberpunkandroid.effects.CyberGlowIconPath
-import com.example.cyberpunkandroid.effects.CyberSpark
-import com.example.cyberpunkandroid.effects.GlowingText
+import com.example.cyberpunkandroid.components.CyberGlowIconPath
+import com.example.cyberpunkandroid.effects.cyberSpark
+import androidx.compose.foundation.layout.Box
+import com.example.cyberpunkandroid.components.GlowingText
 import com.example.cyberpunkandroid.effects.cyberGlowBorder
 import com.example.cyberpunkandroid.effects.cyberGlowBorderRounded
 import com.example.cyberpunkandroid.icons.CyberIcon
@@ -56,17 +57,12 @@ object EffectsShowcase {
             name = "cyberSpark",
             description = "AGSL fine popcorn spark particles with parabolic downward gravity arcs & birth flashes"
         ) {
-            CyberSpark(
-                modifier = Modifier
+            Box(modifier = Modifier
                     .fillMaxWidth()
                     .height(400.dp)
                     .background(CyberTheme.colors.surfaceSecondary)
-                    .padding(CyberPrimitives.Spacing.dp16),
-                sparkCount = 16,
-                intensity = 1.0f,
-                speed = 1.2f,
-                color = CyberTheme.colors.primary
-            ) {
+                    .padding(CyberPrimitives.Spacing.dp16).cyberSpark(sparkCount = 16, intensity = 1.0f, speed = 1.2f, color = CyberTheme.colors.primary
+            ), contentAlignment = androidx.compose.ui.Alignment.Center) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(CyberPrimitives.Spacing.dp8)
