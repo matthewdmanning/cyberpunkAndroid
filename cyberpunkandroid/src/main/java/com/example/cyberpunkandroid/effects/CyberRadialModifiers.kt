@@ -25,6 +25,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.toSize
 import com.example.cyberpunkandroid.config.CyberRadialDefaults
+import com.example.cyberpunkandroid.theme.CyberElevation
 import com.example.cyberpunkandroid.theme.CyberTheme
 import com.example.cyberpunkandroid.utils.CyberPathGeometry
 
@@ -42,7 +43,7 @@ import com.example.cyberpunkandroid.utils.CyberPathGeometry
  *   `fadeSteps > 0` the fade is cut into visibly discrete bands. Ahead of the head nothing is drawn.
  * - A partial sector clips the wedge to a pie slice with a hard edge.
  * - The effect is drawn over the content, so it also tints the background. To light only icons, set
- *   `showWedge = false`, `headWidth = 0.dp` and put [cyberRadialIllumination] on the icons.
+ *   `showWedge = false`, `headWidth = CyberElevation.level0` and put [cyberRadialIllumination] on the icons.
  *
  * ```
  * val sweep = rememberCyberRadarSweep(tailDegrees = 120f, fadeSteps = 6)
@@ -237,7 +238,7 @@ fun Modifier.cyberRadialPulse(
  *
  * ```
  * val sweep = rememberCyberRadarSweep()
- * Box(Modifier.size(200.dp).cyberRadarSweep(sweep, showWedge = false, headWidth = 0.dp)) {
+ * Box(Modifier.size(200.dp).cyberRadarSweep(sweep, showWedge = false, headWidth = CyberElevation.level0)) {
  *     CyberIcon(CyberIcons.Wifi, "Wifi", Modifier.align(Alignment.TopCenter).cyberRadialIllumination(sweep))
  * }
  * ```
@@ -269,15 +270,22 @@ fun Modifier.cyberRadialIllumination(
     .radialSemantics("CyberRadialIllumination", appendedA11y, customA11y)
     .composed {
         val resolvedColor = if (color == Color.Unspecified) CyberTheme.colors.primary else color
-        var center: Offset? by remember { mutableStateOf<Offset?>(null) } // component center in root coordinates
+        var bounds: Rect? by remember { mutableStateOf<Rect?>(null) } // component bounds in root coordinates
         Modifier
-            .onGloballyPositioned { center = it.positionInRoot() + it.size.toSize().toRect().center }
+            .onGloballyPositioned { bounds = Rect(it.positionInRoot(), it.size.toSize()) }
             .drawWithCache {
                 val glowLayer = obtainGraphicsLayer()
                 val blurPx = radius.toPx()
                 onDrawWithContent {
-                    val at = center
-                    val level = if (at == null) 0f else field.intensityAt(at).coerceIn(0f, 1f) * maxIntensity
+                    val b = bounds
+                    val level = if (b == null) 0f else {
+                        val c = field.intensityAt(b.center)
+                        val tl = field.intensityAt(b.topLeft)
+                        val tr = field.intensityAt(b.topRight)
+                        val bl = field.intensityAt(b.bottomLeft)
+                        val br = field.intensityAt(b.bottomRight)
+                        maxOf(c, tl, tr, bl, br).coerceIn(0f, 1f) * maxIntensity
+                    }
                     if (level >= CyberRadialDefaults.Illumination.MinVisible) drawContourGlow(glowLayer, resolvedColor, blurPx, level)
                     drawContent()
                 }

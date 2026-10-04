@@ -2,6 +2,7 @@ package com.example.cyberpunkandroid.config
 
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.example.cyberpunkandroid.theme.CyberElevation
 
 /**
  * Default values for the radial effect system: the radar sweep, the radial pulse, icon illumination
@@ -18,14 +19,14 @@ object CyberRadialDefaults {
         /** Length of the fading trail behind the beam head, in degrees. A quarter turn reads as a classic radar wedge. */
         const val TrailDegrees: Float = 90f
 
-        /** One revolution (or one there-and-back in bounce mode) per 2.4 s, the same loop the path effects use. */
-        const val LoopMillis: Int = 2400
+        /** One revolution (or one there-and-back in bounce mode) per 0.6 s, the same loop the path effects use. */
+        const val LoopMillis: Int = 600
 
         /** Thickness of the bright line drawn at the head of the beam. Set the modifier's `headWidth` to 0 to hide it. */
         val HeadWidth: Dp = 1.5.dp
 
         /** Blur radius of the glow around the head line, matching the path dividers. Zero disables the glow. */
-        val GlowRadius: Dp = 6.dp
+        val GlowRadius: Dp = CyberElevation.level3
 
         /** Opacity of the wedge at its head. Kept below 1 so the wedge glows over a background rather than covering it. */
         const val WedgeAlpha: Float = 0.6f
@@ -42,17 +43,17 @@ object CyberRadialDefaults {
 
     /** Defaults for `rememberCyberRadialPulse` and `Modifier.cyberRadialPulse`. */
     object Pulse {
-        /** One pulse per 1.8 s. Ambient loop only: tap feedback must stay under 250 ms, so pass a shorter spec for that. */
-        const val LoopMillis: Int = 1800
+        /** One pulse per 0.8 s. Ambient loop only: tap feedback must stay under 250 ms, so pass a shorter spec for that. */
+        const val LoopMillis: Int = 800
 
         /** Length of the fading trail behind the ring head (the soft rim of a disc wipe). */
-        val Trail: Dp = 24.dp
+        val Trail: Dp = CyberPrimitives.Spacing.dp24
 
         /** Thickness of the bright ring drawn at the head. Set the modifier's `ringWidth` to 0 to hide it. */
-        val RingWidth: Dp = 2.dp
+        val RingWidth: Dp = CyberPrimitives.BorderWidths.dp2
 
         /** Blur radius of the glow around the ring line, matching the path dividers. Zero disables the glow. */
-        val GlowRadius: Dp = 6.dp
+        val GlowRadius: Dp = CyberElevation.level3
 
         /** Opacity of the trail at the ring head. */
         const val TrailAlpha: Float = 0.6f
@@ -94,7 +95,7 @@ object CyberRadialDefaults {
         val Width: Dp = 1.6.dp
 
         /** Length of the hot head of each comet. */
-        val Head: Dp = 3.dp
+        val Head: Dp = CyberElevation.level2
 
         /** Whole-number laps per loop. A comet with speed 3 laps three times per loop, so the loop stays seamless. */
         val Speeds: List<Int> = listOf(1, 2, 3)
