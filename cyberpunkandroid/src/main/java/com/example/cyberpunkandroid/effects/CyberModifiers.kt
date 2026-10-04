@@ -95,37 +95,18 @@ fun Modifier.cyberOverload(
     exitAnimationSpec: AnimationSpec<Float> = tween(300),
     appendedA11y: String? = null,
     customA11y: String? = null
-): Modifier = this.cyberSemantics("CyberOverload", appendedA11y, customA11y).composed {
-    if (!enabled) return@composed this
-
-    val level = animateTriggeredLevel(trigger, interactionSource, intensity, animationSpec, exitAnimationSpec, "overloadIntensity")
-    val clock = rememberEffectClock()
-
-    cyberShaderEffect(
-        shaderSource = CyberShaders.OverloadShader,
-        level = level,
-        uniforms = { _, current ->
-            floatUniform("time", clock.value * timeScale)
-            floatUniform("intensity", current)
-        },
-        fallback = {
-            val rLayer = obtainGraphicsLayer()
-            val bLayer = obtainGraphicsLayer()
-            val draw: CyberFallbackDraw = { current ->
-                with(CyberFallbacks) {
-                    drawOverloadFallback(current, clock.value * (timeScale / 0.15f), rLayer, bLayer)
-                }
-            }
-            draw
-        },
-        shaderLayer = {
-            val bouncePx = bounceAmount.toPx()
-            if (bouncePx > 0f) {
-                translationY = -bouncePx * kotlin.math.abs(kotlin.math.sin(clock.value * 10f))
-            }
-        }
+): Modifier = this.cyberSemantics("CyberOverload", appendedA11y, customA11y).then(
+    CyberOverloadElement(
+        enabled = enabled,
+        intensity = intensity,
+        timeScale = timeScale,
+        bounceAmount = bounceAmount,
+        trigger = trigger,
+        interactionSource = interactionSource,
+        animationSpec = animationSpec,
+        exitAnimationSpec = exitAnimationSpec
     )
-}
+)
 
 // -------------------------------------------------------------------------
 // 2) Scanlines Modifier
@@ -161,31 +142,18 @@ fun Modifier.cyberDatastream(
     animationSpec: AnimationSpec<Float> = tween(300),
     appendedA11y: String? = null,
     customA11y: String? = null
-): Modifier = this.cyberSemantics("CyberDatastream", appendedA11y, customA11y).composed {
-    val level by animateTriggeredLevel(trigger, interactionSource, maxAlpha, animationSpec, label = "datastreamAlpha")
-    val time by rememberEffectClock()
-
-    drawWithContent {
-        drawContent()
-        if (level > 0f && size.height > 0f) {
-            val baseExtent = size.height * 0.5f
-            val extent = if (mirror) baseExtent * 0.5f else baseExtent
-            val resolution = 8
-
-            val colors = List(resolution) { index ->
-                val factor = index.toFloat() / (resolution - 1)
-                color.copy(alpha = alphaTransform(factor) * level)
-            }
-
-            drawDatastreamGradient(
-                extent = extent,
-                forwardCenter = (time * speed * 100f) % size.height,
-                mirror = mirror,
-                colors = colors
-            )
-        }
-    }
-}
+): Modifier = this.cyberSemantics("CyberDatastream", appendedA11y, customA11y).then(
+    CyberDatastreamElement(
+        color = color,
+        speed = speed,
+        maxAlpha = maxAlpha,
+        mirror = mirror,
+        alphaTransform = alphaTransform,
+        trigger = trigger,
+        interactionSource = interactionSource,
+        animationSpec = animationSpec
+    )
+)
 
 // -------------------------------------------------------------------------
 // 7) Noise Texture Overlay Modifier
@@ -219,27 +187,17 @@ fun Modifier.cyberNoise(
     animationSpec: AnimationSpec<Float> = tween(300),
     appendedA11y: String? = null,
     customA11y: String? = null
-): Modifier = this.cyberSemantics("CyberNoise", appendedA11y, customA11y).composed {
-    if (!enabled) return@composed this
-
-    val level = animateTriggeredLevel(trigger, interactionSource, opacity, animationSpec, label = "noiseOpacity")
-    val clock = rememberEffectClock(running = animated)
-
-    cyberShaderEffect(
-        shaderSource = CyberShaders.NoiseShader,
-        level = level,
-        uniforms = { _, current ->
-            floatUniform("time", clock.value * speed)
-            floatUniform("intensity", current)
-        },
-        fallback = {
-            val draw: CyberFallbackDraw = { current ->
-                with(CyberFallbacks) { drawNoiseFallback(current, clock.value * speed) }
-            }
-            draw
-        }
+): Modifier = this.cyberSemantics("CyberNoise", appendedA11y, customA11y).then(
+    CyberNoiseElement(
+        enabled = enabled,
+        opacity = opacity,
+        speed = speed,
+        animated = animated,
+        trigger = trigger,
+        interactionSource = interactionSource,
+        animationSpec = animationSpec
     )
-}
+)
 
 // -------------------------------------------------------------------------
 // 8) Icon Animations
@@ -262,29 +220,15 @@ fun Modifier.cyberIconSpin(
     resetAnimationSpec: AnimationSpec<Float> = tween(300),
     appendedA11y: String? = null,
     customA11y: String? = null
-): Modifier = this.cyberSemantics("CyberIconSpin", appendedA11y, customA11y).composed {
-    val isActive = trigger.isActive(interactionSource)
-    val progress = remember { Animatable(0f) }
-
-    LaunchedEffect(isActive, animationSpec) {
-        if (isActive) {
-            progress.animateTo(
-                targetValue = progress.value + 360f,
-                animationSpec = animationSpec
-            )
-        } else {
-            progress.animateTo(0f, resetAnimationSpec)
-        }
-    }
-
-    graphicsLayer {
-        rotationZ = progress.value
-        if (bounceAmount.toPx() > 0f) {
-            val radians = progress.value * Math.PI / 180.0
-            translationY = -bounceAmount.toPx() * kotlin.math.abs(kotlin.math.sin(radians)).toFloat()
-        }
-    }
-}
+): Modifier = this.cyberSemantics("CyberIconSpin", appendedA11y, customA11y).then(
+    CyberIconSpinElement(
+        bounceAmount = bounceAmount,
+        trigger = trigger,
+        interactionSource = interactionSource,
+        animationSpec = animationSpec,
+        resetAnimationSpec = resetAnimationSpec
+    )
+)
 
 /**
  * Scale up and fade out radar ping effect with a locked dense core and diffuse outer ring.
@@ -316,41 +260,20 @@ fun Modifier.cyberPing(
     ),
     appendedA11y: String? = null,
     customA11y: String? = null
-): Modifier = this.cyberSemantics("CyberPing", appendedA11y, customA11y).composed {
-    val isActive = trigger.isActive(interactionSource)
-
-    val infiniteTransition = androidx.compose.animation.core.rememberInfiniteTransition()
-    val specToUse = if (isActive) animationSpec else infiniteRepeatable(tween(100), RepeatMode.Restart)
-
-    val progress by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = specToUse
+): Modifier = this.cyberSemantics("CyberPing", appendedA11y, customA11y).then(
+    CyberPingElement(
+        color = color,
+        durationMillis = durationMillis,
+        startScale = startScale,
+        maxDiffuseScale = maxDiffuseScale,
+        alphaDecayExponent = alphaDecayExponent,
+        shape = shape,
+        borderWidth = borderWidth,
+        trigger = trigger,
+        interactionSource = interactionSource,
+        animationSpec = animationSpec
     )
-
-    if (!isActive) return@composed this
-
-    val waveColor = if (color == Color.Unspecified) CyberPrimitives.Colors.Cyan500 else color
-
-    drawWithContent {
-        val maxDelta = maxDiffuseScale - startScale
-        val diffuseScale = startScale + progress * maxDelta
-        val diffuseAlpha = (1f - progress).toDouble().coerceAtLeast(0.0).let { Math.pow(it, alphaDecayExponent.toDouble()) }.toFloat()
-
-        drawContent()
-
-        val strokeWidthPx = borderWidth.toPx()
-        scale(diffuseScale, diffuseScale) {
-            val outline = shape.createOutline(size, layoutDirection, this)
-            val path = Path().apply { addOutline(outline) }
-            drawPath(
-                path = path,
-                color = waveColor.copy(alpha = diffuseAlpha),
-                style = Stroke(width = strokeWidthPx / diffuseScale) // Counteract the scale so stroke width stays constant
-            )
-        }
-    }
-}
+)
 
 /**
  * Pulses the opacity of the composable to draw attention, staying the same size.
@@ -372,22 +295,16 @@ fun Modifier.cyberIconPulse(
     ),
     appendedA11y: String? = null,
     customA11y: String? = null
-): Modifier = this.cyberSemantics("CyberIconPulse", appendedA11y, customA11y).composed {
-    val isActive = trigger.isActive(interactionSource)
-
-    val infiniteTransition = androidx.compose.animation.core.rememberInfiniteTransition()
-    val specToUse = if (isActive) animationSpec else infiniteRepeatable(tween(100), RepeatMode.Reverse)
-
-    val progress by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = specToUse
+): Modifier = this.cyberSemantics("CyberIconPulse", appendedA11y, customA11y).then(
+    CyberIconPulseElement(
+        durationMillis = durationMillis,
+        minOpacity = minOpacity,
+        maxOpacity = maxOpacity,
+        trigger = trigger,
+        interactionSource = interactionSource,
+        animationSpec = animationSpec
     )
-
-    graphicsLayer {
-        this.alpha = if (isActive) minOpacity + progress * (maxOpacity - minOpacity) else 1f
-    }
-}
+)
 
 
 /**
@@ -409,14 +326,16 @@ fun Modifier.cyberFloat(
     exitAnimationSpec: AnimationSpec<Float> = spring(),
     appendedA11y: String? = null,
     customA11y: String? = null
-): Modifier = this.cyberSemantics("CyberFloat", appendedA11y, customA11y).composed {
-    val isActive = trigger.isActive(interactionSource)
-    val progress = animateTriggeredProgress(isActive, animationSpec, exitAnimationSpec)
-
-    graphicsLayer {
-        translationY = -height.toPx() * progress.value
-    }
-}
+): Modifier = this.cyberSemantics("CyberFloat", appendedA11y, customA11y).then(
+    CyberFloatElement(
+        height = height,
+        durationMillis = durationMillis,
+        trigger = trigger,
+        interactionSource = interactionSource,
+        animationSpec = animationSpec,
+        exitAnimationSpec = exitAnimationSpec
+    )
+)
 
 /**
  * Flicker-in opacity sequence for bootups.
@@ -442,20 +361,14 @@ fun Modifier.cyberBoot(
     exitAnimationSpec: AnimationSpec<Float> = tween(300),
     appendedA11y: String? = null,
     customA11y: String? = null
-): Modifier = this.cyberSemantics("CyberBoot", appendedA11y, customA11y).composed {
-    val isActive = trigger.isActive(interactionSource)
-    // Starts dark only if booting immediately; an idle element (e.g. PRESS trigger) starts fully visible
-    val bootAlpha = remember { Animatable(if (isActive) 0f else 1f) }
-    LaunchedEffect(isActive) {
-        // Activating replays the flicker (its keyframes restart from 0); deactivating mid-flicker settles to
-        // full opacity with exitAnimationSpec instead of jumping
-        bootAlpha.animateTo(1f, if (isActive) animationSpec else exitAnimationSpec)
-    }
-
-    graphicsLayer {
-        alpha = bootAlpha.value
-    }
-}
+): Modifier = this.cyberSemantics("CyberBoot", appendedA11y, customA11y).then(
+    CyberBootElement(
+        trigger = trigger,
+        interactionSource = interactionSource,
+        animationSpec = animationSpec,
+        exitAnimationSpec = exitAnimationSpec
+    )
+)
 
 
 
@@ -476,14 +389,15 @@ fun Modifier.cyberBounce(
     exitAnimationSpec: AnimationSpec<Float> = spring(),
     appendedA11y: String? = null,
     customA11y: String? = null
-): Modifier = this.cyberSemantics("CyberBounce", appendedA11y, customA11y).composed {
-    val isActive = trigger.isActive(interactionSource)
-    val progress = animateTriggeredProgress(isActive, animationSpec, exitAnimationSpec)
-
-    graphicsLayer {
-        translationY = -height.toPx() * progress.value
-    }
-}
+): Modifier = this.cyberSemantics("CyberBounce", appendedA11y, customA11y).then(
+    CyberBounceElement(
+        height = height,
+        trigger = trigger,
+        interactionSource = interactionSource,
+        animationSpec = animationSpec,
+        exitAnimationSpec = exitAnimationSpec
+    )
+)
 
 /**
  * CRT screen look: barrel distortion and a vignette. The center bulges outward and the border darkens.
@@ -505,32 +419,13 @@ fun Modifier.cyberCrt(
     interactionSource: InteractionSource? = null,
     appendedA11y: String? = null,
     customA11y: String? = null
-): Modifier = this.cyberSemantics("CyberCrt", appendedA11y, customA11y).composed {
-    if (!enabled) return@composed this
-    val isActive = trigger.isActive(interactionSource)
-    val level = androidx.compose.runtime.rememberUpdatedState(if (isActive) 1f else 0f)
-    val clock = rememberEffectClock()
-
-    cyberShaderEffect(
-        shaderSource = CyberShaders.CrtShader,
-        level = level,
-        uniforms = { _, _ -> floatUniform("time", clock.value) },
-        // Fallback for older APIs: draw a vignette overlay
-        fallback = {
-            val radialGradient = Brush.radialGradient(
-                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.55f)),
-                radius = size.width.coerceAtLeast(size.height) * 0.75f,
-                center = Offset(size.width / 2f, size.height / 2f)
-            )
-            val draw: CyberFallbackDraw = {
-                drawContent()
-                drawRect(brush = radialGradient)
-            }
-            draw
-        },
-        clipWhenIdle = false
+): Modifier = this.cyberSemantics("CyberCrt", appendedA11y, customA11y).then(
+    CyberCrtElement(
+        enabled = enabled,
+        trigger = trigger,
+        interactionSource = interactionSource
     )
-}
+)
 
 
 /**
@@ -580,40 +475,14 @@ fun Modifier.cyberStripes(
     ),
     appendedA11y: String? = null,
     customA11y: String? = null
-): Modifier = this.cyberSemantics("CyberStripes", appendedA11y, customA11y).composed {
-    val infiniteTransition = rememberInfiniteTransition()
-    val phase by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = animationSpec,
-        label = "stripePhase"
+): Modifier = this.cyberSemantics("CyberStripes", appendedA11y, customA11y).then(
+    CyberStripesElement(
+        color = color,
+        stripeWidth = stripeWidth,
+        speed = speed,
+        animationSpec = animationSpec
     )
-
-    drawWithCache {
-        val widthPx = stripeWidth.toPx()
-        // Described as a background, so stripes are drawn behind the content
-        onDrawWithContent {
-            clipRect {
-                val diagonalLength = size.width + size.height
-                val numStripes = (diagonalLength / (widthPx * 2)).toInt() + 2
-                val shift = phase * widthPx * 2
-
-                for (i in -1..numStripes) {
-                    val offset = i * widthPx * 2 + shift
-                    val start = Offset(offset - size.height, size.height)
-                    val end = Offset(offset, 0f)
-                    drawLine(
-                        color = color,
-                        start = start,
-                        end = end,
-                        strokeWidth = widthPx
-                    )
-                }
-            }
-            drawContent()
-        }
-    }
-}
+)
 
 /**
  * 4-Phase Holographic Shifting Background.
@@ -627,43 +496,11 @@ fun Modifier.cyberHoloBackground(
     ),
     appendedA11y: String? = null,
     customA11y: String? = null
-): Modifier = this.cyberSemantics("CyberHolo", appendedA11y, customA11y).composed {
-    val infiniteTransition = rememberInfiniteTransition()
-    val phase by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = animationSpec,
-        label = "holoPhase"
+): Modifier = this.cyberSemantics("CyberHolo", appendedA11y, customA11y).then(
+    CyberHoloBackgroundElement(
+        animationSpec = animationSpec
     )
-
-    val bg = LocalCyberColors.current.secondary
-    val c1 = CyberPrimitives.Colors.Cyan500.copy(alpha = 0.3f)
-    val c2 = CyberPrimitives.Colors.Magenta500.copy(alpha = 0.3f)
-    val c3 = CyberPrimitives.Colors.Green500.copy(alpha = 0.3f)
-
-    drawWithCache {
-        val sweep = Brush.sweepGradient(
-            0.0f to bg,
-            0.25f to c1,
-            0.5f to c2,
-            0.75f to c3,
-            1.0f to bg,
-            center = Offset(size.width / 2, size.height / 2)
-        )
-        onDrawWithContent {
-            // We use graphicsLayer rotation for phase shift instead of recalculating brush natively
-            // Rotate the draw context
-            rotate(phase * 360f) {
-                drawRect(
-                    brush = sweep,
-                    size = size.copy(width = size.width * 2, height = size.height * 2),
-                    topLeft = Offset(-size.width/2, -size.height/2)
-                )
-            }
-            drawContent()
-        }
-    }
-}
+)
 
 /**
  * Glassmorphism overlay: applies translucent tint, subtle borders/shadows, and optional blur on API 31+.
@@ -713,92 +550,16 @@ fun Modifier.cyberSpark(
     animationSpec: AnimationSpec<Float> = tween(300),
     appendedA11y: String? = null,
     customA11y: String? = null
-): Modifier = this.cyberSemantics("CyberSpark", appendedA11y, customA11y).composed {
-    val primary = if (color == Color.Unspecified) CyberTheme.colors.primary else color
-    val secondary = if (secondaryColor == Color.Unspecified) CyberTheme.colors.secondary else secondaryColor
-    val warning = if (warningColor == Color.Unspecified) CyberTheme.semantics.colors.warning else warningColor
-
-    val level = animateTriggeredLevel(trigger, interactionSource, intensity, animationSpec, label = "sparkIntensity")
-    val clock = rememberEffectClock()
-
-    this.drawWithCache {
-        onDrawWithContent {
-            drawContent()
-            val currentIntensity = level.value
-            if (currentIntensity <= 0f || sparkCount <= 0) return@onDrawWithContent
-
-            val time = clock.value * speed
-            val center = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height / 2f)
-            val maxExtent = minOf(size.width, size.height) * 0.45f
-
-            // TODO: document this
-            fun hash(n: Float): Float = (kotlin.math.sin(n * 127.1f) * 43758.545f).let { it - kotlin.math.floor(it) }
-
-            for (i in 0 until sparkCount) {
-                val sparkSpeedMultiplier = 0.8f + hash(i * 3.1f) * 1.2f
-                val sparkTimeOffset = hash(i * 7.7f)
-
-                val cycleFloat = time * sparkSpeedMultiplier + sparkTimeOffset
-                val epoch = kotlin.math.floor(cycleFloat)
-                val t = cycleFloat - epoch
-
-                // Stable random seed for THIS specific flight arc
-                val seed = (i * 10000 + epoch.toInt()).toLong()
-                val random = kotlin.random.Random(seed)
-
-                // Easing curve (LinearInSlowOut)
-                val easedT = t * t * (3f - 2f * t)
-
-                // Always start off going UP: angle between -135 deg and -45 deg
-                val angle = -2.356f + random.nextFloat() * 1.5708f
-                val spd = (0.4f + random.nextFloat() * 0.6f) * maxExtent
-
-                val vx = kotlin.math.cos(angle) * spd
-                val vy = kotlin.math.sin(angle) * spd
-                val gravity = 1.2f * maxExtent
-
-                val sparkPos = androidx.compose.ui.geometry.Offset(
-                    center.x + vx * easedT,
-                    center.y + vy * easedT + 0.5f * gravity * easedT * easedT
-                )
-
-                // Radius decreases by half from beginning to end
-                val baseRadius = (3f + random.nextFloat() * 3f) * currentIntensity
-                val currentRadius = baseRadius * (1.0f - 0.5f * t)
-
-                // Plasma colorscale interpolation
-                val plasmaColor = when {
-                    t < 0.25f -> {
-                        val localT = t / 0.25f
-                        androidx.compose.ui.graphics.lerp(Color.White, warning, localT)
-                    }
-                    t < 0.60f -> {
-                        val localT = (t - 0.25f) / 0.35f
-                        androidx.compose.ui.graphics.lerp(primary, secondary, localT)
-                    }
-                    else -> {
-                        val localT = (t - 0.60f) / 0.40f
-                        androidx.compose.ui.graphics.lerp(secondary, warning.copy(alpha = 0.5f), localT)
-                    }
-                }
-
-                // Rapid cooling alpha decay
-                val alphaDecay = (1.0f - t)
-                val finalColor = plasmaColor.copy(alpha = plasmaColor.alpha * alphaDecay)
-
-                // Draw glowing aura
-                drawCircle(
-                    color = finalColor.copy(alpha = finalColor.alpha * 0.3f),
-                    radius = currentRadius * 2.5f,
-                    center = sparkPos
-                )
-                // Draw hot core
-                drawCircle(
-                    color = finalColor,
-                    radius = currentRadius,
-                    center = sparkPos
-                )
-            }
-        }
-    }
-}
+): Modifier = this.cyberSemantics("CyberSpark", appendedA11y, customA11y).then(
+    CyberSparkElement(
+        color = color,
+        secondaryColor = secondaryColor,
+        warningColor = warningColor,
+        sparkCount = sparkCount,
+        intensity = intensity,
+        speed = speed,
+        trigger = trigger,
+        interactionSource = interactionSource,
+        animationSpec = animationSpec
+    )
+)
