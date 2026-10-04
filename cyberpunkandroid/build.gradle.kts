@@ -1,6 +1,9 @@
+import org.gradle.api.publish.maven.MavenPublication
+
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.compose.compiler)
+    `maven-publish`
 }
 
 android {
@@ -30,11 +33,16 @@ android {
     buildFeatures {
         compose = true
     }
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
+    }
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
             all {
-                it.jvmArgs("-XX:+EnableDynamicAgentLoading") // To suppress Java 21 agent warnings if any, though optional
+                it.jvmArgs("-XX:+EnableDynamicAgentLoading")
             }
         }
     }
@@ -44,7 +52,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-    
+
     val composeBom = platform(libs.androidx.compose.bom)
     implementation(composeBom)
     androidTestImplementation(composeBom)
@@ -52,17 +60,30 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.foundation)
-    
+
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    testImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
+    testImplementation("org.robolectric:robolectric:4.14-beta-1")
+    testImplementation("androidx.test.ext:junit:1.1.5")
+    implementation("androidx.compose.material3:material3:1.4.0")
 }
-dependencies { testImplementation("androidx.compose.ui:ui-test-junit4")
- debugImplementation("androidx.compose.ui:ui-test-manifest")
- testImplementation("org.robolectric:robolectric:4.14-beta-1")
- testImplementation("androidx.test.ext:junit:1.1.5") }
-dependencies { implementation("androidx.compose.material3:material3:1.4.0") }
+
+afterEvaluate {
+    publishing {
+        publications {
+            register<MavenPublication>("release") {
+                from(components["release"])
+                groupId = "com.github.matthewdmanning.cyberpunkAndroid"
+                artifactId = "cyberpunkandroid"
+                version = System.getenv("VERSION") ?: "unspecified"
+            }
+        }
+    }
+}
 
 kotlin { jvmToolchain(11) }
