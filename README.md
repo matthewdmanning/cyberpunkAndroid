@@ -8,66 +8,29 @@ It provides hardware-accelerated, futuristic visual effects and highly customiza
 Add the JitPack repository to your `settings.gradle.kts` file:
 
 ```kotlin
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        google()
-        mavenCentral()
-        maven { url = uri("https://jitpack.io") }
-    }
-}
+maven { url = uri("https://jitpack.io") }
 ```
 
 Add the dependency to your app-level `build.gradle.kts`:
 
 ```kotlin
-dependencies {
-    implementation("com.github.matthewdmanning:cyberpunkAndroid:1.0.5")
-}
+implementation("com.github.matthewdmanning:cyberpunkAndroid:1.0.5")
 ```
 
-## Quick Start
+## Using the Library
 
 CyberpunkAndroid is designed around two main concepts:
 1. **Components**: Themed, structural building blocks (e.g., `CyberButton`, `CyberContainer`, `CyberTabs`).
 2. **Modifiers**: High-performance, shader-backed visual effects you can attach to *any* Compose layout (e.g., `Modifier.cyberOverload()`, `Modifier.cyberScanlines()`).
 
-### 1. Set up the Theme
-Wrap your application in the `CyberTheme` to provide the necessary design tokens, colors, and typography to the library's components:
+To get started, simply wrap your application content in `CyberTheme` to initialize the design tokens, colors, and typography. From there, you can drop in structural components and seamlessly chain Cyberpunk modifiers onto them to create highly interactive, futuristic UIs.
 
-```kotlin
-setContent {
-    CyberTheme {
-        // Your app content here
-    }
-}
-```
+## Performance Tips & Best Practices
 
-### 2. Use Components & Modifiers
-You can seamlessly combine Cyberpunk components with Cyberpunk modifiers to create highly interactive, futuristic UI elements:
-
-```kotlin
-import com.example.cyberpunkandroid.components.CyberButton
-import com.example.cyberpunkandroid.components.CyberContainer
-import com.example.cyberpunkandroid.effects.cyberScanlines
-import com.example.cyberpunkandroid.effects.cyberOverload
-import com.example.cyberpunkandroid.theme.CyberTheme
-
-@Composable
-fun SystemBootScreen() {
-    // A stylized container with a background scanline effect
-    CyberContainer(
-        modifier = Modifier.cyberScanlines(speed = 0.5f)
-    ) {
-        CyberButton(
-            onClick = { /* Launch Sequence */ },
-            text = "INITIALIZE",
-            // Applies a heavy GPU glitch effect when interacted with
-            modifier = Modifier.cyberOverload(intensity = 0.8f)
-        )
-    }
-}
-```
+- **Hardware Acceleration:** Under the hood, stateful effects (like CRT curves, overloads, and datastreams) leverage AGSL `RuntimeShader` on API 33+ devices. They execute entirely on the GPU and skip Compose recomposition phases. You can freely stack these modifiers on top-level screens without lagging the UI thread.
+- **Pre-API 33 Fallbacks:** For older devices, the library automatically falls back to procedural Canvas drawing. While optimized, applying heavy visual modifiers to dozens of items in a deeply nested `LazyColumn` on an older device may impact frame rates. Apply them strategically to focal points.
+- **Triggering Effects:** Use `CyberInteractionTrigger` effectively. Instead of running continuous animated effects (`ALWAYS`) on every single item, bind heavy effects to `PRESSED` or `FOCUSED` states using an `InteractionSource`. This ensures they only consume rendering resources when the user is actively engaging with the component.
+- **Keep it Lean:** The library's effects are built using the modern `Modifier.Node` API to guarantee zero allocations during recomposition. If you wrap these effects in your own custom modifiers, try to use `Modifier.Node` yourself or standard composable functions, avoiding the deprecated `Modifier.composed` anti-pattern to preserve these performance gains.
 
 ## Documentation
 
