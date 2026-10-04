@@ -71,12 +71,13 @@ afterEvaluate {
         publications {
             register<MavenPublication>("release") {
                 from(components["release"])
-                groupId = "com.github.matthewdmanning.cyberpunkAndroid"
-                artifactId = "cyberpunkandroid"
-                version = System.getenv("VERSION") ?: "unspecified"
+                groupId = "com.github.matthewdmanning"
+                artifactId = "cyberpunkAndroid"
+                version = System.getenv("JITPACK_VERSION") ?: System.getenv("VERSION") ?: "1.0.0"
             }
         }
     }
 }
 
 kotlin { jvmToolchain(11) }
+
