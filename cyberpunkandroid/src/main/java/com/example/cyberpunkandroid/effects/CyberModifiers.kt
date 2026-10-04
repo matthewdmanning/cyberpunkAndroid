@@ -131,61 +131,6 @@ fun Modifier.cyberOverload(
 // 2) Scanlines Modifier
 // -------------------------------------------------------------------------
 
-/**
- * Applies animated CRT cathode-ray scanlines and subtle barrel curvature over the composable.
- *
- * TODO(visual): the "subtle barrel curvature" is not implemented: ScanlinesShader only draws bands and the
- *  fallback only draws lines. Needs a decision on strength (CyberConfig.Shaders.CrtCurvature = 0.3 exists but is
- *  unused; cyberCrt uses 0.20, which is not subtle) and on whether the fallback should approximate it.
- *
- * ### Rendering Architecture:
- * - **Android 13+ (API 33+)**: Uses hardware AGSL [com.example.cyberpunkandroid.effects.CyberShaders.ScanlinesShader]
- *   drawing moving phosphor scanline bands.
- * - **API < 33 & Previews**: Falls back to [com.example.cyberpunkandroid.effects.CyberFallbacks.drawScanlinesFallback],
- *   rendering animated semi-transparent horizontal stroke lines on Compose graphics.
- *
- * @param spacing Vertical distance between adjacent scanline bars. Defaults to [com.example.cyberpunkandroid.config.CyberPrimitives.Spacing.dp4].
- * @param opacity Alpha transparency of the scanline pattern. Defaults to [com.example.cyberpunkandroid.config.CyberConfig.Shaders.ScanlineOpacity].
- * @param speed Frequency multiplier for vertical scanline translation.
-  * @param color TODO: document this
-  * @param appendedA11y TODO: document this
-  * @param customA11y TODO: document this
- */
-fun Modifier.cyberScanlines(
-    spacing: Dp = CyberPrimitives.Spacing.dp4,
-    opacity: Float = CyberConfig.Shaders.ScanlineOpacity,
-    speed: Float = 1.0f,
-    color: Color = Color.Transparent,
-    trigger: CyberInteractionTrigger = CyberInteractionTrigger.ALWAYS,
-    interactionSource: InteractionSource? = null,
-    animationSpec: AnimationSpec<Float> = tween(300),
-    appendedA11y: String? = null,
-    customA11y: String? = null
-): Modifier = this.cyberSemantics("CyberScanlines", appendedA11y, customA11y).composed {
-    val level = animateTriggeredLevel(trigger, interactionSource, opacity, animationSpec, label = "scanlinesOpacity")
-    val clock = rememberEffectClock()
-    val spacingPx = with(androidx.compose.ui.platform.LocalDensity.current) { spacing.toPx() }
-
-    cyberShaderEffect(
-        shaderSource = CyberShaders.ScanlinesShader,
-        level = level,
-        uniforms = { _, current ->
-            floatUniform("time", clock.value * speed)
-            floatUniform("scanlineOpacity", current)
-            floatUniform("spacing", spacingPx.coerceAtLeast(1f))
-            colorUniform("scanlineColor", color)
-        },
-        fallback = {
-            val draw: CyberFallbackDraw = { current ->
-                val offset = (clock.value * speed * 20f) % spacingPx
-                with(CyberFallbacks) {
-                    drawScanlinesFallback(spacingPx, current, offset, color)
-                }
-            }
-            draw
-        }
-    )
-}
 
 /**
  * A scanning line, usually moving vertically, with a trail of decaying opacity behind it. Blended with Screen,
