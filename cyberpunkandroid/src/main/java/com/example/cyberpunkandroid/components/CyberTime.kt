@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.cyberpunkandroid.icons.CyberSectorRim
 import com.example.cyberpunkandroid.theme.CyberTheme
+import com.example.cyberpunkandroid.effects.cyberComponentSemantics
 
 @Composable
 fun CyberTime(
@@ -25,7 +26,7 @@ fun CyberTime(
     customA11y: String? = null
 ) {
     Box(
-        modifier = modifier.size(size),
+        modifier = modifier.cyberComponentSemantics("CyberTime", appendedA11y, customA11y).size(size),
         contentAlignment = Alignment.Center
     ) {
         CyberSectorRim(
@@ -35,7 +36,7 @@ fun CyberTime(
             gapAngle = 10f,
             size = size
         )
-        
+
         Text(
             text = timeText,
             color = color,

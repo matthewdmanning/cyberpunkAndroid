@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import com.example.cyberpunkandroid.config.CyberPrimitives
 import com.example.cyberpunkandroid.theme.CyberTheme
+import com.example.cyberpunkandroid.effects.cyberComponentSemantics
 
 /**
  * Top-level sci-fi header navigation bar featuring sticky layout styling, glowing brand typography,
@@ -52,7 +53,7 @@ fun CyberNavigationBar(
     actions: (@Composable RowScope.() -> Unit)? = null,
 ) {
     Row(
-        modifier = modifier
+        modifier = modifier.cyberComponentSemantics("CyberNavigationBar", appendedA11y, customA11y)
             .fillMaxWidth()
             .background(CyberTheme.colors.surface.copy(alpha = 0.90f))
             .border(

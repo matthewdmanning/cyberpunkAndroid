@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.example.cyberpunkandroid.config.CyberPrimitives
 import com.example.cyberpunkandroid.theme.CyberTheme
+import com.example.cyberpunkandroid.effects.cyberComponentSemantics
 
 /**
  * Full-screen or container-filling blocking loading overlay with frosted glass styling and centered [CyberSpinner].
@@ -55,7 +56,7 @@ fun CyberSpinnerOverlay(
     val interactionSource = remember { MutableInteractionSource() }
 
     Box(
-        modifier = modifier
+        modifier = modifier.cyberComponentSemantics("CyberSpinnerOverlay", appendedA11y, customA11y)
             .fillMaxSize()
             .background(CyberPrimitives.Colors.Void500.copy(alpha = 0.90f))
             .clickable(
@@ -117,7 +118,7 @@ fun CyberSpinnerOverlay(
     onDismissRequest: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
-    Box(modifier = modifier) {
+    Box(modifier = modifier.cyberComponentSemantics("CyberSpinnerOverlay", appendedA11y, customA11y)) {
         content()
 
         AnimatedVisibility(

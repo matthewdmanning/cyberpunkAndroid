@@ -17,6 +17,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.cyberpunkandroid.theme.CyberTheme
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.drawText
+
 /*
  * ARCHITECTURE DIAGNOSTIC & ATTEMPTS LOG FOR GlowingText:
  * ----------------------------------------------------------------------------------
@@ -29,13 +37,15 @@ import com.example.cyberpunkandroid.theme.CyberTheme
  *   Paint.setMaskFilter(BlurMaskFilter) on hardware Canvas calls, rendering no glow at all.
  *
  * ATTEMPT 3: Multi-Stage Font Glyph Shadow Layering (CURRENT VERIFIED SOLUTION).
- * - How it works: Layer 4 distinct Text passes in a Box with generous padding.
+ * - How it works: Measure text layout once. Use drawBehind to layer 4 distinct Text passes in a Box with generous padding.
  *   - Pass 1 (Far Bloom): TextStyle with Shadow(blurRadius = 32dp, alpha = 0.25f)
  *   - Pass 2 (Mid Glow): TextStyle with Shadow(blurRadius = 16dp, alpha = 0.50f)
  *   - Pass 3 (Inner Glow): TextStyle with Shadow(blurRadius = 6dp, alpha = 0.85f)
  *   - Pass 4 (Foreground): Crisp sharp Text(textColor)
  * - Why this works: Native TextStyle Shadow calculates radial drop shadows strictly from font glyph vector paths.
  *   Layering 3 concentric shadow passes produces a 360-degree luminous aura surrounding each letter glyph with ZERO rectangular box!
+ * - Performance: We use a single transparent Text element to drive the layout dimensions, capturing its onTextLayout result,
+ *   and we perform the 4 drawing passes manually in a drawBehind modifier. This avoids paying the cost of measuring/laying out text 4 separate times.
  * ----------------------------------------------------------------------------------
  */
 
@@ -72,56 +82,62 @@ fun GlowingText(
     val midBlurPx = with(density) { glowRadius.toPx() }
     val innerBlurPx = with(density) { (glowRadius * 0.4f).toPx() }
 
+    var layoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+
     Box(
         modifier = modifier
             .cyberSemantics("GlowingText", appendedA11y, customA11y)
-            .padding(glowRadius * 1.5f),
+            .padding(glowRadius * 1.5f)
+            .drawBehind {
+                layoutResult?.let { result ->
+                    // Pass 1: Far Outer Bloom Shadow
+                    drawText(
+                        textLayoutResult = result,
+                        color = glowColor.copy(alpha = 0.30f),
+                        shadow = Shadow(
+                            color = glowColor.copy(alpha = 0.60f),
+                            offset = Offset.Zero,
+                            blurRadius = farBlurPx
+                        )
+                    )
+
+                    // Pass 2: Mid Glow Shadow
+                    drawText(
+                        textLayoutResult = result,
+                        color = glowColor.copy(alpha = 0.60f),
+                        shadow = Shadow(
+                            color = glowColor.copy(alpha = 0.85f),
+                            offset = Offset.Zero,
+                            blurRadius = midBlurPx
+                        )
+                    )
+
+                    // Pass 3: Inner High-Intensity Glow Shadow
+                    drawText(
+                        textLayoutResult = result,
+                        color = glowColor,
+                        shadow = Shadow(
+                            color = glowColor,
+                            offset = Offset.Zero,
+                            blurRadius = innerBlurPx
+                        )
+                    )
+
+                    // Pass 4: Crisp Sharp Foreground Text
+                    drawText(
+                        textLayoutResult = result,
+                        color = textColor
+                    )
+                }
+            },
         contentAlignment = Alignment.Center
     ) {
-        // Pass 1: Far Outer Bloom Shadow
+        // Transparent text drives the measurement and layout sizing for the Box
         Text(
             text = text,
-            color = glowColor.copy(alpha = 0.30f),
-            style = baseStyle.copy(
-                shadow = Shadow(
-                    color = glowColor.copy(alpha = 0.60f),
-                    offset = Offset.Zero,
-                    blurRadius = farBlurPx
-                )
-            )
-        )
-
-        // Pass 2: Mid Glow Shadow
-        Text(
-            text = text,
-            color = glowColor.copy(alpha = 0.60f),
-            style = baseStyle.copy(
-                shadow = Shadow(
-                    color = glowColor.copy(alpha = 0.85f),
-                    offset = Offset.Zero,
-                    blurRadius = midBlurPx
-                )
-            )
-        )
-
-        // Pass 3: Inner High-Intensity Glow Shadow
-        Text(
-            text = text,
-            color = glowColor,
-            style = baseStyle.copy(
-                shadow = Shadow(
-                    color = glowColor,
-                    offset = Offset.Zero,
-                    blurRadius = innerBlurPx
-                )
-            )
-        )
-
-        // Pass 4: Crisp Sharp Foreground Text
-        Text(
-            text = text,
-            color = textColor,
-            style = baseStyle
+            style = baseStyle,
+            color = Color.Transparent,
+            onTextLayout = { layoutResult = it }
         )
     }
 }

@@ -2,6 +2,8 @@
 
 This document serves as the reference guide for correctly applying visual effects and modifiers from the `cyberpunkandroid` library.
 
+For what each effect looks like and what every parameter does, see the [reference docs](reference/README.md).
+
 ---
 
 ## Macro-Shaders & Screen-Space Distortion

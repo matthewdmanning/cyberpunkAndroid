@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import com.example.cyberpunkandroid.config.CyberConfig
 import com.example.cyberpunkandroid.config.CyberPrimitives
 import com.example.cyberpunkandroid.theme.CyberTheme
+import com.example.cyberpunkandroid.effects.cyberComponentSemantics
 
 /**
  * Interactive individual navigation link with animated bottom glow border and hover/press tactile scaling.
@@ -82,7 +83,7 @@ fun CyberNavLink(
     )
 
     Column(
-        modifier = modifier
+        modifier = modifier.cyberComponentSemantics("CyberNavLink", appendedA11y, customA11y)
             .width(IntrinsicSize.Max)
             .scale(scaleValue)
             .clickable(
