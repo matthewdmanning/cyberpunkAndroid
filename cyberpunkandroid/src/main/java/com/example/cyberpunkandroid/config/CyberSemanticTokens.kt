@@ -3,7 +3,6 @@ package com.example.cyberpunkandroid.config
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 
-// TODO: document this
 @Immutable
 data class CyberSemanticColors(
     val caution: Color = CyberPrimitives.Colors.Yellow500,
@@ -15,13 +14,11 @@ data class CyberSemanticColors(
     val terminal: Color = CyberPrimitives.Colors.Cyan500
 )
 
-// TODO: document this
 @Immutable
 data class CyberSemanticDurations(
     val warningPulse: Int = CyberPrimitives.Durations.ms500
 )
 
-// TODO: document this
 @Immutable
 data class CyberSemanticTokens(
     val colors: CyberSemanticColors = CyberSemanticColors(),

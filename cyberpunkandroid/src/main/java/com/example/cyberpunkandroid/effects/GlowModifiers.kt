@@ -290,7 +290,6 @@ private fun Modifier.cyberGlowStroke(
     }
 }
 
-// TODO: document this
 @Deprecated("Use cyberGlowBorder instead", ReplaceWith("cyberGlowBorder(color, shape, glowRadius, width, appendedA11y=appendedA11y, customA11y=customA11y)"))
 fun Modifier.cyberNeonBorder(
     color: Color = Color.Cyan,
@@ -301,7 +300,6 @@ fun Modifier.cyberNeonBorder(
     customA11y: String? = null
 ): Modifier = cyberGlowBorder(color = color, shape = shape, glowRadius = glowRadius, width = width, appendedA11y = appendedA11y, customA11y = customA11y)
 
-// TODO: document this
 @Deprecated("Use cyberGlowBorderFlow instead", ReplaceWith("cyberGlowBorderFlow(colors, shape, glowRadius, width, speed, appendedA11y=appendedA11y, customA11y=customA11y)"))
 fun Modifier.cyberNeonBorderFlow(
     enabled: Boolean = true,

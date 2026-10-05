@@ -5,7 +5,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 
-// TODO: document this
 fun DrawScope.drawDatastreamGradient(
     extent: Float,
     forwardCenter: Float,
@@ -19,7 +18,6 @@ fun DrawScope.drawDatastreamGradient(
         add(Color.Transparent)
     }
 
-    // TODO: document this
     fun drawStream(centerOffset: Float, streamColors: List<Color>) {
         drawRect(
             brush = Brush.verticalGradient(

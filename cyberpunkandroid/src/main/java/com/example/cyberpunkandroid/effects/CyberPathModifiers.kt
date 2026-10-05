@@ -269,7 +269,6 @@ internal fun rememberPathProgress(isActive: Boolean, animationSpec: AnimationSpe
     return progress.asState()
 }
 
-// TODO: document this
 internal fun quantize(p: Float, steps: Int): Float = if (steps > 0) floor(p * steps) / steps else p
 
 /** The layer's own color, or the modifier color when the layer doesn't set one. */

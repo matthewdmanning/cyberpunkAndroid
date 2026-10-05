@@ -7,7 +7,6 @@ import androidx.compose.ui.unit.dp
 
 /** Maps the Cyber diagonal cut-corner style onto Material 3 shape roles. */
 fun cyberMaterialShapes(): Shapes {
-    // TODO: document this
     fun diagonalCut(cut: Dp) = CutCornerShape(
         topStart = 0.dp,
         topEnd = cut,

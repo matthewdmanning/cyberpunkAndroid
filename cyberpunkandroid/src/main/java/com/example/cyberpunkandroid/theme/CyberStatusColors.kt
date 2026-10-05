@@ -4,7 +4,6 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import com.example.cyberpunkandroid.config.CyberSemanticColors
 
-// TODO: document this
 @Immutable
 data class CyberStatusRole(
     val color: Color,
@@ -13,7 +12,6 @@ data class CyberStatusRole(
     val onContainer: Color
 )
 
-// TODO: document this
 @Immutable
 data class CyberStatusColors(
     val success: CyberStatusRole,
@@ -23,12 +21,10 @@ data class CyberStatusColors(
     val danger: CyberStatusRole
 )
 
-// TODO: document this
 fun cyberStatusColors(
     colors: CyberColors = CyberColors(),
     semantic: CyberSemanticColors = CyberSemanticColors()
 ): CyberStatusColors {
-    // TODO: document this
     fun role(accent: Color) = CyberStatusRole(
         color = accent,
         onColor = OnAccent,
