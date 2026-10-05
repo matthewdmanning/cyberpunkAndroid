@@ -31,6 +31,7 @@ class CyberComponentTestSuite(
 
     @Test
     fun testComponentRendering() {
+        composeTestRule.mainClock.autoAdvance = false
         composeTestRule.setContent {
             Box(modifier = Modifier.padding(16.dp).modifierFactory()) {
                 componentFactory()

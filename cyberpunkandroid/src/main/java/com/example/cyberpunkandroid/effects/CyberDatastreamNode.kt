@@ -12,7 +12,7 @@ import androidx.compose.ui.platform.InspectorInfo
 import com.example.cyberpunkandroid.utils.drawDatastreamGradient
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.isActive
-import androidx.compose.runtime.withFrameNanos
+import androidx.compose.animation.core.withInfiniteAnimationFrameNanos
 
 class CyberDatastreamElement(
     val color: Color,
@@ -99,7 +99,7 @@ class CyberDatastreamNode(
         coroutineScope.launch {
             var lastTime = 0L
             while (isActive) {
-                withFrameNanos { frameTime ->
+                withInfiniteAnimationFrameNanos { frameTime ->
                     if (lastTime == 0L) lastTime = frameTime
                     val delta = (frameTime - lastTime) / 1_000_000_000f
                     time += delta
