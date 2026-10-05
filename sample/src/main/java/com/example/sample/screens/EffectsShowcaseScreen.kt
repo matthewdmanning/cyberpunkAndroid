@@ -32,6 +32,15 @@ import com.example.cyberpunkandroid.effects.cyberGlowBorderRounded
 import com.example.cyberpunkandroid.icons.CyberIcon
 import com.example.cyberpunkandroid.icons.CyberIcons
 import com.example.cyberpunkandroid.theme.CyberTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.example.cyberpunkandroid.components.CyberButton
+import com.example.cyberpunkandroid.components.CyberButtonSize
+import com.example.cyberpunkandroid.components.CyberLaserText
+import com.example.cyberpunkandroid.effects.cyberLaserOutliner
 
 /**
  * Showcase object containing ONLY debug/unverified effects in a single-column, full-width layout
@@ -153,6 +162,44 @@ object EffectsShowcase {
                         modifier = Modifier.size(100.dp),
 
                     )
+                }
+            }
+        },
+        EffectItem(
+            name = "CyberLaserText & cyberLaserOutliner",
+            description = "Sequential letter-by-letter laser beam tracing with molten contact arc, falling sparks, and cooling weld bead"
+        ) {
+            var replayKey by remember { mutableIntStateOf(0) }
+            CyberCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(220.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(CyberPrimitives.Spacing.dp16),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    key(replayKey) {
+                        CyberLaserText(
+                            text = "CYBER",
+                            fontSize = 44.sp,
+                            laserColor = CyberTheme.colors.primary,
+                            weldColor = CyberTheme.colors.secondary,
+                            durationMillis = 3000
+                        )
+                    }
+                    CyberButton(
+                        onClick = { replayKey++ },
+                        size = CyberButtonSize.Small
+                    ) {
+                        Text(
+                            text = "REPLAY LASER WELD",
+                            style = CyberTheme.typography.terminal
+                        )
+                    }
                 }
             }
         }
