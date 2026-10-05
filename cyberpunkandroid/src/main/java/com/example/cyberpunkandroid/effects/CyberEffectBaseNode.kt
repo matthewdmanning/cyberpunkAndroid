@@ -18,7 +18,7 @@ import androidx.compose.ui.node.LayoutModifierNode
 import androidx.compose.ui.unit.Constraints
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import androidx.compose.runtime.withFrameMillis
+import androidx.compose.animation.core.withInfiniteAnimationFrameMillis
 import androidx.compose.ui.node.invalidateDraw
 import androidx.compose.ui.node.invalidatePlacement
 
@@ -90,7 +90,7 @@ internal abstract class CyberEffectBaseNode(
 
         clockJob = coroutineScope.launch {
             while (true) {
-                withFrameMillis { frameTime ->
+                withInfiniteAnimationFrameMillis { frameTime ->
                     clock = (frameTime % 100_000L) / 1000f
                     if (levelAnimatable.value > 0f) {
                         invalidatePlacement()

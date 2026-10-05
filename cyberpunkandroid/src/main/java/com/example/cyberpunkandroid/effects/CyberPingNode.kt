@@ -6,6 +6,7 @@ import androidx.compose.animation.core.InfiniteRepeatableSpec
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.withInfiniteAnimationFrameMillis
 import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,7 +25,6 @@ import com.example.cyberpunkandroid.config.CyberConfig
 import com.example.cyberpunkandroid.config.CyberPrimitives
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import androidx.compose.runtime.withFrameMillis
 
 internal data class CyberPingElement(
     val color: Color,
@@ -105,7 +105,7 @@ internal class CyberPingNode(
         launchAnimation()
         invalidationJob = coroutineScope.launch {
             while (true) {
-                withFrameMillis {
+                withInfiniteAnimationFrameMillis {
                     if (isActive()) {
                         invalidateDraw()
                     }

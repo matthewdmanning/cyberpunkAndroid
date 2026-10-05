@@ -14,7 +14,7 @@ import androidx.compose.ui.node.CompositionLocalConsumerModifierNode
 import androidx.compose.ui.node.currentValueOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.isActive
-import androidx.compose.runtime.withFrameNanos
+import androidx.compose.animation.core.withInfiniteAnimationFrameNanos
 
 class CyberSparkElement(
     val color: Color,
@@ -107,7 +107,7 @@ class CyberSparkNode(
         coroutineScope.launch {
             var lastTime = 0L
             while (isActive) {
-                withFrameNanos { frameTime ->
+                withInfiniteAnimationFrameNanos { frameTime ->
                     if (lastTime == 0L) lastTime = frameTime
                     val delta = (frameTime - lastTime) / 1_000_000_000f
                     time += delta
