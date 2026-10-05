@@ -2,7 +2,7 @@ import org.gradle.api.publish.maven.MavenPublication
 
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
+    // No kotlin-android plugin: AGP 9+ compiles Kotlin itself (built-in Kotlin) and rejects that plugin.
     alias(libs.plugins.compose.compiler)
     `maven-publish`
 }
