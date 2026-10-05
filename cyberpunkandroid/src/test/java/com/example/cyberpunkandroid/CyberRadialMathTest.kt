@@ -1,11 +1,11 @@
 package com.example.cyberpunkandroid
 
-import com.example.cyberpunkandroid.effects.AlphaStop
+import com.example.cyberpunkandroid.utils.AlphaStop
 import com.example.cyberpunkandroid.utils.CyberRadialDirection
 import com.example.cyberpunkandroid.utils.CyberRadialMath
 import com.example.cyberpunkandroid.utils.CyberRadialSector
 import com.example.cyberpunkandroid.utils.CyberSweepMode
-import com.example.cyberpunkandroid.effects.SweepPose
+import com.example.cyberpunkandroid.utils.SweepPose
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -209,3 +209,4 @@ class CyberRadialMathTest {
         assertEquals(1f, CyberRadialMath.pulseFade(1f, 1f), eps)                        // fade disabled
     }
 }
+
