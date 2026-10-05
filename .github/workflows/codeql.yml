@@ -38,7 +38,9 @@ jobs:
         java-version: '17'
 
     - name: Build Project
-      run: ./gradlew assembleDebug
+      # --no-daemon: CodeQL's build tracer cannot follow a long-lived Gradle daemon,
+      # and the same flag already fixes the Gradle 9.8.0 agent crash on JitPack (jitpack.yml).
+      run: ./gradlew assembleDebug --no-daemon
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
