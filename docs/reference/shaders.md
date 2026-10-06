@@ -10,13 +10,12 @@ To *use* these effects, go to [Modifiers & effects](modifiers-and-effects.md#dis
 
 ```
 Modifier.cyberOverload(…)            public API, CyberModifiers.kt
-  └─ animateTriggeredLevel(…)         trigger → animated strength (0 = off)
-  └─ rememberEffectClock()            seconds since start, wraps every 100 s
-  └─ CyberEffectBaseNode (abstract base class)
-        shaderSource = CyberShaders.OverloadShader,
-        level, uniforms = { … }, fallback = { … })
-          ├─ API 33+: RuntimeShader → RenderEffect on a graphicsLayer
-          └─ API < 33: drawWithCache → CyberFallbacks.draw…Fallback
+  └─ CyberOverloadElement             ModifierNodeElement
+        └─ CyberOverloadNode : CyberEffectBaseNode (abstract base class)
+              shaderSource = CyberShaders.OverloadShader,
+              trigger, interactionSource, strength, animationSpec
+                ├─ API 33+: RuntimeShader → RenderEffect on LayoutModifierNode layerBlock
+                └─ API < 33: DrawModifierNode.draw() → CyberFallbacks.drawOverloadFallback
 ```
 
 `CyberEffectBaseNode` owns everything the shader effects have in common:
@@ -108,6 +107,9 @@ Modifier.cyberOverload(…)            public API, CyberModifiers.kt
 ## `SparkShader`
 
 **Effect:** Particle sparks drawn analytically: no particle objects, and each pixel sums the light from every spark. Used by `Modifier.cyberSpark`.
+
+> [!NOTE]
+> `Modifier.cyberSpark` currently renders via Canvas particles (`ContentDrawScope.drawCircle`) on all API levels in `CyberSparkNode.kt`. `SparkShader` in `CyberShaders.kt` is retained internally for reference and future GPU shader acceleration.
 
 **What it computes, for each of `sparkCount` sparks (`i`, up to `MaxSparks` = 64)**
 1. **Life cycle:** each spark has its own staggered 0…1 life, `t = fract(time × speed × (0.8…2.0) + offset)`, with smoothstep easing for position.

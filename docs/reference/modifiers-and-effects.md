@@ -117,13 +117,13 @@ Box(modifier = Modifier.size(160.dp).cyberSpark(intensity = 1.2f)) {
 
 | Parameter | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `color` | `Color` | theme `primary` | Mid-life ember color. |
-| `secondaryColor` | `Color` | theme `secondary` | Late-life ember color. |
-| `warningColor` | `Color` | semantic `warning` | Birth flash color and final dim color. |
-| `sparkCount` | `Int` | `32` | Number of embers, 0–64 (values outside are clamped). |
-| `intensity` | `Float` | `1` | Brightness and ember size. |
-| `speed` | `Float` | `1` | How fast bursts cycle (linear: 2 = twice as fast). |
-| `animationSpec` | `AnimationSpec<Float>` | `tween(300)` | Fade in/out when the trigger changes (modifier only). |
+| `color` | `Color` | `Color.Unspecified` | Mid-life ember color (resolves to theme `primary`). |
+| `secondaryColor` | `Color` | `Color.Unspecified` | Late-life ember color (resolves to theme `secondary`). |
+| `warningColor` | `Color` | `Color.Unspecified` | Birth flash color and final dim color (resolves to `#FFB800`). |
+| `sparkCount` | `Int` | `32` | Number of embers rendered. |
+| `intensity` | `Float` | `1.0f` | Brightness and ember size multiplier. |
+| `speed` | `Float` | `1.0f` | Frequency multiplier for particle movement. |
+| `animationSpec` | `AnimationSpec<Float>` | `tween(300)` | Fade in/out when the trigger changes. |
 
 ---
 
@@ -182,6 +182,7 @@ Modifier
 | `shape` | `Shape` | `CutCornerShape(12.dp)` | Outline to trace. |
 | `glowRadius` | `Dp` | `8.dp` | Halo spread. `0.dp` draws only the sharp stroke. |
 | `width` | `Dp` | `2.dp` | Sharp stroke width. |
+| `alignment` | `CyberBorderAlignment` | `CyberBorderAlignment.BOTH` | Stroke alignment relative to the boundary (`INSIDE`, `OUTSIDE`, or `BOTH`). |
 
 ### `Modifier.cyberGlowBorderRounded`
 
@@ -193,6 +194,7 @@ Shortcut for `cyberGlowBorder(shape = RoundedCornerShape(cornerRadius))` with a 
 | `cornerRadius` | `Dp` | `16.dp` | Corner rounding. |
 | `glowRadius` | `Dp` | `12.dp` | Halo spread. |
 | `width` | `Dp` | `2.dp` | Sharp stroke width. |
+| `alignment` | `CyberBorderAlignment` | `CyberBorderAlignment.BOTH` | Stroke alignment relative to the boundary (`INSIDE`, `OUTSIDE`, or `BOTH`). |
 
 ### `Modifier.cyberGlowBorderFlow`
 
@@ -213,6 +215,7 @@ Modifier.cyberGlowBorderFlow(colors = listOf(CyberTheme.colors.primary, CyberThe
 | `glowRadius` | `Dp` | `8.dp` | Halo spread. |
 | `width` | `Dp` | `2.dp` | Sharp stroke width. |
 | `speed` | `Float` | `1` | Rotation speed; one turn per 2000 ms ÷ `speed` (minimum speed 0.1). |
+| `alignment` | `CyberBorderAlignment` | `CyberBorderAlignment.BOTH` | Stroke alignment relative to the boundary (`INSIDE`, `OUTSIDE`, or `BOTH`). |
 
 `cyberNeonBorder` and `cyberNeonBorderFlow` are **deprecated** aliases of `cyberGlowBorder` and `cyberGlowBorderFlow`.
 
@@ -254,6 +257,7 @@ GlowingText("NEON CITY", glowColor = CyberTheme.colors.secondary, fontSize = 36.
 | `glowColor` | `Color` | `color` | Halo color. |
 | `radius` | `Dp` | `12.dp` | Halo spread and padding. |
 | `intensity` | `Float` | `1.5` | Halo opacity/stacking; see `cyberTextGlow`. |
+| `dropoffPower` | `Float` | `3f` | Non-linear glow dropoff curve exponent. |
 
 ### `CyberGlowIconPath`
 
@@ -268,21 +272,38 @@ GlowingText("NEON CITY", glowColor = CyberTheme.colors.secondary, fontSize = 36.
 | `innerPadding` | `Dp` | `3.dp` | Inset of the mid glow layer. |
 | `radius` | `Dp` | `16.dp` | Far bloom spread (mid layer uses half). |
 | `intensity` | `Float` | `2` | Bloom strength. |
+| `dropoffPower` | `Float` | `3f` | Non-linear glow dropoff curve exponent. |
 
+### `Modifier.cyberLaserOutliner` & `CyberLaserText`
 
+**What:** Sequential letter-by-letter laser beam tracing with molten contact arc, falling sparks, and cooling weld bead.
 
-**What:** A `Box` that applies `cyberTextGlow` to everything inside it.
+**Looks like:** A piercing vertical laser beam tracks along letter borders sequentially from left to right. The contact point emits a molten arc flare and gravity-bound spark bursts, trailing a hot molten bead that settles into the final cooled outline. Defaults to a finite one-shot reveal.
 
-**Use for:** Glowing a group (an icon plus label) with one glow pass, instead of stacking a glow modifier on each child.
+**Use for:** Hero headers, futuristic title entrance reveals, and cybernetic text borders.
+
+```kotlin
+CyberLaserText(
+    text = "CYBER",
+    fontSize = 44.sp,
+    laserColor = CyberTheme.colors.primary,
+    weldColor = CyberTheme.colors.secondary,
+    durationMillis = 3000
+)
+```
 
 | Parameter | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `modifier` | `Modifier` | `Modifier` | Applied to the box. |
-| `color` | `Color` | `Color.Cyan` | Glow color. |
-| `radius` | `Dp` | `8.dp` | Glow spread. |
-| `intensity` | `Float` | `1` | Glow strength. |
-| `contentAlignment` | `Alignment` | `Center` | Child alignment. |
-| `content` | `BoxScope.() -> Unit` | required | Children. |
+| `text` | `String` | required | Text whose glyph contours will be laser-welded (`CyberLaserText` only). |
+| `fontSize` | `TextUnit` | `36.sp` | Font size of the text glyphs (`CyberLaserText` only). |
+| `strokeWidth` | `Dp` | `1.5.dp` | Thickness of the laser ray and welded outline stroke. |
+| `glowRadius` | `Dp` | `8.dp` | Optical bloom halo around the laser and molten seam. |
+| `sparkCount` | `Int` | `10` | Number of fizzing weld spark particles emitted from the contact point. |
+| `durationMillis` | `Int` | `2400` | Duration for the complete left-to-right welding pass. |
+| `laserColor` | `Color` | `Cyan` | Color of the vertical laser beam and contact flare. |
+| `weldColor` | `Color` | `#FFB800` | Hot molten color of the freshly deposited weld pool. |
+| `coolColor` | `Color` | `primary` | Settled color of the cooled weld outline once tracing completes. |
+| `guideAlpha` | `Float` | `0.08f` | Opacity of the unwelded blueprint guide outline. |
 
 ---
 

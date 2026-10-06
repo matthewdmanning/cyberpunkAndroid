@@ -143,21 +143,27 @@ Box(
 ## Overlays & Glassmorphism
 
 ### 6. Cyber Backdrop Blur (`Modifier.cyberBackdropBlur`)
-Blurs content drawn *behind* it in the Compose tree. Must be applied over background content.
+Applies a translucent tinted wash over layered content. Layer it as a floating overlay above your background content.
 
 ```kotlin
 Box(
     modifier = Modifier
         .fillMaxWidth()
         .height(140.dp)
-        .background(CyberTheme.colors.surfaceSecondary)
-        .cyberBackdropBlur(radius = 24.dp, tint = Color.Black.copy(alpha = 0.35f)),
+        .background(CyberTheme.colors.surfaceSecondary),
     contentAlignment = Alignment.Center
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
         CyberIcon(iconRes = CyberIcons.Eye, contentDescription = "Backdrop", size = CyberPrimitives.IconSizes.dp64, tint = CyberTheme.colors.secondary)
         Text("BACKGROUND CONTENT", style = CyberTheme.typography.terminal, color = CyberTheme.colors.secondary)
     }
+
+    // Floating overlay wash
+    Box(
+        modifier = Modifier
+            .matchParentSize()
+            .cyberBackdropBlur(tint = Color.Black.copy(alpha = 0.35f))
+    )
 }
 ```
 
@@ -166,7 +172,7 @@ Box(
 ## Glow Composables & Text Effects
 
 ### 7. GlowingText
-Emissive text glyph bloom rendered via native `BlurMaskFilter` on Canvas (`GlowingText.kt`), producing a clean contour glow with zero rectangular box.
+Emissive text glyph bloom rendered via multi-stage font glyph shadow layering in `TextStyle` (`GlowingText.kt`), producing a clean contour glow with zero rectangular box.
 
 ```kotlin
 GlowingText(
@@ -179,11 +185,11 @@ GlowingText(
 ```
 
 ### 8. CyberGlowIcon & CyberGlowIconPath
-Outer-contour vector path glow icons in [CyberGlowIcon.kt](../cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/effects/CyberGlowIcon.kt) that project bloom along vector path outlines.
+Outer-contour vector path glow icons in [CyberGlowIcon.kt](../cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/components/CyberGlowIcon.kt) that project bloom along vector path outlines.
 
 ```kotlin
 CyberGlowIconPath(
-    painter = painterResource(id = CyberIcons.Zap),
+    iconRes = CyberIcons.Zap,
     contentDescription = "Glow Icon Path",
     color = CyberTheme.colors.primary,
     glowColor = CyberTheme.colors.secondary,
