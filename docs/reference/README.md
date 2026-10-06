@@ -4,7 +4,7 @@ Reference docs for the visual layer of the `cyberpunkandroid` library: what each
 
 | Doc | Covers |
 | --- | --- |
-| [Modifiers & effects](modifiers-and-effects.md) | Every public `Modifier.cyber…` function and the effect composables (`GlowingText`, `CyberGlowIcon`, `CyberSpark`, …) |
+| [Modifiers & effects](modifiers-and-effects.md) | Every public `Modifier.cyber…` function and the effect composables (`GlowingText`, `CyberGlowIcon`, …) |
 | [Shaders](shaders.md) | The AGSL (Android Graphics Shading Language) shaders behind the distortion effects, their fallbacks, and how to add one |
 | [Icons](icons.md) | `CyberIcon`, its four render variants, the `CyberIcons` catalog, and the dial/rim decorations |
 
@@ -74,8 +74,10 @@ The distortion effects run an AGSL runtime shader on **Android 13+ (API 33)**. O
 
 | Effect | API 33+ | API 31–32 | API 24–30 |
 | --- | --- | --- | --- |
-| `cyberOverload`, `cyberScanlines`, `cyberNoise`, `cyberCrt`, `cyberSpark` | AGSL shader | Fallback | Fallback |
-| `cyberTextGlow`, `cyberGlowBorder*`, `cyberBackdropBlur` | Blur | Blur | No blur (see each entry) |
+| `cyberOverload`, `cyberScanlines`, `cyberNoise`, `cyberCrt` | AGSL shader | Fallback | Fallback |
+| `cyberSpark` | Canvas particles | Canvas particles | Canvas particles |
+| `cyberTextGlow`, `cyberGlowBorder*` | Blur | Blur | No blur (see each entry) |
+| `cyberBackdropBlur` | Tint wash | Tint wash | Tint wash |
 | Everything else | Same everywhere | | |
 
 Details per shader: [shaders.md](shaders.md).
@@ -92,7 +94,7 @@ The visual description is the spec. These effects don't draw what it describes y
 
 | Effect | Described as | Currently draws | Recommended direction |
 | --- | --- | --- | --- |
-| `cyberBackdropBlur` | Blurs and tints whatever is **behind** it (frosted glass over content) | Blurs foreground content over a tint | Style using translucent tint, gradient `Brush`, subtle border/shadow; avoid offscreen background capture layers |
+| `cyberBackdropBlur` | Blurs and tints whatever is **behind** it (frosted glass over content) | Translucent tint wash | Style using translucent tint, gradient `Brush`, subtle border/shadow; avoid offscreen background capture layers |
 | `cyberScanlines` | Scanlines **and subtle barrel curvature** | Scanlines only | Curvature strength; whether the fallback approximates it |
 | `cyberPing` | Expanding ring **with a locked dense core** | Expanding ring only | Is the core a stationary ring or a filled shape? |
 | `cyberBorder` | Static container border outline | Thin dashed or solid stroke in normal drawing path | Keep in normal drawing path (`Stroke`/`Brush`); use `cyberGlowBorder` or `dropShadow()` for active outer glow |

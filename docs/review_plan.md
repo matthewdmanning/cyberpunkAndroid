@@ -27,7 +27,7 @@ This document outlines the systematic code review protocol for the `codebase-dee
 - [ ] **Zero Magic Numbers**: All spatial dimensions, durations, and colors reference `CyberPrimitives`, `CyberConfig`, or `CyberTheme`.
 
 ### Gate 2: Resource Optimization & Graphics Layers
-*Reference: [ANDROID-COMPOSE-GRAPHICS-LAYER-RESOURCE-OPTIMIZATION.md](agents/ANDROID-COMPOSE-GRAPHICS-LAYER-RESOURCE-OPTIMIZATION.md)*
+*Reference: [ANDROID-COMPOSE-GRAPHICS-LAYER-RESOURCE-OPTIMIZATION.md](reference/ANDROID-COMPOSE-GRAPHICS-LAYER-RESOURCE-OPTIMIZATION.md)*
 
 - [ ] **No Unnecessary Offscreen Rasterization**:
   - `graphicsLayer` uses `CompositingStrategy.Auto` unless offscreen rendering is strictly required for correctness.
@@ -40,7 +40,7 @@ This document outlines the systematic code review protocol for the `codebase-dee
   - Resource-intensive techniques document: (1) Jetpack Compose example, (2) condition causing the expensive path, (3) cheaper standard alternative, and (4) correctness constraints.
 
 ### Gate 3: Material Surfaces & Directional Inlay Shadows
-*References: [ANDROID-MATERIAL-SURFACE-APPEARANCE-REFERENCE.md](agents/ANDROID-MATERIAL-SURFACE-APPEARANCE-REFERENCE.md) & [ANDROID-DIRECTIONAL-INLAY-SHADOW-REFERENCE.md](agents/ANDROID-DIRECTIONAL-INLAY-SHADOW-REFERENCE.md)*
+*References: [ANDROID-MATERIAL-SURFACE-APPEARANCE-REFERENCE.md](reference/ANDROID-MATERIAL-SURFACE-APPEARANCE-REFERENCE.md) & [ANDROID-DIRECTIONAL-INLAY-SHADOW-REFERENCE.md](reference/ANDROID-DIRECTIONAL-INLAY-SHADOW-REFERENCE.md)*
 
 - [ ] **Standard Primitives First**:
   - Glass, metal, and plastic surface recipes prioritize standard Compose primitives (`Brush`, `drawOutline`, `dropShadow`, `innerShadow`) over custom AGSL/RenderEffect passes.
@@ -50,7 +50,7 @@ This document outlines the systematic code review protocol for the `codebase-dee
   - `cyberBorder` uses standard `Stroke` and `drawOutline` in the normal drawing path. Active multi-pass glows are reserved for `cyberGlowBorder`.
 
 ### Gate 4: Animated Text Transitions & Shared Bounds
-*Reference: [ANDROID-ANIMATED-TEXT-TRANSITION-REFERENCE.md](agents/ANDROID-ANIMATED-TEXT-TRANSITION-REFERENCE.md)*
+*Reference: [ANDROID-ANIMATED-TEXT-TRANSITION-REFERENCE.md](reference/ANDROID-ANIMATED-TEXT-TRANSITION-REFERENCE.md)*
 
 - [ ] **Transform/Bounds Scaling**:
   - Prominent display text moving between positions utilizes bounds-based scaling (`ScaleToBounds`) rather than continuously recalculating font sizes or reflowing text during transition.

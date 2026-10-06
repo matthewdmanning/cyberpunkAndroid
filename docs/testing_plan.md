@@ -47,7 +47,7 @@ git diff --check
   - Verify that resting components do NOT force `CompositingStrategy.Offscreen`.
   - Confirm `cyberBackdropBlur` does not capture background subtrees into offscreen intermediate layers.
 - **Frame Budget & GPU Profiling**:
-  - Profile `CyberSpark`, `CyberWeld`, `cyberOverload`, `cyberScanlines`, and `cyberNoise` on target hardware (e.g., Pixel 7 / Vulkan pipeline).
+  - Profile `Modifier.cyberSpark`, `CyberWeld`, `cyberOverload`, `cyberScanlines`, and `cyberNoise` on target hardware (e.g., Pixel 7 / Vulkan pipeline).
   - Target: $\le 16.6\text{ ms}$ per frame during active animation loops.
 
 ### Tier 4: Visual & Preview Regression Sweep

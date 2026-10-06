@@ -12,16 +12,16 @@
 
 | Screen / Feature | Active Shader / Renderer | Rendered Frames | Jank Rate (%) | Median Frame Time | 95th % Frame Time | 99th % Frame Time | GPU Median Time | Status |
 |---|---|---|---|---|---|---|---|---|
-| **`CyberSpark` Showcase** | AGSL `SparkShader` (16 sparks, gravity, parabolic arcs) | 287 | **0.00%** | **7 ms** | **11 ms** | **12 ms** | **3 ms** | ✅ **Pass (142 FPS eq.)** |
+| **`Modifier.cyberSpark` Showcase** | AGSL `SparkShader` (16 sparks, gravity, parabolic arcs) | 287 | **0.00%** | **7 ms** | **11 ms** | **12 ms** | **3 ms** | ✅ **Pass (142 FPS eq.)** |
 | **`CyberWeld` Effects** | Path geometry, 200 fizz sparks/s, popping bursts, blackbody cooling bead | 281 | **0.00%** | **11 ms** | **13 ms** | **15 ms** | **4 ms** | ✅ **Pass (90 FPS eq.)** |
 | **Interactive Current View** | Active HUD layout, path effect masks, theme overlays | 375 | **0.00%** | **18 ms** | **20 ms** | **22 ms** | **6 ms** | ✅ **Pass (~55 FPS)** |
 | **Overall App Baseline** | Full navigation, tab switching & initial composition | 699 | **0.43%** | **12 ms** | **14 ms** | **15 ms** | **4 ms** | ✅ **Pass** |
 
 ---
 
-## ⚡ 1. Dedicated `CyberSpark` Profiling (`EffectsShowcaseScreen`)
+## ⚡ 1. Dedicated `Modifier.cyberSpark` Profiling (`EffectsShowcaseScreen`)
 
-- **Target Component**: `CyberSpark` (16 active sparks)
+- **Target Component**: `Modifier.cyberSpark` (16 active sparks)
 - **Execution Path**: AGSL Runtime Shader (`SparkShader`) on API 37 Vulkan pipeline
 
 ```text
@@ -113,5 +113,5 @@ Objects:
 ## 💡 Profiling Conclusions
 
 1. **Shader Execution Efficiency**: AGSL `SparkShader` and `cyberShaderEffect` runtime uniform binding execute inside the GPU draw phase without causing recomposition or layout invalidation.
-2. **0% Jank Performance**: Both `CyberSpark` and `CyberWeld` demonstrate 0.00% jank over multi-hundred frame animation cycles on physical hardware.
+2. **0% Jank Performance**: Both `Modifier.cyberSpark` and `CyberWeld` demonstrate 0.00% jank over multi-hundred frame animation cycles on physical hardware.
 3. **Memory Stability**: Total PSS memory footprint remains stable at ~186 MB with zero graphics layer or bitmap memory leaks.
