@@ -75,4 +75,6 @@ CyberGlowIcon(
 
 ## Documentation
 
+For UI construction patterns, layout examples, and recipes targeted at AI agents (or humans building screens conceptually), see the [UI Agent Cookbook](docs/cookbook/README.md).
+
 For a comprehensive breakdown of every available component, shader effect, and thematic token, see the [Full Reference Documentation](docs/reference/README.md).

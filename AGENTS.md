@@ -12,7 +12,7 @@ Use the following routes:
 | --- | --- |
 | Public component, modifier, or API signature | [Library API conventions](docs/agents/api-conventions.md), [Reference index](docs/reference/README.md), and [Modifiers & effects catalog](docs/reference/modifiers-and-effects.md) |
 | Drawing, shader, visual effect, or modifier composition | [Effect implementation rules](docs/agents/effects-rules.md), [Shader guide](docs/reference/shaders.md), relevant Android references discovered below, and official API documentation through `context7-mcp` |
-| Screen layout examples & UI usage recipes | [Usage examples](docs/EFFECTS_EXAMPLES.md) |
+| Screen layout examples & UI usage recipes | [UI Agent Cookbook](docs/cookbook/README.md) and [Usage examples](docs/EFFECTS_EXAMPLES.md) |
 | Path deformation, border tracers, & edge animations | [Path effects](docs/PATH_EFFECTS.md) |
 | Radar sweep, circular pulse, & radial metrics | [Radial effects](docs/RADIAL_EFFECTS.md) |
 | Vector icons & render variants | [Icon reference](docs/reference/icons.md) |
