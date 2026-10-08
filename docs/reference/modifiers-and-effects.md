@@ -4,7 +4,7 @@ Every public visual effect in `cyberpunkandroid`: what it is, what it looks like
 
 Shared parameters (`trigger`, `interactionSource`, `appendedA11y`, `customA11y`) behave the same everywhere and are explained once in the [reference index](README.md#concepts-shared-by-every-effect). They're left out of the tables below unless an effect treats them differently.
 
-**Jump to:** [Distortion shaders](#distortion-shaders) · [Glow](#glow) · [Motion](#motion) · [Surfaces & patterns](#surfaces--patterns) · [Interaction](#interaction) · [Utilities](#utilities) · [Choosing an effect](#choosing-an-effect)
+**Jump to:** [Distortion shaders](#distortion-shaders) · [Glow](#glow) · [Motion](#motion) · [Surfaces & patterns](#surfaces--patterns) · [Interaction](#interaction) · [Screen transitions](#screen-transitions) · [Utilities](#utilities) · [Choosing an effect](#choosing-an-effect)
 
 ---
 
@@ -511,6 +511,45 @@ Throws if used outside `CyberDragDropProvider`.
 | `pollingDelayMillis` | `Long` | `16` | Progress update interval (~60 Hz). |
 | `onProgressUpdate` | `(Float) -> Unit` | required | Called with 0–1 while held, and 0 on early release. |
 | `onComplete` | `() -> Unit` | required | Called once when progress reaches 1. |
+
+---
+
+## Screen transitions
+
+### `CyberPixelFrontierTransition` (prototype)
+
+**What:** A full-screen switch from one screen to another. A frontier sweeps across the screen. The old screen breaks into pixel blocks and disappears ahead of it. The new screen appears behind it.
+
+**Looks like:** A line moves from the top to the bottom of the screen (or left to right). Near the line, both screens turn into square pixel blocks. The blocks are largest at the line and get smaller (3 steps: full, half, quarter size) away from it, so the picture sharpens with distance. The line is a ragged, stepped edge: each block column shifts it by its own random amount. Neon outlines in the theme color follow block sides at the frontier and wherever two neighbor blocks differ in brightness. A red/blue color split along the sweep, strongest at the line, and a soft glow along the line complete the look. Below Android 13 (API 33), the default `AnimatedContent` transition (fade and scale) runs instead.
+
+**Use for:** Switching between whole screens or large panels, when the change should feel like a signal glitch or a data scan. Do not use it for small elements or for frequent, rapid changes.
+
+```kotlin
+CyberPixelFrontierTransition(targetState = currentScreen) { screen ->
+    when (screen) {
+        Screen.Home -> HomeScreen()
+        Screen.Map -> MapScreen()
+    }
+}
+```
+
+Draw the `screen` value the lambda receives, not the outer state. The old screen stays visible while it leaves. Each screen needs an opaque background.
+
+| Parameter | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `targetState` | `S` | required | The screen to show. A change starts the transition. |
+| `orientation` | `Orientation` | `Vertical` | `Vertical` sweeps top to bottom. `Horizontal` sweeps left to right. |
+| `blockSize` | `Dp` | `32.dp` | Edge length of the largest block, at the frontier. |
+| `bandBlocks` | `Float` | `6f` | Width of the pixelated band, in largest blocks (minimum 1). Wider costs more GPU time. |
+| `edgeWidth` | `Dp` | `2.dp` | Thickness of the neon outlines. |
+| `edgeThreshold` | `Float` | `0.12f` | Smallest brightness difference (0..1) between neighbor blocks that draws an outline. |
+| `splitOffset` | `Dp` | `4.dp` | Peak red/blue shift along the sweep. 0 turns it off. |
+| `frontierJitter` | `Dp` | `32.dp` | Total random shift of the frontier per block column. 0 gives a straight line. |
+| `glowStrength` | `Float` | `0.35f` | Peak opacity of the soft glow along the frontier. 0 turns it off. |
+| `animationSpec` | `FiniteAnimationSpec<Float>` | `tween(300)` | Timing of the sweep. |
+| `edgeColor` | `Color` | theme `primary` | Color of the outlines and the glow. |
+
+**Known limits:** If `targetState` changes again before the transition ends, it restarts and can show a jump. Both screens must fill the host. Not measured on a device yet. See the [Pixel frontier test plan](../test-drives/2026-10-08_pixel_frontier_test_plan.md). Source of the look and the shader details: [shaders.md](shaders.md#pixelfrontiershader).
 
 ---
 

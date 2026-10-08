@@ -136,6 +136,44 @@ Modifier.cyberOverload(…)            public API, CyberModifiers.kt
 - **Launch angle:** ±45° from vertical, with launch speed scaled to 45% of the short side.
 - **Life:** same color stages, fading out and halving in radius over each spark's life.
 
+## `PixelFrontierShader`
+
+**Effect:** One half of a screen-to-screen transition. Used by `CyberPixelFrontierTransition` (prototype). The component puts this shader on each screen layer. The old screen uses `revealBehind = 0`. The new screen uses `revealBehind = 1`. It does not use `CyberEffectBaseNode`, because both layers must read one shared progress value from the transition.
+
+**What it computes**
+1. **Blocks:** for each pixel it tests three block sizes (largest, half, quarter). The coarsest size whose reach covers the block wins. The reach of each size is a fraction of `bandWidth` (1/3, 2/3, 3/3), measured from the frontier. Pixels outside the band use one sample.
+2. **Frontier:** each block column of the largest size shifts the frontier by `(hash(column) - 0.5) × jitter`. The shift depends only on position, so the two layers agree.
+3. **Show or hide:** the block center decides. The new screen shows blocks the frontier has passed. The old screen shows blocks it has not passed. Hidden pixels return transparent. Both layers cut the same blocks, so they never overlap or leave a gap.
+4. **Color split:** red is read `splitOffset × proximity` pixels forward on the axis, blue the same distance back.
+5. **Outlines:** for each of the four block sides, if the pixel is within `edgeWidth` of the side, the neighbor block is read. The side gets an outline if the neighbor is on the other side of the frontier, or if its brightness (Rec. 709 luma) differs by at least `edgeThreshold`.
+6. **Output:** the block color, mixed toward `edgeColor` by `outline × proximity × edgeColor.a`. `proximity` is 1 on the frontier and 0 at the edge of the band.
+
+| Uniform | Type | Set from |
+| --- | --- | --- |
+| `resolution` | `float2` | layer size |
+| `axis` | `float2` | `(0,1)` for a vertical sweep, `(1,0)` for a horizontal sweep |
+| `frontier` | `float` | sweep progress (see `pixelFrontierPosition`) |
+| `revealBehind` | `float` | 1 for the entering screen, 0 for the leaving screen |
+| `blockSize` | `float` | `blockSize` in px |
+| `bandWidth` | `float` | `blockSize × bandBlocks` in px |
+| `edgeWidth` | `float` | `edgeWidth` in px |
+| `edgeThreshold` | `float` | `edgeThreshold` |
+| `splitOffset` | `float` | `splitOffset` in px |
+| `jitter` | `float` | `frontierJitter` in px |
+| `edgeColor` | `layout(color) half4` | `edgeColor` |
+
+**Fallback:** none in the shader. Below API 33 the component uses the default `AnimatedContent` transition.
+
+**Cost:** one sample per pixel outside the band. Inside the band, three samples for the block color, plus up to four neighbor samples for pixels within `edgeWidth` of a block side. A new `RenderEffect` is built every frame, because Compose only redraws when the effect object changes. Both screen layers are drawn off-screen at the same time during a transition. These costs are estimates, not measurements.
+
+**What was checked, and where:**
+- The AGSL text compiles in Skia's runtime-effect compiler on a desktop (Skia m144). Android's own Skia version can differ.
+- A desktop render at half Pixel 7 resolution, at 6 progress values, showed 0 gap pixels and 0 overlap pixels between the two layers.
+- JVM tests check the position math and that the shader declares exactly the uniforms Kotlin sets.
+- **Not checked:** frame time, GPU time, and the look on a Pixel 7. See the [test plan](../test-drives/2026-10-08_pixel_frontier_test_plan.md).
+
+---
+
 ---
 
 ## Adding a shader effect

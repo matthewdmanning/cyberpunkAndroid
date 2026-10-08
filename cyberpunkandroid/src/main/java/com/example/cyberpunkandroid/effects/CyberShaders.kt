@@ -35,6 +35,218 @@ internal object CyberShaders {
         return android.graphics.RenderEffect.createRuntimeShaderEffect(shader, "contents").asComposeRenderEffect()
     }
 
+    /**
+     * Names of the uniforms that [PixelFrontierShader] declares. Kotlin code sets uniforms only through
+     * these names, and a unit test checks that the shader source still declares every one of them.
+     * (Setting a uniform that the shader does not declare throws at runtime.)
+     */
+    internal object PixelFrontierUniforms {
+        const val Resolution = "resolution"
+        const val Contents = "contents"
+        const val Axis = "axis"
+        const val Frontier = "frontier"
+        const val RevealBehind = "revealBehind"
+        const val BlockSize = "blockSize"
+        const val BandWidth = "bandWidth"
+        const val EdgeWidth = "edgeWidth"
+        const val EdgeThreshold = "edgeThreshold"
+        const val SplitOffset = "splitOffset"
+        const val Jitter = "jitter"
+        const val EdgeColor = "edgeColor"
+
+        /** Every uniform name, used by the source-consistency test. */
+        val All = listOf(
+            Resolution, Contents, Axis, Frontier, RevealBehind, BlockSize, BandWidth,
+            EdgeWidth, EdgeThreshold, SplitOffset, Jitter, EdgeColor,
+        )
+    }
+
+    /**
+     * Visual: a frontier line sweeps across one screen layer. On the side where this layer is hidden, the
+     * shader returns transparent pixels. On the side where it is shown, pixels near the frontier are
+     * grouped into square blocks. Blocks are largest at the frontier and halve in size in steps
+     * (three steps, set by `LevelCount` in the source) away from it, so the picture sharpens with distance. Each block is shown
+     * or hidden as a whole. Each column of largest blocks moves the frontier by its own random amount
+     * (up to `jitter`), so the frontier is a ragged, stepped edge, not a straight line.
+     *
+     * Edge effects, only inside the band: (1) a neon outline on a block side when the neighbor block
+     * differs in brightness, (2) the same outline on a block side that touches the frontier, and
+     * (3) a red/blue color split along the sweep axis, strongest at the frontier.
+     *
+     * Two layers (old screen and new screen) use the same shader with opposite [revealBehind] values.
+     * Both layers compute the same blocks, so their visible areas never overlap and never leave a gap.
+     *
+     * Cost per pixel: one sample outside the band. Inside the band, three samples for the block color,
+     * plus up to four neighbor samples, and only for pixels within `edgeWidth` of a block side.
+     */
+    @Language("AGSL")
+    const val PixelFrontierShader = """
+        uniform float2 resolution;
+        uniform shader contents;
+        uniform float2 axis;            // (1,0) sweeps left to right, (0,1) sweeps top to bottom
+        uniform float frontier;         // frontier position along the axis, in pixels
+        uniform float revealBehind;     // 1.0: show pixels the frontier has passed (new screen). 0.0: show pixels ahead of it (old screen)
+        uniform float blockSize;        // edge length of the largest block, in pixels
+        uniform float bandWidth;        // distance from the frontier over which blocks exist, in pixels
+        uniform float edgeWidth;        // outline thickness, in pixels
+        uniform float edgeThreshold;    // smallest brightness difference (0..1) that draws an outline
+        uniform float splitOffset;      // peak red/blue shift along the axis, in pixels
+        uniform float jitter;           // total random shift of the frontier per block column, in pixels (0 = straight line)
+        layout(color) uniform half4 edgeColor;
+
+        // Number of block sizes in the band. Each step halves the block size.
+        const int LevelCount = 3;
+        // Rec. 709 weights that turn a color into a brightness value.
+        const half3 LumaWeights = half3(0.2126, 0.7152, 0.0722);
+
+        half luma(half3 rgb) {
+            return dot(rgb, LumaWeights);
+        }
+
+        // Pseudo-random value from 0 to 1 for a whole number. The two constants are the widely used
+        // "sine hash" values. Any pair that scrambles the sine output works.
+        float hash(float n) {
+            return fract(sin(n * 12.9898) * 43758.5453);
+        }
+
+        // Frontier position for the block column that contains a point. Each column of the largest blocks
+        // gets its own shift of up to half of jitter in each direction, so the frontier is ragged.
+        // The value depends only on the point, so the old and new screen layers agree.
+        float frontierAt(float2 point) {
+            float2 across = float2(axis.y, axis.x); // direction across the sweep
+            float column = floor(dot(point, across) / blockSize);
+            return frontier + (hash(column) - 0.5) * jitter;
+        }
+
+        // Reads the content at a point, kept half a pixel inside the layer so the read is always valid.
+        half4 sampleInside(float2 point) {
+            return contents.eval(clamp(point, float2(0.5), resolution - 0.5));
+        }
+
+        // Returns 1.0 when this pixel lies within edgeWidth of a block side that needs an outline.
+        // A side needs an outline when the neighbor block is on the other side of the frontier,
+        // or when the neighbor block differs in brightness by at least edgeThreshold.
+        float sideEdge(float2 neighborCenter, half centerLuma, float distanceToSide, bool ahead) {
+            if (distanceToSide > edgeWidth) {
+                return 0.0;
+            }
+            bool neighborAhead = dot(neighborCenter, axis) - frontierAt(neighborCenter) >= 0.0;
+            if (neighborAhead != ahead) {
+                return 1.0;
+            }
+            half neighborLuma = luma(sampleInside(neighborCenter).rgb);
+            return abs(centerLuma - neighborLuma) >= edgeThreshold ? 1.0 : 0.0;
+        }
+
+        half4 main(float2 fragCoord) {
+            // Pick the block for this pixel. The loop runs from the finest level to the coarsest,
+            // so the coarsest level whose reach covers the block wins.
+            float2 samplePoint = fragCoord;
+            float cell = 0.0; // 0.0 means the pixel is outside the band
+            for (int i = 0; i < LevelCount; i++) {
+                int level = LevelCount - 1 - i;
+                float size = blockSize / exp2(float(level));
+                float2 center = (floor(fragCoord / size) + 0.5) * size;
+                float reach = bandWidth * float(level + 1) / float(LevelCount);
+                if (abs(dot(center, axis) - frontierAt(center)) < reach) {
+                    samplePoint = center;
+                    cell = size;
+                }
+            }
+
+            // The whole block is shown or hidden, based on the block center.
+            bool ahead = dot(samplePoint, axis) - frontierAt(samplePoint) >= 0.0;
+            bool visible = revealBehind > 0.5 ? !ahead : ahead;
+            if (!visible) {
+                return half4(0.0);
+            }
+            if (cell == 0.0) {
+                return contents.eval(fragCoord);
+            }
+
+            // Closeness to the frontier: 1.0 on the frontier, 0.0 at the edge of the band.
+            float proximity = 1.0 - clamp(abs(dot(samplePoint, axis) - frontierAt(samplePoint)) / bandWidth, 0.0, 1.0);
+
+            // Block color with a red/blue split along the axis.
+            float2 split = axis * splitOffset * proximity;
+            half4 middle = sampleInside(samplePoint);
+            half4 color = half4(sampleInside(samplePoint + split).r, middle.g, sampleInside(samplePoint - split).b, middle.a);
+
+            // Outlines on the four block sides.
+            float2 local = fragCoord - (samplePoint - 0.5 * cell); // pixel position inside the block, 0..cell
+            half centerLuma = luma(middle.rgb);
+            float edge = 0.0;
+            edge = max(edge, sideEdge(samplePoint + float2(-cell, 0.0), centerLuma, local.x, ahead));
+            edge = max(edge, sideEdge(samplePoint + float2(cell, 0.0), centerLuma, cell - local.x, ahead));
+            edge = max(edge, sideEdge(samplePoint + float2(0.0, -cell), centerLuma, local.y, ahead));
+            edge = max(edge, sideEdge(samplePoint + float2(0.0, cell), centerLuma, cell - local.y, ahead));
+
+            half strength = half(edge * proximity * edgeColor.a);
+            color.rgb = mix(color.rgb, edgeColor.rgb * color.a, strength);
+            return color;
+        }
+    """
+
+    /** Settings for one frame of [PixelFrontierShader]. All distances are in pixels. */
+    internal data class PixelFrontierSpec(
+        /** Layer width. */
+        val width: Float,
+        /** Layer height. */
+        val height: Float,
+        /** True when the frontier sweeps top to bottom. False when it sweeps left to right. */
+        val vertical: Boolean,
+        /** Frontier position along the sweep axis. */
+        val frontier: Float,
+        /** True for the new screen (shown behind the frontier). False for the old screen. */
+        val revealBehind: Boolean,
+        /** Edge length of the largest block. */
+        val blockSize: Float,
+        /** Width of the band in which blocks exist. */
+        val bandWidth: Float,
+        /** Outline thickness. */
+        val edgeWidth: Float,
+        /** Smallest brightness difference (0..1) that draws an outline. */
+        val edgeThreshold: Float,
+        /** Peak red/blue shift along the sweep axis. */
+        val splitOffset: Float,
+        /** Total random shift of the frontier per block column. 0 gives a straight frontier. */
+        val jitter: Float,
+        /** Outline color as a packed ARGB integer. */
+        val edgeColorArgb: Int,
+    )
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    fun createPixelFrontierShader() = RuntimeShader(PixelFrontierShader)
+
+    /**
+     * Writes [spec] into [shader] and wraps it as a render effect for one screen layer.
+     *
+     * @param shader A shader made by [createPixelFrontierShader]. Use one instance per screen layer.
+     * @param spec Settings for this frame.
+     * @return A render effect that applies the shader to the layer content.
+     */
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    internal fun pixelFrontierEffect(shader: RuntimeShader, spec: PixelFrontierSpec): androidx.compose.ui.graphics.RenderEffect {
+        shader.setFloatUniform(PixelFrontierUniforms.Resolution, spec.width, spec.height)
+        shader.setFloatUniform(
+            PixelFrontierUniforms.Axis,
+            if (spec.vertical) 0f else 1f,
+            if (spec.vertical) 1f else 0f,
+        )
+        shader.setFloatUniform(PixelFrontierUniforms.Frontier, spec.frontier)
+        shader.setFloatUniform(PixelFrontierUniforms.RevealBehind, if (spec.revealBehind) 1f else 0f)
+        shader.setFloatUniform(PixelFrontierUniforms.BlockSize, spec.blockSize)
+        shader.setFloatUniform(PixelFrontierUniforms.BandWidth, spec.bandWidth)
+        shader.setFloatUniform(PixelFrontierUniforms.EdgeWidth, spec.edgeWidth)
+        shader.setFloatUniform(PixelFrontierUniforms.EdgeThreshold, spec.edgeThreshold)
+        shader.setFloatUniform(PixelFrontierUniforms.SplitOffset, spec.splitOffset)
+        shader.setFloatUniform(PixelFrontierUniforms.Jitter, spec.jitter)
+        shader.setColorUniform(PixelFrontierUniforms.EdgeColor, spec.edgeColorArgb)
+        return android.graphics.RenderEffect
+            .createRuntimeShaderEffect(shader, PixelFrontierUniforms.Contents)
+            .asComposeRenderEffect()
+    }
+
 
     @Language("AGSL")
     const val GlowShader = """
