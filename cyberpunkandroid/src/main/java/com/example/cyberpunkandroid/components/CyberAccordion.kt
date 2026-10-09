@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
@@ -26,11 +27,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.IntSize
 import com.example.cyberpunkandroid.config.CyberPrimitives
+import com.example.cyberpunkandroid.icons.CyberIcons
 import com.example.cyberpunkandroid.effects.cyberBorder
 import com.example.cyberpunkandroid.effects.cyberOverload
 import com.example.cyberpunkandroid.effects.cyberScanlines
@@ -112,22 +117,46 @@ fun CyberAccordion(
                     }
                 }
             }
-            Text(
-                text = if (expanded) "⌃" else "⌄",
+            val chevronA11y = if (headerContent != null) {
+                customA11y ?: if (expanded) "Collapse section" else "Expand section"
+            } else null
+
+            Icon(
+                painter = painterResource(id = if (expanded) CyberIcons.ChevronUp else CyberIcons.ChevronDown),
+                contentDescription = null,
+                tint = CyberTheme.colors.primary,
                 modifier = Modifier
                     .size(CyberPrimitives.IconSizes.dp24)
                     .then(
                         if (headerContent != null) {
-                            Modifier.toggleable(value = expanded, role = Role.Button, onValueChange = onExpandedChange)
+                            Modifier
+                                .cyberSemantics(
+                                    name = if (expanded) "Collapse section" else "Expand section",
+                                    appendedA11y = appendedA11y,
+                                    customA11y = chevronA11y,
+                                )
+                                .toggleable(
+                                    value = expanded,
+                                    role = Role.Button,
+                                    onValueChange = onExpandedChange,
+                                )
                         } else {
                             Modifier
                         },
                     )
                     .graphicsLayer { alpha = 0.95f }
-                    .cyberTextGlow(color = CyberTheme.colors.primary, intensity = if (expanded) 1f else 0.75f)
-                    .cyberSemantics("CyberAccordionChevron"),
-                color = CyberTheme.colors.primary,
-                style = CyberTheme.typography.terminal,
+                    .cyberTextGlow(
+                        color = CyberTheme.colors.primary,
+                        intensity = if (expanded) 1f else 0.75f,
+                        customA11y = chevronA11y,
+                    )
+                    .then(
+                        if (headerContent == null) {
+                            Modifier.clearAndSetSemantics { }
+                        } else {
+                            Modifier
+                        },
+                    ),
             )
         }
 
