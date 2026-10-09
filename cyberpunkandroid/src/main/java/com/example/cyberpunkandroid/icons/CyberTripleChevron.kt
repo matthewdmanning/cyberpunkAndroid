@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.dp
 import com.example.cyberpunkandroid.config.CyberPrimitives
 import com.example.cyberpunkandroid.theme.CyberTheme
 import kotlin.math.abs
-import kotlin.math.min
 
 /**
  * Three open, right-facing chevrons with individually adjustable stroke thickness,
@@ -120,7 +119,7 @@ internal fun tripleChevronPoints(
     val bottom = height - inset
     return List(3) { index ->
         val left = inset + index * (footprint + gap)
-        val x = left + abs(shift) / 2f
+        val x = left + abs(shift)
         val a = Offset(x + shift, top)
         val b = Offset(x + run, mid)
         val c = Offset(x - shift, bottom)
