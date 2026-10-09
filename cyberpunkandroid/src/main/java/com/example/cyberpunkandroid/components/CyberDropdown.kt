@@ -20,8 +20,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import com.example.cyberpunkandroid.config.CyberPrimitives
 
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import com.example.cyberpunkandroid.effects.cyberBorder
-import com.example.cyberpunkandroid.effects.cyberSemantics
 import com.example.cyberpunkandroid.theme.CyberTheme
 
 /**
@@ -49,8 +53,15 @@ fun CyberDropdown(
     onItemSelected: (Int) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(value = false) }
+    val actionLabel = if (expanded) "Close options menu" else "Open options menu"
+    val currentText = if (selectedIndex in items.indices) items[selectedIndex] else placeholder
+    val triggerA11yLabel = customA11y ?: if (!appendedA11y.isNullOrBlank()) {
+        "$currentText - $appendedA11y"
+    } else {
+        null
+    }
 
-    Box(modifier = modifier.cyberSemantics("CyberDropdown", appendedA11y, customA11y)) {
+    Box(modifier = modifier) {
         // Trigger
         Box(
             modifier = Modifier
@@ -59,10 +70,23 @@ fun CyberDropdown(
                 .background(CyberTheme.colors.surface)
                 .cyberBorder(color = CyberTheme.colors.primary,
                     width = CyberPrimitives.BorderWidths.dp1, shape = CyberTheme.shapes.cyberCutCornerShapeSmall)
-                .clickable { expanded = true }
+                .semantics {
+                    this.stateDescription = if (expanded) "Expanded" else "Collapsed"
+                    this.onClick(label = actionLabel) {
+                        expanded = !expanded
+                        true
+                    }
+                    if (triggerA11yLabel != null) {
+                        this.contentDescription = triggerA11yLabel
+                    }
+                }
+                .clickable(
+                    role = Role.Button,
+                    onClickLabel = actionLabel,
+                ) { expanded = !expanded }
                 .padding(CyberPrimitives.Spacing.dp12)
         ) {
-            val text = if (selectedIndex in items.indices) items[selectedIndex] else placeholder
+            val text = currentText
             CompositionLocalProvider(LocalContentColor provides CyberTheme.colors.primary) {
                 ProvideTextStyle(value = CyberTheme.typography.terminal) {
                     Text(text = text.uppercase())

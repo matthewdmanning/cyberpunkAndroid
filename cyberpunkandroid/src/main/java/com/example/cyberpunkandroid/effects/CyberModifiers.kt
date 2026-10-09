@@ -443,7 +443,7 @@ fun Modifier.cyberBorder(
     pathEffect: PathEffect? = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f),
     appendedA11y: String? = null,
     customA11y: String? = null
-): Modifier = this.cyberSemantics("CyberBorder", appendedA11y, customA11y).drawWithCache {
+): Modifier = this.cyberComponentSemantics("CyberBorder", appendedA11y, customA11y).drawWithCache {
     val outline = shape.createOutline(size, layoutDirection, this)
     val path = Path().apply { addOutline(outline) }
 

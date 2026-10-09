@@ -35,8 +35,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.example.cyberpunkandroid.effects.cyberComponentSemantics
@@ -73,9 +77,14 @@ fun CyberSpinner(
         label = "RotationAnimation"
     )
 
+    val spinnerDescription = customA11y ?: if (!appendedA11y.isNullOrBlank()) "Loading - $appendedA11y" else "Loading"
+
     Spacer(
         modifier = modifier
-            .cyberSemantics("CyberSpinner", appendedA11y, customA11y)
+            .semantics(mergeDescendants = true) {
+                progressBarRangeInfo = ProgressBarRangeInfo.Indeterminate
+                contentDescription = spinnerDescription
+            }
             .size(size)
             .drawBehind {
                 val strokeWidth = CyberPrimitives.BorderWidths.dp2.toPx()
@@ -95,7 +104,7 @@ fun CyberSpinner(
                         )
                     }
                 }
-                
+
                 // Inner segmented ring
                 withTransform(
                     transformBlock = { rotate(-rotation * 1.5f) }
@@ -152,6 +161,7 @@ fun CyberSpinnerOverlay(
     onDismissRequest: (() -> Unit)? = null,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    val dismissActionLabel = if (onDismissRequest != null) "Dismiss loading overlay" else null
 
     Box(
         modifier = modifier.cyberComponentSemantics("CyberSpinnerOverlay", appendedA11y, customA11y)
@@ -161,6 +171,7 @@ fun CyberSpinnerOverlay(
                 interactionSource = interactionSource,
                 indication = null,
                 role = if (onDismissRequest != null) Role.Button else null,
+                onClickLabel = dismissActionLabel,
                 onClick = { onDismissRequest?.invoke() }
             ),
         contentAlignment = Alignment.Center
@@ -170,7 +181,11 @@ fun CyberSpinnerOverlay(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.padding(CyberPrimitives.Spacing.dp16)
         ) {
-            CyberSpinner(color = color, size = spinnerSize)
+            CyberSpinner(
+                modifier = if (text != null) Modifier.clearAndSetSemantics { } else Modifier,
+                color = color,
+                size = spinnerSize
+            )
 
             if (text != null) {
                 Spacer(modifier = Modifier.height(CyberPrimitives.Spacing.dp16))

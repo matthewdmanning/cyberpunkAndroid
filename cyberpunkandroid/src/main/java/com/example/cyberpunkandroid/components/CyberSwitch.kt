@@ -26,11 +26,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.cyberpunkandroid.effects.cyberGlowBorderFlow
-import com.example.cyberpunkandroid.effects.cyberSemantics
 import com.example.cyberpunkandroid.theme.CyberTheme
 import kotlin.math.roundToInt
 
@@ -82,9 +84,18 @@ fun CyberSwitch(
         }
     }
 
+    val actionLabel = if (checked) "Turn off" else "Turn on"
+    val switchA11yLabel = customA11y ?: appendedA11y
+
     BoxWithConstraints(
         modifier = modifier
-            .cyberSemantics("CyberSwitch", appendedA11y, customA11y)
+            .then(
+                if (switchA11yLabel != null) {
+                    Modifier.semantics { contentDescription = switchA11yLabel }
+                } else {
+                    Modifier
+                }
+            )
             .toggleable(
                 value = checked,
                 enabled = enabled,
@@ -94,6 +105,18 @@ fun CyberSwitch(
                     onCheckedChange(next)
                 },
             )
+            .semantics {
+                this.onClick(label = actionLabel) {
+                    if (enabled) {
+                        val next = !checked
+                        if (next) activationCount++
+                        onCheckedChange(next)
+                        true
+                    } else {
+                        false
+                    }
+                }
+            }
             .size(width, height),
     ) {
         val shape = RoundedCornerShape(height / 2)

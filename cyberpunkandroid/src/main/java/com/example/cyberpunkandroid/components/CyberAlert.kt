@@ -20,9 +20,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import com.example.cyberpunkandroid.config.CyberPrimitives
 
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.example.cyberpunkandroid.effects.cyberBorder
 import com.example.cyberpunkandroid.effects.cyberScanlines
-import com.example.cyberpunkandroid.effects.cyberSemantics
 import com.example.cyberpunkandroid.icons.CyberIcon
 import com.example.cyberpunkandroid.icons.SemanticIcons
 import com.example.cyberpunkandroid.theme.CyberTheme
@@ -78,9 +79,15 @@ fun CyberAlert(
         CyberAlertVariant.Error -> SemanticIcons.Danger
     }
 
+    val a11yDescription = customA11y ?: if (!appendedA11y.isNullOrBlank()) "$title - $message - $appendedA11y" else null
+
     Box(
         modifier = modifier
-            .cyberSemantics("CyberAlert", appendedA11y, customA11y)
+            .semantics(mergeDescendants = true) {
+                if (a11yDescription != null) {
+                    contentDescription = a11yDescription
+                }
+            }
             .fillMaxWidth()
             .clip(CyberTheme.shapes.cyberCutCornerShape)
             .background(CyberTheme.colors.surface)

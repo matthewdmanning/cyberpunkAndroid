@@ -23,8 +23,10 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.semantics
 import com.example.cyberpunkandroid.config.CyberPrimitives
-import com.example.cyberpunkandroid.effects.cyberSemantics
 import com.example.cyberpunkandroid.theme.CyberTheme
 
 /**
@@ -81,6 +83,13 @@ fun CyberCheckbox(
         label = "CyberCheckboxProgress"
     )
 
+    val actionLabel = if (checked) "Uncheck" else "Check"
+    val a11yDescription = customA11y ?: if (!appendedA11y.isNullOrBlank()) {
+        if (text != null) "$text - $appendedA11y" else appendedA11y
+    } else {
+        null
+    }
+
     val toggleableModifier = if (onCheckedChange != null) {
         Modifier.toggleable(
             value = checked,
@@ -96,7 +105,21 @@ fun CyberCheckbox(
 
     Row(
         modifier = modifier
-            .cyberSemantics("CyberCheckbox", appendedA11y, customA11y)
+            .semantics(mergeDescendants = true) {
+                if (a11yDescription != null) {
+                    contentDescription = a11yDescription
+                }
+                if (onCheckedChange != null) {
+                    onClick(label = actionLabel) {
+                        if (enabled) {
+                            onCheckedChange(!checked)
+                            true
+                        } else {
+                            false
+                        }
+                    }
+                }
+            }
             .then(toggleableModifier),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -111,7 +134,7 @@ fun CyberCheckbox(
                         val graphicsSize = this.size
                         val strokeWidth = CyberPrimitives.BorderWidths.dp2.toPx()
                         val corner = CyberPrimitives.Spacing.dp4.toPx()
-                        
+
                         // Box path
                         val boxPath = Path().apply {
                             moveTo(0f, corner)
@@ -135,9 +158,9 @@ fun CyberCheckbox(
                                 val start = Offset(graphicsSize.width * 0.25f, graphicsSize.height * 0.5f)
                                 val mid = Offset(graphicsSize.width * 0.45f, graphicsSize.height * 0.7f)
                                 val end = Offset(graphicsSize.width * 0.8f, graphicsSize.height * 0.25f)
-                                
+
                                 moveTo(start.x, start.y)
-                                
+
                                 if (checkProgress < 0.5f) {
                                     val p = checkProgress * 2f
                                     lineTo(
@@ -153,7 +176,7 @@ fun CyberCheckbox(
                                     )
                                 }
                             }
-                            
+
                             drawPath(
                                 path = tickPath,
                                 color = color,
@@ -167,7 +190,7 @@ fun CyberCheckbox(
                     }
             )
         }
-        
+
         if (text != null) {
             Text(
                 text = text,

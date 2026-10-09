@@ -17,6 +17,9 @@ import com.example.cyberpunkandroid.components.CyberSnackbar
 import com.example.cyberpunkandroid.theme.CyberTheme
 import org.junit.Rule
 import org.junit.Test
+import androidx.compose.ui.semantics.SemanticsProperties
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
@@ -62,10 +65,80 @@ class CyberNotificationAccordionTest {
         }
 
         composeTestRule.onNodeWithText("Nested terminal output").assertDoesNotExist()
-        composeTestRule.onNodeWithContentDescription("CyberAccordion", useUnmergedTree = true)
-            .performSemanticsAction(SemanticsActions.OnClick)
+        val headerNode = composeTestRule.onNodeWithText("DIAGNOSTICS")
+        headerNode.assertIsDisplayed()
+        assertEquals(
+            "Collapsed",
+            headerNode.fetchSemanticsNode().config[SemanticsProperties.StateDescription]
+        )
+
+        headerNode.performSemanticsAction(SemanticsActions.OnClick)
         composeTestRule.waitForIdle()
         assertTrue(expanded)
         composeTestRule.onNodeWithText("Nested terminal output").assertIsDisplayed()
+    }
+
+    @Test
+    fun `accordion suppresses inner decorative chevron semantics when header handles clicks`() {
+        composeTestRule.setContent {
+            CyberTheme {
+                CyberAccordion(
+                    title = "Diagnostics",
+                    expanded = false,
+                ) {
+                    Text("Details")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithContentDescription("CyberAccordionChevron", useUnmergedTree = true)
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription("CyberTextGlow", useUnmergedTree = true)
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun `accordion chevron exposes plain language action when custom header is used`() {
+        var expanded by mutableStateOf(false)
+        composeTestRule.setContent {
+            CyberTheme {
+                CyberAccordion(
+                    title = "Ignored",
+                    expanded = expanded,
+                    onExpandedChange = { expanded = it },
+                    headerContent = { Text("Custom Header") },
+                ) {
+                    Text("Expanded Content")
+                }
+            }
+        }
+
+        val toggleChevron = composeTestRule.onNodeWithContentDescription("Expand section", useUnmergedTree = true)
+        toggleChevron.assertIsDisplayed()
+        assertEquals(
+            "Collapsed",
+            toggleChevron.fetchSemanticsNode().config[SemanticsProperties.StateDescription]
+        )
+        toggleChevron.performSemanticsAction(SemanticsActions.OnClick)
+        composeTestRule.waitForIdle()
+        assertTrue(expanded)
+    }
+
+    @Test
+    fun `accordion supports custom and appended accessibility labels without class name prefixes`() {
+        composeTestRule.setContent {
+            CyberTheme {
+                CyberAccordion(
+                    title = "Diagnostics",
+                    expanded = false,
+                    appendedA11y = "Sensors",
+                ) {
+                    Text("Sensors output")
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithContentDescription("Diagnostics - Sensors").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("CyberAccordion - Sensors").assertDoesNotExist()
     }
 }
