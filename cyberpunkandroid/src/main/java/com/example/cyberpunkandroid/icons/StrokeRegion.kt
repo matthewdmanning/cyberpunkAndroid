@@ -340,7 +340,7 @@ internal fun strokePieces(lines: List<StrokeLine>, strokeWidth: Double, alignmen
         val hiB = DoubleArray(segCount)
         val oneSided = closed && alignment != CyberStrokeAlignment.Center
         // Open contours lean outside; closed ones follow their alignment exactly.
-        val lean = if (closed) DoubleArray(n) else convexLean(line, strokeWidth)
+        val lean = if (closed) DoubleArray(segCount) to DoubleArray(segCount) else convexLean(line, strokeWidth)
         for (i in 0 until segCount) {
             if (oneSided) {
                 val toward = if (alignment == CyberStrokeAlignment.Outside) line.outward[i] else -line.outward[i]
@@ -348,8 +348,8 @@ internal fun strokePieces(lines: List<StrokeLine>, strokeWidth: Double, alignmen
                 val hi = if (toward > 0) strokeWidth else 0.0
                 loA[i] = lo; hiA[i] = hi; loB[i] = lo; hiB[i] = hi
             } else {
-                val leanA = lean[i]
-                val leanB = lean[(i + 1) % lean.size]
+                val leanA = lean.first[i]
+                val leanB = lean.second[i]
                 loA[i] = -strokeWidth * (1 - leanA) / 2; hiA[i] = strokeWidth * (1 + leanA) / 2
                 loB[i] = -strokeWidth * (1 - leanB) / 2; hiB[i] = strokeWidth * (1 + leanB) / 2
             }
@@ -386,56 +386,109 @@ internal fun strokePieces(lines: List<StrokeLine>, strokeWidth: Double, alignmen
 /**
  * How far each vertex's stroke leans to one side, −1 (all on −normal) to 1 (all on +normal).
  *
- * Curves lean toward their convex side, away from the center of the bend, by a share that
- * grows with curvature × width: a bend tighter than the width puts the whole stroke outside.
- * Then, unsmoothed, the inner reach w(1 − w/r)/2 stays below the radius r, so the stroke never
- * fills the inside of a curl.
+ * Returned per segment end (start, end). Where the direction vector is known, each end uses it:
+ * a straight line's side from [StrokeLine.sideLean] (away from the nearest place its
+ * perpendicular, the reciprocal slope, meets the shape, or its line's nearby polarity), or a
+ * curve's own curvature. At a corner each side keeps its own lean; the corner's wedge joins them.
  *
- * Straight lines lean fully to their outside, from [StrokeLine.sideLean]: the side opposite
- * the nearest place where the line's perpendicular meets another part of the shape.
+ * At a smooth join where the two sides disagree (two curves, or a curve and a line, meeting
+ * with different bends) the direction isn't known, so the centerline there is modeled by an
+ * overlapping cubic Bézier fitted across the join. Within two stroke widths of the join the
+ * lean blends from that model to the known lean, so the width changes smoothly instead of
+ * stepping.
  *
- * The lean is averaged over one stroke width of arc around each vertex, so it ramps through
- * curve joins and corners instead of stepping.
+ * Curves lean to the convex side by min(1, curvature × width):
+ * a bend tighter than the width puts the whole stroke outside, and the inner reach stays
+ * below the bend radius, so the stroke never fills the inside of a curl.
  */
-private fun convexLean(line: StrokeLine, strokeWidth: Double): DoubleArray {
+private fun convexLean(line: StrokeLine, strokeWidth: Double): Pair<DoubleArray, DoubleArray> {
     val pts = line.points
     val n = pts.size
     val segCount = if (line.closed) n else n - 1
-    // Curvature > 0 bends toward +normal, so its convex side is −normal.
-    fun curveLean(k: Double) = -kotlin.math.sign(k) * min(1.0, abs(k) * strokeWidth)
-    fun leanA(i: Int) = line.sideLean[i].takeUnless { it.isNaN() } ?: curveLean(line.curveA[i])
-    fun leanB(i: Int) = line.sideLean[i].takeUnless { it.isNaN() } ?: curveLean(line.curveB[i])
-    val raw = DoubleArray(n) { v ->
-        val ends = ArrayList<Double>(2)
-        if (line.closed || v < segCount) ends += leanA(v % segCount)
-        if (line.closed || v > 0) ends += leanB((v - 1 + segCount) % segCount)
-        ends.average()
-    }
-    // Vertex arc positions; closed lines repeat once on each side so windows can wrap.
-    val arc = DoubleArray(n)
-    for (v in 1 until n) arc[v] = arc[v - 1] + (pts[v] - pts[v - 1]).length()
-    val total = if (line.closed) arc[n - 1] + (pts[0] - pts[n - 1]).length() else arc[n - 1]
-    val copies = if (line.closed) 3 else 1
-    val at = DoubleArray(n * copies) { arc[it % n] + (if (line.closed) (it / n - 1) * total else 0.0) }
-    val prefix = DoubleArray(n * copies + 1)
-    for (u in at.indices) prefix[u + 1] = prefix[u] + raw[u % n]
-    val window = strokeWidth / 2
-    fun firstAtLeast(x: Double): Int {
+    val arc = DoubleArray(n + 1)
+    for (v in 1..n) arc[v] = arc[v - 1] + (pts[v % n] - pts[v - 1]).length()
+    val total = if (line.closed) arc[n] else arc[n - 1]
+    if (total <= 0.0) return DoubleArray(segCount) to DoubleArray(segCount)
+
+    /** The centerline point at arc position [s], wrapping on closed lines and clamped on open ones. */
+    fun pointAt(s: Double): Pt {
+        val at = if (line.closed) s.mod(total) else s.coerceIn(0.0, total)
         var lo = 0
-        var hi = at.size
-        while (lo < hi) { val mid = (lo + hi) / 2; if (at[mid] < x) lo = mid + 1 else hi = mid }
-        return lo
+        var hi = segCount - 1
+        while (lo < hi) { // last segment starting at or before [at]
+            val mid = (lo + hi + 1) / 2
+            if (arc[mid] <= at) lo = mid else hi = mid - 1
+        }
+        val len = arc[lo + 1] - arc[lo]
+        val a = pts[lo]
+        val b = pts[(lo + 1) % n]
+        return if (len <= 0.0) a else a + (b - a) * ((at - arc[lo]) / len)
     }
-    val tiny = 1e-9 * (total + 1.0)
-    return DoubleArray(n) { v ->
-        val center = arc[v]
-        // On a closed loop the window covers at most the loop once (half each way).
-        val reach = if (line.closed) min(window, total / 2 - tiny) else window
-        val from = firstAtLeast(center - reach)
-        val to = firstAtLeast(center + reach + tiny)
-        (prefix[to] - prefix[from]) / (to - from)
+
+    /** Curvature at arc [s] of the cubic Bézier interpolating the centerline over [from, to]. */
+    fun overlappingCurvature(s: Double, from: Double, to: Double): Double {
+        val span = to - from
+        if (span <= 0.0) return 0.0
+        val p0 = pointAt(from)
+        val q1 = pointAt(from + span / 3)
+        val q2 = pointAt(from + 2 * span / 3)
+        val p3 = pointAt(to)
+        // Control points that make B(1/3) = q1 and B(2/3) = q2.
+        val x = q1 * 27.0 - p0 * 8.0 - p3
+        val y = q2 * 27.0 - p0 - p3 * 8.0
+        val curve = CubicCurve(arrayOf(p0, (x * 2.0 - y) * (1.0 / 18), (y * 2.0 - x) * (1.0 / 18), p3))
+        return curve.curvature((s - from) / span)
     }
+
+    // Each segment end's own lean, where its direction is known.
+    fun curveLean(k: Double) = -kotlin.math.sign(k) * min(1.0, abs(k) * strokeWidth) // k > 0: convex side is −normal
+    val leanA = DoubleArray(segCount) { line.sideLean[it].takeUnless(Double::isNaN) ?: curveLean(line.curveA[it]) }
+    val leanB = DoubleArray(segCount) { line.sideLean[it].takeUnless(Double::isNaN) ?: curveLean(line.curveB[it]) }
+
+    // Smooth joins where the two sides disagree: there the direction isn't known.
+    val joins = ArrayList<Double>()
+    val corners = if (line.closed) 0 until n else 1 until n - 1
+    for (v in corners) {
+        val j = (v - 1 + segCount) % segCount
+        val i = v % segCount
+        val turn = abs(kotlin.math.atan2(line.directions[j].cross(line.directions[i]), line.directions[j].dot(line.directions[i])))
+        // At a real corner each side keeps its own lean, and the corner's wedge joins them.
+        if (turn <= SmoothJoinTurn && abs(leanB[j] - leanA[i]) > 1e-9) joins += arc[v]
+    }
+    if (joins.isEmpty()) return leanA to leanB
+
+    // Near those joins the centerline is modeled by an overlapping cubic Bézier, fitted across
+    // the join, and the lean blends from that model at the join to the known lean at the
+    // zone's edge, so the width changes smoothly instead of stepping.
+    val zone = JoinZoneWidths * strokeWidth
+    fun distanceToJoin(s: Double) = joins.minOf { val d = abs(it - s); if (line.closed) min(d, total - d) else d }
+    fun modeled(v: Int): Double {
+        val s = arc[v]
+        val chords = (pts[v] - pts[(v - 1 + n) % n]).length() + (pts[(v + 1) % n] - pts[v]).length()
+        val reach = max(zone, 2.0 * chords) / 2 // wide enough to see the curve, not one chord
+        val from = if (line.closed) s - reach else max(0.0, s - reach)
+        val to = if (line.closed) s + reach else min(total, s + reach)
+        return curveLean(overlappingCurvature(s, from, to))
+    }
+    fun blend(known: Double, v: Int): Double {
+        val d = distanceToJoin(arc[v])
+        if (d >= zone) return known
+        val t = d / zone
+        val weight = t * t * (3 - 2 * t) // smoothstep: 0 at the join, 1 at the zone's edge
+        return modeled(v) + (known - modeled(v)) * weight
+    }
+    for (i in 0 until segCount) {
+        leanA[i] = blend(leanA[i], i)
+        leanB[i] = blend(leanB[i], (i + 1) % n)
+    }
+    return leanA to leanB
 }
+
+// The zone around a smooth join where the lean is modeled, in stroke widths of arc.
+private const val JoinZoneWidths = 2.0
+
+// Turns at most this sharp are smooth joins, not corners (flattened curves step by ≤ 15°).
+private val SmoothJoinTurn = 20.0 * PI / 180.0
 
 // Sine of the smallest turn that still gets a corner wedge.
 private const val ParallelTurn = 1e-9

@@ -202,7 +202,10 @@ A second overload takes a `CyberStrokeShape`. Use it to share one shape with `Mo
 - **A lone line stays centered.** Nothing marks its inside.
 - **The lean grows with curvature × width.** Straight runs stay centered.
 - **A curl's inside does not fill.** The inner reach stays below the bend radius.
-- **The lean ramps over one stroke width.** It does not step where two curves join.
+- **Known directions are used as they are.** Lines use their perpendicular. Curves use their own curvature.
+- **Corners keep each side's lean.** The corner wedge joins the two sides.
+- **Smooth joins with unknown direction use an overlapping Bézier.** It is fitted across the join.
+- **The lean blends near those joins.** It moves from the model to the known lean over two stroke widths.
 - **Nearby lines taper.** Each side reaches at most (1 − `minGap`) / 2 of the gap.
 - **Tight corners stay open.** "Nearby" includes parts that the line turns over 90° to reach.
 - **Crossings stay solid.** Lines are not tapered where they cross.
