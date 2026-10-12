@@ -143,7 +143,14 @@ internal fun CyberStrokeIconPlayground() {
             }
         }
         Setting("Centerline width", widthDp, 24f..320f, "%.0f dp") { widthDp = it }
-        Setting("Thickness", thicknessDp, 0.5f..96f, "%.1f dp") { thicknessDp = it }
+        // The outline warns as the stroke passes reasonable thickness for the icon's width.
+        val thicknessRatio = thicknessDp / widthDp
+        val thicknessOutline = when {
+            thicknessRatio >= ExcessiveThickness -> status.danger.color
+            thicknessRatio >= HeavyThickness -> status.warning.color
+            else -> CyberTheme.colors.border
+        }
+        Setting("Thickness", thicknessDp, 0.5f..96f, "%.1f dp", outline = thicknessOutline) { thicknessDp = it }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             CyberStrokeAlignment.entries.forEach { option ->
                 Label(
@@ -163,10 +170,23 @@ internal fun CyberStrokeIconPlayground() {
 }
 
 @Composable
-private fun Setting(name: String, value: Float, range: ClosedFloatingPointRange<Float>, format: String, onValueChange: (Float) -> Unit) {
+private fun Setting(
+    name: String,
+    value: Float,
+    range: ClosedFloatingPointRange<Float>,
+    format: String,
+    outline: Color? = null,
+    onValueChange: (Float) -> Unit
+) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Label("$name: ${format.format(value)}", CyberTheme.colors.textSecondary)
-        CyberSlider(value = value, valueRange = range, modifier = Modifier.fillMaxWidth(), customA11y = name, onValueChange = onValueChange)
+        CyberSlider(
+            value = value,
+            valueRange = range,
+            modifier = Modifier.fillMaxWidth().let { if (outline != null) it.border(1.dp, outline) else it },
+            customA11y = name,
+            onValueChange = onValueChange
+        )
     }
 }
 
@@ -174,6 +194,10 @@ private fun Setting(name: String, value: Float, range: ClosedFloatingPointRange<
 private fun Label(text: String, color: Color, modifier: Modifier = Modifier) {
     BasicText(text, modifier, style = CyberTheme.typography.terminal.copy(color = color))
 }
+
+// Stroke width ÷ centerline width where the thickness slider's outline turns yellow, then red.
+private const val HeavyThickness = 0.10f
+private const val ExcessiveThickness = 0.20f
 
 // Tall enough to watch the icon grow before it reaches the stage edge.
 private val StageHeight = 280.dp
