@@ -4,25 +4,21 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
-import com.example.cyberpunkandroid.components.CyberTabs
-import com.example.cyberpunkandroid.components.CyberPixelTransition
-import com.example.cyberpunkandroid.components.CyberTerminalBackground
+import com.example.cyberpunkandroid.components.CyberButton
+import com.example.cyberpunkandroid.components.CyberContainer
 import com.example.cyberpunkandroid.theme.CyberTheme
-import com.example.sample.screens.*
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,96 +30,48 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = CyberTheme.colors.background
                 ) {
-                    val navController = rememberNavController()
-                    val navBackStackEntry by navController.currentBackStackEntryAsState()
-                    val currentRoute = navBackStackEntry?.destination?.route ?: "sandbox"
-
-                    CyberPixelTransition(targetKey = currentRoute) {
-                        if (currentRoute == "terminal") {
-                            CyberTerminalBackground(text = TerminalBackgroundGlyphs)
-                        }
-                    Column(modifier = Modifier.safeDrawingPadding().fillMaxSize()) {
-                        Box(modifier = Modifier.weight(1f)) {
-                            NavHost(navController = navController, startDestination = "sandbox") {
-                                composable("sandbox") { SandboxScreen(onBack = {}) }
-                                composable("showcase") { EffectsShowcaseScreen() }
-                                composable("effects") { EffectsScreen() }
-                                composable("command_center") { 
-                                    CommandCenterScreen(onNavigateToSandbox = {
-                                        navController.navigate("sandbox") {
-                                            popUpTo(navController.graph.startDestinationId)
-                                            launchSingleTop = true
-                                        }
-                                    }) 
-                                }
-                                composable("feedback") { com.example.sample.screens.FeedbackFormScreen() }
-                                composable("glow_test") { com.example.sample.screens.GlowTestScreen() }
-                                composable("terminal") { /* Background is drawn beneath the navigation layer. */ }
-                                composable("paths") { com.example.sample.screens.PathEffectsScreen() }
-                                composable("radial") { com.example.sample.screens.RadialEffectsScreen() }
-                            }
-                        }
-
-                        CyberTabs(
-                            tabs = listOf("Sandbox", "Showcase", "Effects", "Command", "Glow", "Terminal", "Paths", "Radial"),
-                            selectedTabIndex = when(currentRoute) {
-                                "sandbox" -> 0
-                                "showcase" -> 1
-                                "effects" -> 2
-                                "command_center" -> 3
-                                "glow_test" -> 4
-                                "terminal" -> 5
-                                "paths" -> 6
-                                "radial" -> 7
-                                else -> 0
-                            },
-                            onTabSelected = { index ->
-                                val route = when(index) {
-                                    0 -> "sandbox"
-                                    1 -> "showcase"
-                                    2 -> "effects"
-                                    3 -> "command_center"
-                                    4 -> "glow_test"
-                                    5 -> "terminal"
-                                    6 -> "paths"
-                                    7 -> "radial"
-                                    else -> "sandbox"
-                                }
-                                navController.navigate(route) {
-                                    popUpTo(navController.graph.startDestinationId)
-                                    launchSingleTop = true
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth().padding(8.dp)
-                        )
-                    }
-                    }
+                    SampleApp()
                 }
             }
         }
     }
 }
 
-// Native angular strokes form non-readable script clusters without a downloaded font.
-private val TerminalBackgroundGlyphs = """
-    ╲┤╱├ ┬╲│┴╱ ┤╲┬ ├╱┴│
-    ┴╱┤ ╲├│╱┬ ┤┴╲├ ╱│┬
-    ├╲┬│ ╱┤┴ ╲│├╱ ┬┤╲
-    ╱┴├ ╲┬┤│╱ ├│╲┴ ┤╱┬
-    ┬╲├│ ┴┤╱ ╲│┬├ ┤╱┴╲
-    ╲┤┬ ╱├│┴╲ ┤╱├ ┬│╲┴
-    ├╱┴│ ╲┬┤ ╱│├╲ ┴┤┬
-    ┴╲┤├ ╱│┬ ╲├┴│ ┤╱╲┬
-    ╱┬├ ╲┤│┴ ├╱┬╲ │┤┴
-    ┤╲│╱ ┬├┴╲ ╱┤│ ├┬╲┴
-    ╲├┬┤ ╱┴│ ├╲┤╱ ┬│┴
-    ┴┤╱│ ╲├┬ ╱│┴┤ ╲┬├╱
-    ├╲┴ ╱┬┤│ ╲├│┬ ┴╱┤
-    ╱│┤┬ ╲┴├ ╱┬│╲ ┤├┴╱
-    ┬├╲│ ┤╱┴╲ ├│┬ ╱┤┴
-    ╲┴├┤ ╱│┬ ╲┤├╱ ┴│┬
-    ┤╱┬│ ╲├┴ ┬│╱┤ ╲┴├
-    ╱├┤╲ ┴┬│ ╲┤╱├ │┬┴╲
-    ├┬╲┤ ╱│┴ ╲├╱┬ ┤│┴
-    ╲│┬├ ┴┤╱╲ ┬├│ ╱┴┤
-""".trimIndent()
+@Composable
+fun SampleApp(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .safeDrawingPadding()
+            .fillMaxSize()
+            .padding(CyberTheme.spacing.dp16),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        CyberContainer(
+            modifier = Modifier.padding(CyberTheme.spacing.dp16)
+        ) {
+            Column(
+                modifier = Modifier.padding(CyberTheme.spacing.dp24),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "NEON DECK",
+                    style = CyberTheme.typography.display,
+                    color = CyberTheme.colors.primary
+                )
+                Spacer(modifier = Modifier.height(CyberTheme.spacing.dp8))
+                Text(
+                    text = "Cyberpunk UI Showcase Scaffold",
+                    style = CyberTheme.typography.body,
+                    color = CyberTheme.colors.textSecondary
+                )
+                Spacer(modifier = Modifier.height(CyberTheme.spacing.dp16))
+                CyberButton(
+                    onClick = { }
+                ) {
+                    Text("INITIALIZE")
+                }
+            }
+        }
+    }
+}

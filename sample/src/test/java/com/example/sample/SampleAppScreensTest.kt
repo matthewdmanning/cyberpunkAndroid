@@ -17,30 +17,9 @@ class SampleAppScreensTest {
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun testAppNavigationAndScreens() {
-        // MainActivity launches with "sandbox" as the start destination
-        composeTestRule.onNodeWithText("Render Settings", ignoreCase = true).assertExists()
-        
-        // Navigate to Sandbox using the global nav tabs
-        composeTestRule.onNodeWithText("Sandbox", ignoreCase = true).performClick()
-
-
-
-        // Navigate to Effects using the global nav tabs
-        composeTestRule.onNodeWithText("Effects", ignoreCase = true).performClick()
-        
-        // Now on Effects screen, verify the default "Icons" tab renders
-        composeTestRule.onNodeWithText("Spin Animation", ignoreCase = true).assertExists()
-
-        // Switch to Overload Tab in Effects screen
-        composeTestRule.onNodeWithText("Overload", ignoreCase = true).performClick()
-
-        // Switch to Neon Tab
-        composeTestRule.onNodeWithText("Neon", ignoreCase = true).performClick()
-        composeTestRule.onNodeWithText("NEON GLOW EFFECT", ignoreCase = true).assertExists()
-
-        // Switch to Mix Tab
-        composeTestRule.onNodeWithText("Mix", ignoreCase = true).performClick()
-        composeTestRule.onNodeWithText("SYSTEM ONLINE", ignoreCase = true).assertExists()
+    fun testAppLaunchAndScaffold() {
+        composeTestRule.onNodeWithText("NEON DECK", ignoreCase = true).assertExists()
+        composeTestRule.onNodeWithText("INITIALIZE", ignoreCase = true).assertExists()
+        composeTestRule.onNodeWithText("INITIALIZE", ignoreCase = true).performClick()
     }
 }
