@@ -179,6 +179,7 @@ CyberStrokeIcon(cursiveL, width = 96.dp, thickness = 8.dp)
 | `width` | `Dp` | `64.dp` | Width of the centerline. The height follows the viewport. |
 | `thickness` | `Dp` | `4.dp` | Stroke thickness. |
 | `alignment` | `CyberStrokeAlignment` | `Outside` | Stroke position on closed contours. |
+| `minGap` | `Float` | `0.25f` | Share of each gap between nearby lines that stays open, 0 to 1. |
 | `color` | `Color` | `CyberTheme.colors.primary` | Fill color. |
 | `contentDescription` | `String?` | `null` | Accessibility label. Use `null` for decoration. |
 
@@ -193,9 +194,16 @@ A second overload takes a `CyberStrokeShape`. Use it to share one shape with `Mo
 - **Curves keep their center.** Arc radii become r + offset and r − offset.
 - **Closed loops thicken outside by default.** The enclosed area keeps its size.
 - **Open contours thicken on both sides.** They have no inside.
-- **Overlaps merge.** Inner corners, tight curves and self-crossings stay valid.
+- **Curves lean to their convex side.** The stroke moves away from the bend's center.
+- **The lean grows with curvature × width.** Straight runs stay centered.
+- **A curl's inside does not fill.** The inner reach stays below the bend radius.
+- **The lean ramps over one stroke width.** It does not step where two curves join.
+- **Nearby lines taper.** Each side reaches at most (1 − `minGap`) / 2 of the gap.
+- **Tight corners stay open.** "Nearby" includes parts that the line turns over 90° to reach.
+- **Crossings stay solid.** Lines are not tapered where they cross.
+- **Overlaps merge.** The union keeps the outline valid at every thickness.
 
-The geometry splits the centerline into segments. Each segment becomes a quad. Each corner gets a wedge that keeps the angle. The union of these pieces is the outline.
+The geometry splits each cubic at its critical points. These are the zeros of x′(t) and y′(t), from Δ = b² − 3ac. It also splits at inflections, where x′y″ − y′x″ changes sign. The sign of x′y″ − y′x″ gives the convex side. Each segment becomes a quad or a trapezoid. Each corner gets a wedge that keeps the angle. Where offsets differ, a corner can be a bevel. The union of these pieces is the outline.
 
 #### `CyberCenterline`
 
@@ -214,7 +222,7 @@ Build it with `cyberCenterline(viewportWidth, viewportHeight) { … }`. The buil
 
 | Value | Stroke position on a closed loop |
 | --- | --- |
-| `Center` | Half inside and half outside the centerline. |
+| `Center` | Centered, leaning to the convex side of each bend. |
 | `Outside` | Fully outside. The enclosed area stays the same. |
 | `Inside` | Fully inside. The outer edge stays on the centerline. |
 

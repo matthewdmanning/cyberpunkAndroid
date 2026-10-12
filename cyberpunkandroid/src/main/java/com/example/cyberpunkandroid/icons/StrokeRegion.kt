@@ -54,8 +54,17 @@ internal class Bounds(val left: Double, val top: Double, val right: Double, val 
     }
 }
 
-/** A flattened centerline contour in pixels. */
-internal class Polyline(val points: List<Pt>, val closed: Boolean) {
+/**
+ * A flattened centerline contour in pixels. [curveStart] and [curveEnd] hold each segment's
+ * signed curvature at its two ends, from the source curve (0 on lines, ±1/r on arcs). For a
+ * closed contour the last segment runs from the last point back to the first.
+ */
+internal class Polyline(
+    val points: List<Pt>,
+    val closed: Boolean,
+    val curveStart: DoubleArray = DoubleArray(points.size),
+    val curveEnd: DoubleArray = DoubleArray(points.size)
+) {
     /** Per segment of a closed contour: +1 where its +normal side is outside the loop, else -1. */
     val outward: IntArray by lazy { outwardSides(points) }
 }
@@ -90,7 +99,8 @@ private const val MaxCubicDepth = 16
 internal class CenterlineStroker(
     private val contours: List<CenterlineContour>,
     private val scale: Double,
-    private val alignment: CyberStrokeAlignment
+    private val alignment: CyberStrokeAlignment,
+    private val minGap: Double = DefaultMinGap
 ) {
     // Flattenings by turn limit; a thickness search reuses them instead of re-flattening.
     private val flattened = HashMap<Int, List<Polyline>>()
@@ -105,7 +115,8 @@ internal class CenterlineStroker(
         }
     }
 
-    fun pieces(strokeWidth: Double): List<List<Pt>> = strokePieces(lines(strokeWidth), strokeWidth, alignment)
+    fun pieces(strokeWidth: Double): List<List<Pt>> =
+        strokePieces(crowdedLines(lines(strokeWidth), strokeWidth, minGap), strokeWidth, alignment)
 
     fun bounds(strokeWidth: Double): Bounds? = Bounds.of(pieces(strokeWidth))
 
@@ -129,7 +140,7 @@ internal class CenterlineStroker(
     fun fit(requested: Double, maxWidth: Double, maxHeight: Double): StrokeFit? {
         if (!(requested > 0.0) || requested.isInfinite()) return null
         // One flattening for the whole search: it moves the bounds by far less than a pixel.
-        val lines = lines(requested)
+        val lines = crowdedLines(lines(requested), requested, minGap)
         fun fits(w: Double): Bounds? =
             Bounds.of(strokePieces(lines, w, alignment))?.takeIf { it.width <= maxWidth && it.height <= maxHeight }
         if (maxWidth.isInfinite() && maxHeight.isInfinite()) {
@@ -181,51 +192,90 @@ internal class CenterlineStroker(
 internal fun flatten(contours: List<CenterlineContour>, scale: Double, tolerance: Double, maxTurn: Double): List<Polyline> {
     val out = ArrayList<Polyline>(contours.size)
     for (c in contours) {
-        val pts = ArrayList<Pt>()
-        var cur = Pt(c.startX * scale, c.startY * scale)
-        pts += cur
+        val path = FlatPath(Pt(c.startX * scale, c.startY * scale))
         for (s in c.segments) {
             when (s) {
-                is CenterlineSegment.Line -> {
-                    cur = Pt(s.x * scale, s.y * scale)
-                    pts += cur
-                }
+                is CenterlineSegment.Line -> path.add(Pt(s.x * scale, s.y * scale), 0.0, 0.0)
                 is CenterlineSegment.Cubic -> {
-                    val p3 = Pt(s.x * scale, s.y * scale)
-                    flattenCubic(cur, Pt(s.x1 * scale, s.y1 * scale), Pt(s.x2 * scale, s.y2 * scale), p3, tolerance, maxTurn, 0, pts)
-                    cur = p3
+                    val curve = CubicCurve(arrayOf(path.last, Pt(s.x1 * scale, s.y1 * scale), Pt(s.x2 * scale, s.y2 * scale), Pt(s.x * scale, s.y * scale)))
+                    // Pieces that bend one way and are monotonic in x and y, split at the curve's
+                    // critical points and inflections.
+                    val cuts = listOf(0.0) + curve.splitParameters() + 1.0
+                    for (k in 0 until cuts.size - 1) {
+                        val piece = curve.piece(cuts[k], cuts[k + 1])
+                        flattenCubic(curve, cuts[k], cuts[k + 1], piece[0], piece[1], piece[2], piece[3], tolerance, maxTurn, 0, path)
+                    }
                 }
                 is CenterlineSegment.Arc -> {
                     val center = Pt(s.cx * scale, s.cy * scale)
+                    val cur = path.last
                     val r = (cur - center).length()
                     if (r > 0.0) {
                         val a0 = atan2(cur.y - center.y, cur.x - center.x)
                         val sweep = s.sweepDegrees * PI / 180.0
+                        // A positive sweep turns toward +normal, the center.
+                        val k = if (sweep > 0) 1.0 / r else -1.0 / r
                         val chordTurn = if (tolerance >= r) PI / 2.0 else 2.0 * acos(1.0 - tolerance / r)
                         val n = max(1, ceil(abs(sweep) / min(maxTurn, chordTurn)).toInt())
-                        for (k in 1..n) {
-                            val a = a0 + sweep * k / n
-                            cur = Pt(center.x + r * cos(a), center.y + r * sin(a))
-                            pts += cur
+                        for (step in 1..n) {
+                            val a = a0 + sweep * step / n
+                            path.add(Pt(center.x + r * cos(a), center.y + r * sin(a)), k, k)
                         }
                     }
                 }
             }
         }
-        val clean = ArrayList<Pt>(pts.size)
-        for (p in pts) if (clean.isEmpty() || (p - clean.last()).length() > SamePoint) clean += p
-        var closed = c.closed
-        if (closed && clean.size > 1 && (clean.first() - clean.last()).length() <= SamePoint) clean.removeAt(clean.lastIndex)
-        if (closed && clean.size < 3) closed = false
-        if (clean.size >= 2) out += Polyline(clean, closed)
+        path.toPolyline(c.closed)?.let { out += it }
     }
     return out
+}
+
+/** Points with the curvature of the segment that ends at each one. */
+private class FlatPath(start: Pt) {
+    val points = arrayListOf(start)
+    val curveStart = arrayListOf(0.0) // entry k is the segment ending at point k; entry 0 is unused
+    val curveEnd = arrayListOf(0.0)
+    val last: Pt get() = points.last()
+
+    fun add(p: Pt, kStart: Double, kEnd: Double) {
+        if ((p - points.last()).length() <= SamePoint) return
+        points += p
+        curveStart += kStart
+        curveEnd += kEnd
+    }
+
+    fun toPolyline(closedRequested: Boolean): Polyline? {
+        val pts = ArrayList(points)
+        val ks = ArrayList(curveStart)
+        val ke = ArrayList(curveEnd)
+        var closed = closedRequested
+        // A segment ending back at the start is the closing segment: keep its curvature in slot 0.
+        if (closed && pts.size > 1 && (pts.first() - pts.last()).length() <= SamePoint) {
+            ks[0] = ks.removeAt(ks.lastIndex)
+            ke[0] = ke.removeAt(ke.lastIndex)
+            pts.removeAt(pts.lastIndex)
+        }
+        if (closed && pts.size < 3) closed = false
+        if (pts.size < 2) return null
+        val count = if (closed) pts.size else pts.size - 1
+        // Segment i runs from point i to point i + 1, which is entry i + 1 (or 0 for the closing one).
+        return Polyline(
+            pts, closed,
+            DoubleArray(count) { ks[(it + 1) % pts.size] },
+            DoubleArray(count) { ke[(it + 1) % pts.size] }
+        )
+    }
 }
 
 // Points closer than this (px) are the same point.
 private const val SamePoint = 1e-9
 
-private fun flattenCubic(p0: Pt, p1: Pt, p2: Pt, p3: Pt, tolerance: Double, maxTurn: Double, depth: Int, out: MutableList<Pt>) {
+/** Flattens the piece of [curve] between [t0] and [t1], whose control points are p0–p3. */
+private fun flattenCubic(
+    curve: CubicCurve, t0: Double, t1: Double,
+    p0: Pt, p1: Pt, p2: Pt, p3: Pt,
+    tolerance: Double, maxTurn: Double, depth: Int, out: FlatPath
+) {
     val flat = max(distanceToLine(p1, p0, p3), distanceToLine(p2, p0, p3)) <= tolerance
     val chord = p3 - p0
     val start = firstNonZero(p1 - p0, p2 - p0, chord)
@@ -233,7 +283,7 @@ private fun flattenCubic(p0: Pt, p1: Pt, p2: Pt, p3: Pt, tolerance: Double, maxT
     val turn = if (start == null || end == null) 0.0
     else if (chord.length() > SamePoint) angleBetween(start, chord) + angleBetween(chord, end) else angleBetween(start, end)
     if (depth >= MaxCubicDepth || (flat && turn <= maxTurn)) {
-        out += p3
+        out.add(p3, curve.curvature(t0), curve.curvature(t1))
         return
     }
     // de Casteljau split at the middle.
@@ -243,8 +293,9 @@ private fun flattenCubic(p0: Pt, p1: Pt, p2: Pt, p3: Pt, tolerance: Double, maxT
     val ab = (a + b) * 0.5
     val bc = (b + c) * 0.5
     val mid = (ab + bc) * 0.5
-    flattenCubic(p0, a, ab, mid, tolerance, maxTurn, depth + 1, out)
-    flattenCubic(mid, bc, c, p3, tolerance, maxTurn, depth + 1, out)
+    val tm = (t0 + t1) / 2.0
+    flattenCubic(curve, t0, tm, p0, a, ab, mid, tolerance, maxTurn, depth + 1, out)
+    flattenCubic(curve, tm, t1, mid, bc, c, p3, tolerance, maxTurn, depth + 1, out)
 }
 
 private fun firstNonZero(vararg v: Pt): Pt? = v.firstOrNull { it.length() > SamePoint }
@@ -262,34 +313,43 @@ private fun distanceToLine(p: Pt, a: Pt, b: Pt): Double {
 /**
  * Convex pieces whose union is the stroke: one quad per segment and one wedge per corner,
  * on the outer side of the turn. Closed contours with [CyberStrokeAlignment.Outside] or
- * [CyberStrokeAlignment.Inside] put the whole width on one side of each segment.
+ * [CyberStrokeAlignment.Inside] put the whole width on one side of each segment. Each
+ * segment end's reach on each side is capped by its [StrokeLine] room, so the quads become
+ * trapezoids that taper where other lines come close.
  */
-internal fun strokePieces(lines: List<Polyline>, strokeWidth: Double, alignment: CyberStrokeAlignment): List<List<Pt>> {
+internal fun strokePieces(lines: List<StrokeLine>, strokeWidth: Double, alignment: CyberStrokeAlignment): List<List<Pt>> {
     val pieces = ArrayList<List<Pt>>()
-    val half = strokeWidth / 2.0
     for (line in lines) {
         val pts = line.points
         val n = pts.size
         val closed = line.closed
         val segCount = if (closed) n else n - 1
-        val dirs = Array(segCount) { i ->
-            val d = pts[(i + 1) % n] - pts[i]
-            d * (1.0 / d.length())
-        }
+        val dirs = line.directions
         val normals = Array(segCount) { Pt(-dirs[it].y, dirs[it].x) }
-        val lo = DoubleArray(segCount) { -half }
-        val hi = DoubleArray(segCount) { half }
-        if (closed && alignment != CyberStrokeAlignment.Center) {
-            val outward = line.outward
-            for (i in 0 until segCount) {
-                val toward = if (alignment == CyberStrokeAlignment.Outside) outward[i] else -outward[i]
-                if (toward > 0) { lo[i] = 0.0; hi[i] = strokeWidth } else { lo[i] = -strokeWidth; hi[i] = 0.0 }
-            }
-        }
+        // Offsets along the normal at each segment's start (A) and end (B).
+        val loA = DoubleArray(segCount)
+        val hiA = DoubleArray(segCount)
+        val loB = DoubleArray(segCount)
+        val hiB = DoubleArray(segCount)
+        val oneSided = closed && alignment != CyberStrokeAlignment.Center
+        val lean = if (oneSided) null else convexLean(line, strokeWidth)
         for (i in 0 until segCount) {
+            if (oneSided) {
+                val toward = if (alignment == CyberStrokeAlignment.Outside) line.outward[i] else -line.outward[i]
+                val lo = if (toward > 0) 0.0 else -strokeWidth
+                val hi = if (toward > 0) strokeWidth else 0.0
+                loA[i] = lo; hiA[i] = hi; loB[i] = lo; hiB[i] = hi
+            } else {
+                val leanA = lean!![i]
+                val leanB = lean[(i + 1) % lean.size]
+                loA[i] = -strokeWidth * (1 - leanA) / 2; hiA[i] = strokeWidth * (1 + leanA) / 2
+                loB[i] = -strokeWidth * (1 - leanB) / 2; hiB[i] = strokeWidth * (1 + leanB) / 2
+            }
+            loA[i] = max(loA[i], -line.minusA[i]); hiA[i] = min(hiA[i], line.plusA[i])
+            loB[i] = max(loB[i], -line.minusB[i]); hiB[i] = min(hiB[i], line.plusB[i])
             val a = pts[i]
             val b = pts[(i + 1) % n]
-            pieces += listOf(a + normals[i] * lo[i], b + normals[i] * lo[i], b + normals[i] * hi[i], a + normals[i] * hi[i])
+            pieces += listOf(a + normals[i] * loA[i], b + normals[i] * loB[i], b + normals[i] * hiB[i], a + normals[i] * hiA[i])
         }
         val corners = if (closed) 0 until n else 1 until n - 1
         for (k in corners) {
@@ -298,17 +358,69 @@ internal fun strokePieces(lines: List<Polyline>, strokeWidth: Double, alignment:
             val turn = dirs[j].cross(dirs[i])
             if (abs(turn) < ParallelTurn) continue // straight on, or a full reversal with no finite corner
             // turn > 0 bends toward +normal, so the outer side of the corner is -normal.
-            val oj = if (turn > 0) lo[j] else hi[j]
-            val oi = if (turn > 0) lo[i] else hi[i]
+            val oj = if (turn > 0) loB[j] else hiB[j]
+            val oi = if (turn > 0) loA[i] else hiA[i]
             if (oj == 0.0 || oi == 0.0 || (oj > 0) != (oi > 0)) continue
             val p = pts[k]
             val a = p + normals[j] * oj
             val b = p + normals[i] * oi
             val t = (b - a).cross(dirs[i]) / dirs[j].cross(dirs[i])
-            pieces += listOf(p, a, a + dirs[j] * t, b) // the corner keeps the centerline's angle
+            val corner = a + dirs[j] * t
+            // The offset lines meet ahead of segment j's end and behind segment i's start: the
+            // corner keeps the centerline's angle. When the two sides' offsets differ (the
+            // stroke is tapering here) they can meet far away or behind; then bevel.
+            pieces += if (t >= 0 && (corner - b).dot(dirs[i]) <= 0) listOf(p, a, corner, b) else listOf(p, a, b)
         }
     }
     return pieces
+}
+
+/**
+ * How far each vertex's stroke leans to one side, −1 (all on −normal) to 1 (all on +normal).
+ * The stroke leans toward the convex side of the bend, away from its center, by a share that
+ * grows with curvature × width: straight runs stay centered, and a bend tighter than the
+ * width puts the whole stroke outside. Then, unsmoothed, the inner reach w(1 − w/r)/2 stays
+ * below the radius r, so the stroke never fills the inside of a curl.
+ *
+ * The lean is averaged over one stroke width of arc around each vertex, so it ramps through
+ * the curvature jumps where two curves join instead of stepping.
+ */
+private fun convexLean(line: StrokeLine, strokeWidth: Double): DoubleArray {
+    val pts = line.points
+    val n = pts.size
+    val segCount = if (line.closed) n else n - 1
+    // Curvature > 0 bends toward +normal, so its convex side is −normal.
+    fun lean(k: Double) = -kotlin.math.sign(k) * min(1.0, abs(k) * strokeWidth)
+    val raw = DoubleArray(n) { v ->
+        val ends = ArrayList<Double>(2)
+        if (line.closed || v < segCount) ends += lean(line.curveA[v % segCount])
+        if (line.closed || v > 0) ends += lean(line.curveB[(v - 1 + segCount) % segCount])
+        ends.average()
+    }
+    // Vertex arc positions; closed lines repeat once on each side so windows can wrap.
+    val arc = DoubleArray(n)
+    for (v in 1 until n) arc[v] = arc[v - 1] + (pts[v] - pts[v - 1]).length()
+    val total = if (line.closed) arc[n - 1] + (pts[0] - pts[n - 1]).length() else arc[n - 1]
+    val copies = if (line.closed) 3 else 1
+    val at = DoubleArray(n * copies) { arc[it % n] + (if (line.closed) (it / n - 1) * total else 0.0) }
+    val prefix = DoubleArray(n * copies + 1)
+    for (u in at.indices) prefix[u + 1] = prefix[u] + raw[u % n]
+    val window = strokeWidth / 2
+    fun firstAtLeast(x: Double): Int {
+        var lo = 0
+        var hi = at.size
+        while (lo < hi) { val mid = (lo + hi) / 2; if (at[mid] < x) lo = mid + 1 else hi = mid }
+        return lo
+    }
+    val tiny = 1e-9 * (total + 1.0)
+    return DoubleArray(n) { v ->
+        val center = arc[v]
+        // On a closed loop the window covers at most the loop once (half each way).
+        val reach = if (line.closed) min(window, total / 2 - tiny) else window
+        val from = firstAtLeast(center - reach)
+        val to = firstAtLeast(center + reach + tiny)
+        (prefix[to] - prefix[from]) / (to - from)
+    }
 }
 
 // Sine of the smallest turn that still gets a corner wedge.

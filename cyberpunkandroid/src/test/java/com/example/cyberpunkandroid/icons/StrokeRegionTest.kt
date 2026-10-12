@@ -41,11 +41,16 @@ class StrokeRegionTest {
     }
 
     @Test
-    fun anInsideStrokeThickerThanTheLoopFillsItWithoutBreaking() {
+    fun anInsideStrokeThickerThanTheLoopKeepsPartOfItOpen() {
+        // Opposite sides are 10 apart, so each may fill (1 - 0.25) / 2 of that: 3.75.
         val r = region(square, 8.0, CyberStrokeAlignment.Inside)
         assertEquals(1, r.solids.size)
-        assertEquals(0, r.holes.size)
+        assertEquals(1, r.holes.size)
         assertEquals(100.0, signedArea(r.solids[0]), 1e-6)
+        assertEquals(-2.5 * 2.5, signedArea(r.holes[0]), 1e-6)
+        // With no gap kept, the strokes meet and fill the loop.
+        val closed = checkNotNull(CenterlineStroker(square.contours, 1.0, CyberStrokeAlignment.Inside, minGap = 0.0).region(8.0))
+        assertEquals(0, closed.holes.size)
     }
 
     @Test
@@ -105,21 +110,22 @@ class StrokeRegionTest {
     }
 
     @Test
-    fun narrowNotchFillsInFromOutside() {
-        // A U-shaped loop: the notch is 4 wide, so an 8-wide outside stroke closes its mouth.
+    fun narrowNotchStaysOpenAsTheStrokeThickens() {
+        // A U-shaped loop: the notch is 4 wide, so an 8-wide outside stroke would close it.
         val u = cyberCenterline(30f, 30f) {
             moveTo(0f, 0f); lineTo(13f, 0f); lineTo(13f, 20f); lineTo(17f, 20f); lineTo(17f, 0f)
             lineTo(30f, 0f); lineTo(30f, 30f); lineTo(0f, 30f); close()
         }
-        val thin = region(u, 1.0, CyberStrokeAlignment.Outside)
-        assertEquals(1, thin.solids.size)
         val thick = region(u, 8.0, CyberStrokeAlignment.Outside)
         assertEquals(1, thick.solids.size)
         assertEquals(1, thick.holes.size)
         assertSimple(thick)
-        // The outer edge passes over the notch mouth, 8 above the centerline's top.
         assertEquals(-8.0, thick.bounds.top, 1e-9)
-        assertTrue(thick.solids[0].none { it.y > -8.0 + 1e-6 && it.y < 0.0 - 1e-6 && it.x > 13.0 && it.x < 17.0 })
+        // Each wall fills 1.5 of the 4-wide notch, so the outer edge runs down into it.
+        val inNotch = thick.solids[0].filter { it.x > 13.0 && it.x < 17.0 && it.y > 0.0 }
+        assertTrue(inNotch.isNotEmpty())
+        assertEquals(14.5, inNotch.minOf { it.x }, 1e-6)
+        assertEquals(15.5, inNotch.maxOf { it.x }, 1e-6)
     }
 
     private val cursiveL = cyberCenterline(24f, 24f) {
@@ -139,11 +145,64 @@ class StrokeRegionTest {
     }
 
     @Test
-    fun thickCursiveLClosesItsLoopWithoutBreaking() {
-        val r = region(cursiveL, 60.0, CyberStrokeAlignment.Center, scale = 10.0)
+    fun thickCursiveLKeepsItsLoopOpen() {
+        for (stroke in listOf(20.0, 40.0, 60.0, 90.0)) {
+            val r = region(cursiveL, stroke, CyberStrokeAlignment.Center, scale = 10.0)
+            assertEquals("stroke $stroke", 1, r.solids.size)
+            assertEquals("stroke $stroke", 1, r.holes.size)
+            assertSimple(r)
+        }
+    }
+
+    @Test
+    fun crossingLinesStaySolidWhereTheyCross() {
+        val x = cyberCenterline(100f, 100f) { moveTo(0f, 50f); lineTo(100f, 50f); moveTo(50f, 0f); lineTo(50f, 100f) }
+        val r = region(x, 10.0, CyberStrokeAlignment.Center)
         assertEquals(1, r.solids.size)
-        assertEquals(0, r.holes.size)
-        assertSimple(r)
+        assertEquals(1000.0 + 1000.0 - 100.0, signedArea(r.solids[0]), 1e-6)
+    }
+
+    @Test
+    fun tightCornerKeepsAGapOnItsInside() {
+        // A 20° V with a stroke far wider than the space between its arms near the tip.
+        val half = 10.0 * PI / 180.0
+        val v = cyberCenterline(100f, 100f) {
+            moveTo(0f, 0f)
+            lineTo((50 * cos(half)).toFloat(), (50 * sin(half)).toFloat())
+            lineTo(0f, (100 * sin(half)).toFloat())
+        }
+        val r = region(v, 12.0, CyberStrokeAlignment.Center)
+        val bisectorY = 50 * sin(half)
+        for (x in listOf(10.0, 25.0, 40.0)) assertFalse("x $x", inside(Pt(x, bisectorY), r))
+        // The outside of the corner still keeps the centerline's angle.
+        assertEquals(50 * cos(half) + 6.0 / sin(half), r.bounds.right, 1e-3)
+    }
+
+    @Test
+    fun curvesLeanToTheirConvexSide() {
+        // An open half circle, radius 10, stroked 30 wide: tighter than the stroke, so all of
+        // it goes outside and the inside of the bend stays empty.
+        val arc = cyberCenterline(40f, 40f) { moveTo(30f, 20f); arcTo(20f, 20f, 180f) }
+        val r = region(arc, 30.0, CyberStrokeAlignment.Center)
+        for (p in r.solids[0]) assertTrue("$p", (p - Pt(20.0, 20.0)).length() >= 10.0 - 0.25)
+        // A gentle bend (radius 100, stroke 4) shifts out by only 4/100 of the stroke.
+        val wide = region(cyberCenterline(400f, 400f) { moveTo(300f, 200f); arcTo(200f, 200f, 90f) }, 4.0, CyberStrokeAlignment.Center)
+        assertEquals(300.0 + 4.0 * 1.04 / 2, wide.bounds.right, 0.05)
+    }
+
+    @Test
+    fun cubicsSplitAtCriticalPointsAndInflections() {
+        val arch = CubicCurve(arrayOf(Pt(0.0, 0.0), Pt(0.0, 10.0), Pt(10.0, 10.0), Pt(10.0, 0.0)))
+        assertEquals(listOf(0.5), arch.splitParameters().map { Math.round(it * 1e9) / 1e9 })
+        assertTrue(arch.curvature(0.5) != 0.0)
+        val s = CubicCurve(arrayOf(Pt(0.0, 0.0), Pt(10.0, 0.0), Pt(0.0, 10.0), Pt(10.0, 10.0)))
+        assertTrue(s.splitParameters().any { abs(it - 0.5) < 1e-9 }) // the inflection
+        assertTrue(s.curvature(0.25) * s.curvature(0.75) < 0.0)
+        // The uploaded example f(x) = x³ − 3x + 2 has extrema at x = ±1 (Δ = 9).
+        val f = CubicPolynomial(1.0, 0.0, -3.0, 2.0)
+        assertEquals(9.0, f.derivativeDiscriminant(), 0.0)
+        assertEquals(0.0, f.first(1.0), 0.0)
+        assertTrue(f.second(1.0) > 0.0 && f.second(-1.0) < 0.0)
     }
 
     @Test
@@ -208,6 +267,21 @@ class StrokeRegionTest {
         val loops = unionOutline(listOf(a, b))
         assertEquals(2, loops.size)
         assertTrue(loops.all { abs(signedArea(it) - 100.0) < 1e-9 })
+    }
+
+    /** Inside a solid and outside every hole. */
+    private fun inside(p: Pt, r: StrokeRegion): Boolean {
+        fun winding(loop: List<Pt>): Int {
+            var w = 0
+            for (i in loop.indices) {
+                val a = loop[i]
+                val b = loop[(i + 1) % loop.size]
+                val side = (b - a).cross(p - a)
+                if (a.y <= p.y) { if (b.y > p.y && side > 0) w++ } else if (b.y <= p.y && side < 0) w--
+            }
+            return w
+        }
+        return (r.solids + r.holes).sumOf { winding(it) } != 0
     }
 
     /** No loop edge crosses another loop edge, so every perimeter is a clean trace. */

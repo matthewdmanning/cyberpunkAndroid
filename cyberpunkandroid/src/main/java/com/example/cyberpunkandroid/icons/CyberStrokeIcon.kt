@@ -35,7 +35,14 @@ import kotlin.math.ceil
  * fits, so a growing value never breaks the shape.
  *
  * Closed contours put the stroke [CyberStrokeAlignment.Outside] the loop by default, so what
- * the loop encloses keeps its size. Open contours are stroked on both sides.
+ * the loop encloses keeps its size. Open contours, and closed ones with
+ * [CyberStrokeAlignment.Center], lean toward the convex side of each bend: cubic curves are
+ * split at their critical points and inflections, and the second derivative's sign picks the
+ * side. A curl's inside never fills.
+ *
+ * Where parts of the centerline run close together (tight corners, loops, narrow notches),
+ * the stroke tapers so that [minGap] of each gap, 0 to 1, always stays open. Lines that
+ * cross stay solid where they cross.
  *
  * To run path effects along the icon's outside edge, build a [CyberStrokeShape] and pass it to
  * both this composable's other overload and `Modifier.cyberPerimeter`.
@@ -49,11 +56,12 @@ fun CyberStrokeIcon(
     width: Dp = CyberPrimitives.IconSizes.dp64,
     thickness: Dp = CyberPrimitives.BorderWidths.dp4,
     alignment: CyberStrokeAlignment = CyberStrokeAlignment.Outside,
+    minGap: Float = 0.25f,
     color: Color = CyberTheme.colors.primary,
     contentDescription: String? = null
 ) {
-    val shape = remember(centerline, width, thickness, alignment) {
-        CyberStrokeShape(centerline, width, thickness, alignment)
+    val shape = remember(centerline, width, thickness, alignment, minGap) {
+        CyberStrokeShape(centerline, width, thickness, alignment, minGap)
     }
     CyberStrokeIcon(shape, modifier, color, contentDescription)
 }
@@ -100,10 +108,12 @@ class CyberStrokeShape(
     val centerline: CyberCenterline,
     val width: Dp,
     val thickness: Dp,
-    val alignment: CyberStrokeAlignment = CyberStrokeAlignment.Outside
+    val alignment: CyberStrokeAlignment = CyberStrokeAlignment.Outside,
+    val minGap: Float = 0.25f
 ) : CyberPerimeterShape {
 
     init {
+        require(minGap.isFinite() && minGap in 0f..1f) { "minGap must be between 0 and 1" }
         require(width.value.isFinite() && width >= 0.dp) { "width must be nonnegative and finite" }
         require(thickness.value.isFinite() && thickness > 0.dp) { "thickness must be positive and finite" }
     }
@@ -117,7 +127,7 @@ class CyberStrokeShape(
         val px = with(density) { width.toPx() }
         stroker?.let { if (it.first == px) return it.second }
         val scale = px.toDouble() / centerline.viewportWidth
-        return CenterlineStroker(centerline.contours, scale, alignment).also { stroker = px to it }
+        return CenterlineStroker(centerline.contours, scale, alignment, minGap.toDouble()).also { stroker = px to it }
     }
 
     /** The drawn stroke for [maxWidth] × [maxHeight] px of space; null when nothing fits. */
@@ -150,10 +160,10 @@ class CyberStrokeShape(
 
     override fun equals(other: Any?): Boolean =
         other is CyberStrokeShape && other.centerline == centerline && other.width == width &&
-            other.thickness == thickness && other.alignment == alignment
+            other.thickness == thickness && other.alignment == alignment && other.minGap == minGap
 
     override fun hashCode(): Int =
-        ((centerline.hashCode() * 31 + width.hashCode()) * 31 + thickness.hashCode()) * 31 + alignment.hashCode()
+        (((centerline.hashCode() * 31 + width.hashCode()) * 31 + thickness.hashCode()) * 31 + alignment.hashCode()) * 31 + minGap.hashCode()
 }
 
 /** Adds [loop] as a closed contour, centering [bounds] in [size]. */
