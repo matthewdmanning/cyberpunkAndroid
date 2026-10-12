@@ -33,6 +33,13 @@ Modifier.cyberPathBorder(
 Modifier.cyberPathBorder(CyberGraduatedTicks(), shape = CircleShape, trigger = CyberInteractionTrigger.NONE)
 ```
 
+To trace a thickened icon, use `cyberPerimeter` with the icon's shape:
+
+```kotlin
+val shape = CyberStrokeShape(centerline, width = 96.dp, thickness = 8.dp)
+CyberStrokeIcon(shape, modifier = Modifier.cyberPerimeter(CyberCometTracer(), shape))
+```
+
 A live catalogue is in the sample app under the **Paths** tab (`PathEffectsScreen.kt`).
 
 ## Modifiers
@@ -41,6 +48,7 @@ A live catalogue is in the sample app under the **Paths** tab (`PathEffectsScree
 |---|---|---|
 | `Modifier.cyberPathBorder(effect, color, shape, glowRadius, inset, steps, trigger, interactionSource, hideWhenIdle, animationSpec, appendedA11y, customA11y)` | the `shape` outline, over the content | Auto-insets by the effect's extent. Moves the outline's start to the middle of its longest side, so seams never sit on a corner. |
 | `Modifier.cyberPathDivider(effect, color, alignment, horizontalInset, glowRadius, steps, trigger, interactionSource, hideWhenIdle, animationSpec, appendedA11y, customA11y)` | a horizontal line across the component | An open path, so tracers enter at the start and exit at the end. |
+| `Modifier.cyberPerimeter(effect, shape, color, glowRadius, includeHoles, steps, trigger, interactionSource, hideWhenIdle, animationSpec, appendedA11y, customA11y)` | the outside edge of each filled part of a `CyberPerimeterShape` | For thickened icons such as `CyberStrokeIcon`. It follows the visible edge, not the centerline. Each part gets its own loop. `includeHoles` adds the edges of holes. |
 | `Modifier.cyberWeld(weld, shape, glowRadius, trigger, interactionSource, hideWhenIdle, animationSpec, appendedA11y, customA11y)` | the `shape` outline | Shortcut for `cyberPathBorder(weld, …)` with stronger default glow (`10.dp`) and loop matching `weld.cycleMillis`. |
 
 - `animationSpec` drives progress 0 → 1. An infinite spec loops. A finite spec (for example `tween(900)`) plays once and holds; use `fadeOut = false` on `CyberDrawOn`, `CyberCornerCharge` and `CyberChargeMeter` for one-shots.

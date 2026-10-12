@@ -26,3 +26,4 @@ dependencyResolutionManagement {
 rootProject.name = "cyberpunkAndroid"
 include(":cyberpunkandroid")
 include(":sample")
+include(":sliderpanel")

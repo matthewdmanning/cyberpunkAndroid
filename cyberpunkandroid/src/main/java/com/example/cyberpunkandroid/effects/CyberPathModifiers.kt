@@ -40,7 +40,7 @@ import kotlin.math.floor
 import kotlin.math.roundToInt
 
 /** Default loop for path effects: one cycle every 2.4 s, constant speed. */
-private val DefaultPathLoop: AnimationSpec<Float> =
+internal val DefaultPathLoop: AnimationSpec<Float> =
     infiniteRepeatable(animation = tween(2400, easing = LinearEasing), repeatMode = RepeatMode.Restart)
 
 /**

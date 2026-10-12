@@ -9,7 +9,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -19,6 +18,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.example.cyberpunkandroid.config.CyberPrimitives
+import com.example.cyberpunkandroid.effects.CyberPerimeterShape
 import com.example.cyberpunkandroid.theme.CyberTheme
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -86,9 +86,9 @@ private fun Int.bound() = if (this == Constraints.Infinity) Float.POSITIVE_INFIN
 /**
  * Outline of [CyberTripleChevron] for the same parameters, centered in the given size,
  * which is also the space the stroke may grow into. With [chevron] null, the outline holds
- * all three chevrons; with 0, 1 or 2 it holds only that chevron, left to right. Path
- * borders and tracers measure one contour, so trace each chevron with its own index. Each
- * contour is closed and winds clockwise.
+ * all three chevrons; with 0, 1 or 2 it holds only that chevron, left to right. Each
+ * contour is closed and winds clockwise. `Modifier.cyberPerimeter` runs a path effect round
+ * every chevron at once.
  */
 internal data class CyberTripleChevronShape(
     val width: Dp,
@@ -97,7 +97,7 @@ internal data class CyberTripleChevronShape(
     val thickness: Dp,
     val shear: Float,
     val chevron: Int? = null
-) : Shape {
+) : CyberPerimeterShape {
     fun geometry(density: Density, maxWidth: Float, maxHeight: Float): TripleChevronGeometry? = with(density) {
         tripleChevronGeometry(
             width.toPx(), (width / aspectRatio).toPx(), thickness.toPx(), spacing.toPx(), shear, maxWidth, maxHeight
@@ -106,17 +106,25 @@ internal data class CyberTripleChevronShape(
 
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
         val path = Path()
-        val geometry = geometry(density, size.width, size.height) ?: return Outline.Generic(path)
+        for (contour in contours(size, density)) path.addPath(contour)
+        return Outline.Generic(path)
+    }
+
+    /** Each chevron's outline is its own perimeter; chevrons have no holes. */
+    override fun perimeters(size: Size, layoutDirection: LayoutDirection, density: Density, includeHoles: Boolean): List<Path> =
+        contours(size, density)
+
+    private fun contours(size: Size, density: Density): List<Path> {
+        val geometry = geometry(density, size.width, size.height) ?: return emptyList()
         val dx = (size.width - geometry.size.width) / 2f
         val dy = (size.height - geometry.size.height) / 2f
-        geometry.outlines.forEachIndexed { index, contour ->
-            if (chevron == null || chevron == index) {
-                path.moveTo(contour[0].x + dx, contour[0].y + dy)
-                for (i in 1 until contour.size) path.lineTo(contour[i].x + dx, contour[i].y + dy)
-                path.close()
+        return geometry.outlines.filterIndexed { index, _ -> chevron == null || chevron == index }.map { contour ->
+            Path().apply {
+                moveTo(contour[0].x + dx, contour[0].y + dy)
+                for (i in 1 until contour.size) lineTo(contour[i].x + dx, contour[i].y + dy)
+                close()
             }
         }
-        return Outline.Generic(path)
     }
 }
 

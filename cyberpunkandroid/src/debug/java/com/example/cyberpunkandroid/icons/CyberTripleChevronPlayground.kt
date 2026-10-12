@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.example.cyberpunkandroid.components.CyberSlider
 import com.example.cyberpunkandroid.components.CyberSwitch
 import com.example.cyberpunkandroid.effects.CyberCometTracer
-import com.example.cyberpunkandroid.effects.cyberPathBorder
+import com.example.cyberpunkandroid.effects.cyberPerimeter
 import com.example.cyberpunkandroid.theme.CyberTheme
 
 /**
@@ -50,15 +50,10 @@ internal fun CyberTripleChevronPlayground() {
     val thickness = thicknessDp.dp
     val status = CyberTheme.status
 
-    // Each chevron is its own contour, and path borders trace one contour, so one tracer each.
-    val traced = (0..2).fold(Modifier.border(1.dp, CyberTheme.colors.border) as Modifier) { m, index ->
-        if (!tracer) m
-        else m.cyberPathBorder(
-            CyberCometTracer(),
-            color = CyberTheme.colors.secondary,
-            shape = CyberTripleChevronShape(width, aspectRatio, spacing, thickness, shear, chevron = index),
-            inset = 0.dp
-        )
+    // cyberPerimeter runs one tracer round each chevron's outside edge.
+    val shape = CyberTripleChevronShape(width, aspectRatio, spacing, thickness, shear)
+    val traced = Modifier.border(1.dp, CyberTheme.colors.border).let {
+        if (tracer) it.cyberPerimeter(CyberCometTracer(), shape, color = CyberTheme.colors.secondary) else it
     }
 
     Column(
@@ -70,8 +65,7 @@ internal fun CyberTripleChevronPlayground() {
         // The stage is the space the chevrons may grow into: their natural limit.
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             val geometry = with(LocalDensity.current) {
-                CyberTripleChevronShape(width, aspectRatio, spacing, thickness, shear)
-                    .geometry(this, maxWidth.toPx(), StageHeight.toPx())
+                shape.geometry(this, maxWidth.toPx(), StageHeight.toPx())
             }
             val maxThickness = geometry?.let { with(LocalDensity.current) { it.maxStrokeWidth.toDp() } }
             val load = geometry?.let { StrokeLoad.of(it.load) }

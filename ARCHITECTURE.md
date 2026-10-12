@@ -8,7 +8,8 @@ This document is the architectural map for the `:cyberpunkandroid` library. Use 
 |---|---|---|
 | Components | `cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/components/` | Minimal, functional Compose components and feedback fixtures. Visual effects are added with modifiers. |
 | Effects | `cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/effects/` | Public `Modifier.cyber...` effects, shader-backed rendering, Compose fallbacks, interaction triggers, and telemetry-driven state. |
-| Icons | `cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/icons/` | Cyber icon vectors and the Outline, Solid, Duotone, and Overload variants. |
+| Icons | `cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/icons/` | Cyber icon vectors and the Outline, Solid, Duotone, and Overload variants. Stroked shapes (`CyberStrokeIcon`, `CyberTripleChevron`) and their pure-Kotlin outline geometry (`StrokeRegion.kt`). |
+| Slider panel module | `sliderpanel/src/main/java/com/example/cyberpunkandroid/sliderpanel/` | Separate `:sliderpanel` module. A floating or pinned panel of sliders defined by JSON, with MVVM state. It depends on `:cyberpunkandroid`. See [sliderpanel/README.md](sliderpanel/README.md). |
 | Configuration | `cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/config/` | Primitive and semantic design tokens shared across themes and components. |
 | Theme | `cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/theme/` | Colors, typography, shapes, and `CyberTheme` composition locals. |
 | Drawing utilities | `cyberpunkandroid/src/main/java/com/example/cyberpunkandroid/utils/` | Reusable high-level Compose drawing helpers such as datastream gradients. |

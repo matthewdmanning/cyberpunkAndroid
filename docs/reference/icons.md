@@ -146,3 +146,95 @@ CyberSectorRim(sectorAngles = listOf(5f, 3f, 2f), gapAngle = 8f, color = CyberTh
 | `sectorAngles` | `List<Float>` | four equal (`90f` each) | Relative arc lengths; only the proportions matter. Empty or all zeros draws nothing. |
 | `gapAngle` | `Float` | `10f` | Degrees of gap after each arc. |
 | `size` | `Dp` | `64.dp` | Diameter. |
+
+---
+
+## Stroked shapes
+
+Icons made from a centerline that is thickened into a filled outline. The outline is the single source of truth. Drawing, layout bounds and path effects all use it.
+
+### `CyberStrokeIcon`
+
+**What:** An icon drawn from a `CyberCenterline` that you define in code.
+
+**Looks like:** A solid shape with the stroke's thickness. Corners stay sharp and keep the centerline's angle. Curves keep their shape. Overlaps merge into one shape.
+
+**Use for:** Custom HUD glyphs, closed or concave shapes, and shapes that cross themselves.
+
+```kotlin
+val cursiveL = cyberCenterline(24f, 24f) {
+    moveTo(4f, 21f)
+    cubicTo(9f, 19f, 17f, 10f, 17f, 5f)
+    cubicTo(17f, 2f, 13f, 2f, 12f, 5f)
+    cubicTo(10f, 11f, 9f, 17f, 10f, 20f)
+    cubicTo(11f, 22f, 14f, 21f, 16f, 19f)
+}
+CyberStrokeIcon(cursiveL, width = 96.dp, thickness = 8.dp)
+```
+
+| Parameter | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `centerline` | `CyberCenterline` | required | The path to thicken. |
+| `modifier` | `Modifier` | `Modifier` | Layout/effects. |
+| `width` | `Dp` | `64.dp` | Width of the centerline. The height follows the viewport. |
+| `thickness` | `Dp` | `4.dp` | Stroke thickness. |
+| `alignment` | `CyberStrokeAlignment` | `Outside` | Stroke position on closed contours. |
+| `color` | `Color` | `CyberTheme.colors.primary` | Fill color. |
+| `contentDescription` | `String?` | `null` | Accessibility label. Use `null` for decoration. |
+
+A second overload takes a `CyberStrokeShape`. Use it to share one shape with `Modifier.cyberPerimeter`.
+
+#### Geometry rules
+
+- **The centerline does not move.** The stroke grows around it.
+- **The component grows to hold the stroke.** The parent's space is the only limit.
+- **At the limit, the thickness stops.** The shape does not shrink.
+- **Corners keep their angle.** There is no miter limit and no bevel.
+- **Curves keep their center.** Arc radii become r + offset and r − offset.
+- **Closed loops thicken outside by default.** The enclosed area keeps its size.
+- **Open contours thicken on both sides.** They have no inside.
+- **Overlaps merge.** Inner corners, tight curves and self-crossings stay valid.
+
+The geometry splits the centerline into segments. Each segment becomes a quad. Each corner gets a wedge that keeps the angle. The union of these pieces is the outline.
+
+#### `CyberCenterline`
+
+Build it with `cyberCenterline(viewportWidth, viewportHeight) { … }`. The builder has these calls:
+
+| Call | What it does |
+| --- | --- |
+| `moveTo(x, y)` | Starts a new contour. |
+| `lineTo(x, y)` | Adds a straight line. |
+| `quadTo(x1, y1, x, y)` | Adds a quadratic Bézier curve. |
+| `cubicTo(x1, y1, x2, y2, x, y)` | Adds a cubic Bézier curve. |
+| `arcTo(centerX, centerY, sweepDegrees)` | Adds a circular arc around a center. Positive sweeps go clockwise. |
+| `close()` | Closes the contour back to its start. |
+
+#### `CyberStrokeAlignment`
+
+| Value | Stroke position on a closed loop |
+| --- | --- |
+| `Center` | Half inside and half outside the centerline. |
+| `Outside` | Fully outside. The enclosed area stays the same. |
+| `Inside` | Fully inside. The outer edge stays on the centerline. |
+
+#### `CyberStrokeShape`
+
+The outline of a `CyberStrokeIcon` as a `Shape`. It caches its geometry for each size and thickness. Use one instance for the icon and its effects. It is a `CyberPerimeterShape`, so `Modifier.cyberPerimeter` can trace its edges.
+
+### `CyberTripleChevron`
+
+**What:** Three nested chevrons that point right.
+
+**Looks like:** Filled stroke outlines with sharp tips and square ends.
+
+The centerlines are fixed by `width` and `aspectRatio`. `spacing` is the visible gap between neighbors. The thickness limit is the parent's space or the inner corner. `CyberTripleChevronShape` is internal and is a `CyberPerimeterShape`.
+
+### Playgrounds
+
+Debug builds have interactive previews with sliders:
+
+- `CyberStrokeIconPlayground`: five sample shapes, width, thickness, alignment and a tracer.
+- `CyberTripleChevronPlayground`: every chevron parameter and a tracer.
+
+They are in the `debug` source set and are not in release builds.
