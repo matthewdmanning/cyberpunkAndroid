@@ -72,7 +72,8 @@ class StrokeRegionTest {
         }
         val r = region(v, 4.0, CyberStrokeAlignment.Center)
         val tipX = 50 * cos(half)
-        val expected = 2.0 / sin(half)
+        // Each arm's perpendicular meets the other arm on the inside, so the whole stroke goes outside.
+        val expected = 4.0 / sin(half)
         assertEquals(tipX + expected, r.bounds.right, 1e-3)
         assertEquals(1, r.solids.size)
         assertEquals(0, r.holes.size)
@@ -163,6 +164,23 @@ class StrokeRegionTest {
     }
 
     @Test
+    fun straightLinesFillAwayFromTheNearestPerpendicularHit() {
+        // An open U: each wall's perpendicular meets the opposite wall, so walls thicken outward.
+        val u = cyberCenterline(20f, 20f) { moveTo(0f, 0f); lineTo(0f, 20f); lineTo(20f, 20f); lineTo(20f, 0f) }
+        val r = region(u, 4.0, CyberStrokeAlignment.Center)
+        assertEquals(-4.0, r.bounds.left, 1e-6)
+        assertEquals(24.0, r.bounds.right, 1e-6)
+        assertFalse(inside(Pt(1.0, 10.0), r)) // nothing filled inside the walls
+        // The bottom's perpendicular meets nothing, so it takes the walls' polarity: outward too.
+        assertEquals(24.0, r.bounds.bottom, 1e-6)
+        assertFalse(inside(Pt(10.0, 19.5), r))
+        assertTrue(inside(Pt(10.0, 23.5), r))
+        // A lone line has no outside: it stays centered.
+        val line = region(cyberCenterline(10f, 1f) { moveTo(0f, 0f); lineTo(10f, 0f) }, 2.0, CyberStrokeAlignment.Center)
+        assertEquals(-1.0, line.bounds.top, 1e-9)
+    }
+
+    @Test
     fun tightCornerKeepsAGapOnItsInside() {
         // A 20° V with a stroke far wider than the space between its arms near the tip.
         val half = 10.0 * PI / 180.0
@@ -175,7 +193,7 @@ class StrokeRegionTest {
         val bisectorY = 50 * sin(half)
         for (x in listOf(10.0, 25.0, 40.0)) assertFalse("x $x", inside(Pt(x, bisectorY), r))
         // The outside of the corner still keeps the centerline's angle.
-        assertEquals(50 * cos(half) + 6.0 / sin(half), r.bounds.right, 1e-3)
+        assertEquals(50 * cos(half) + 12.0 / sin(half), r.bounds.right, 1e-3)
     }
 
     @Test

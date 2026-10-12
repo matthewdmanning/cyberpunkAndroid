@@ -32,6 +32,8 @@ internal class StrokeLine(
     val outward: IntArray,
     val curveA: DoubleArray,
     val curveB: DoubleArray,
+    /** For straight segments, the side the whole stroke goes to (±1, 0 when undecided); NaN on curves. */
+    val sideLean: DoubleArray,
     val plusA: DoubleArray,
     val minusA: DoubleArray,
     val plusB: DoubleArray,
@@ -144,6 +146,74 @@ private class Proximity(val lines: List<Polyline>, val width: Double, val minGap
         return doubleArrayOf(min(width, plus * share), min(width, minus * share))
     }
 
+    /**
+     * The outside side of each straight segment (NaN for curves). A straight segment whose
+     * perpendicular meets nothing (the bottom of a U) takes the polarity of the nearest decided
+     * segment along its line: sides are measured against the direction of travel, so the
+     * outside keeps its sign along the line. A curve's polarity is its convex side. A line with
+     * nothing decided stays centered.
+     */
+    private val polarity: Array<DoubleArray> = Array(lines.size) { li ->
+        val line = lines[li]
+        val own = DoubleArray(segCount[li]) { i ->
+            if (line.straight[i]) outsideOf(li, i)
+            else -kotlin.math.sign(line.curveStart[i] + line.curveEnd[i]) // curvature > 0: convex side is −normal
+        }
+        DoubleArray(segCount[li]) { i ->
+            when {
+                !line.straight[i] -> Double.NaN
+                own[i] != 0.0 -> own[i]
+                else -> nearestDecided(li, i, own)
+            }
+        }
+    }
+
+    private fun nearestDecided(li: Int, i: Int, own: DoubleArray): Double {
+        val center = start[li][i] + length[li][i] / 2
+        var best = Double.POSITIVE_INFINITY
+        var sum = 0.0
+        for (j in own.indices) {
+            if (own[j] == 0.0) continue
+            val d = arcSeparation(li, center, start[li][j] + length[li][j] / 2)
+            when {
+                d < best - 1e-9 -> { best = d; sum = own[j] }
+                d <= best + 1e-9 -> sum += own[j] // equally near on both sides: they vote
+            }
+        }
+        return kotlin.math.sign(sum)
+    }
+
+    /**
+     * The outside of straight segment [i] on line [li]: cast its perpendicular (the reciprocal
+     * slope) both ways from its midpoint. The side whose ray meets another part of the shape
+     * first is inside; returns +1 when the outside is +normal, −1 for −normal, and 0 when
+     * neither ray meets anything (a lone line has no outside, so it stays centered).
+     */
+    fun outsideOf(li: Int, i: Int): Double {
+        val a = a(li, i)
+        val d = b(li, i) - a
+        val mid = a + d * 0.5
+        val n = Pt(-d.y, d.x) * (1.0 / d.length())
+        var plus = Double.POSITIVE_INFINITY
+        var minus = Double.POSITIVE_INFINITY
+        for (lj in lines.indices) for (j in 0 until segCount[lj]) {
+            if (lj == li && j == i) continue
+            val q = a(lj, j)
+            val s = b(lj, j) - q
+            val den = n.cross(s)
+            if (abs(den) <= 1e-12 * s.length()) continue // parallel to the ray
+            val t = (q - mid).cross(s) / den // distance along n
+            val u = (q - mid).cross(n) / den // where on the other segment
+            if (u < 0 || u > 1 || abs(t) <= 1e-9) continue
+            if (t > 0) plus = min(plus, t) else minus = min(minus, -t)
+        }
+        return when {
+            plus < minus -> -1.0
+            minus < plus -> 1.0
+            else -> 0.0
+        }
+    }
+
     /** Line [li] with segments split where the room changes, each end carrying its room. */
     fun refine(li: Int): StrokeLine {
         val line = lines[li]
@@ -151,6 +221,7 @@ private class Proximity(val lines: List<Polyline>, val width: Double, val minGap
         val directions = ArrayList<Pt>()
         val outward = ArrayList<Int>()
         val curveA = ArrayList<Double>(); val curveB = ArrayList<Double>()
+        val sideLean = ArrayList<Double>()
         val plusA = ArrayList<Double>(); val minusA = ArrayList<Double>()
         val plusB = ArrayList<Double>(); val minusB = ArrayList<Double>()
         for (i in 0 until segCount[li]) {
@@ -165,6 +236,7 @@ private class Proximity(val lines: List<Polyline>, val width: Double, val minGap
                 val tt = t.coerceIn(inset, 1.0 - inset)
                 return room(li, i, a + (b - a) * tt, n, start[li][i] + tt * len)
             }
+            val side = if (line.straight[i]) polarity[li][i] else Double.NaN
             val ts = arrayListOf(0.0)
             val rooms = arrayListOf(sample(0.0))
             fun split(t0: Double, r0: DoubleArray, t1: Double, r1: DoubleArray, depth: Int) {
@@ -177,15 +249,23 @@ private class Proximity(val lines: List<Polyline>, val width: Double, val minGap
                     split(tm, rm, t1, r1, depth + 1)
                 }
             }
-            val r1 = sample(1.0)
-            split(0.0, rooms[0], 1.0, r1, 0)
-            ts += 1.0; rooms += r1
+            // Straight lines also split one stroke width in from each end, so the lean ramps
+            // only near corners and holds the line's own side in between.
+            val marks = if (line.straight[i] && len > 2 * width) listOf(width / len, 1.0 - width / len) else emptyList()
+            var t0 = 0.0
+            for (t1 in marks + 1.0) {
+                val r1 = sample(t1)
+                split(t0, rooms.last(), t1, r1, 0)
+                ts += t1; rooms += r1
+                t0 = t1
+            }
             for (k in 0 until ts.size - 1) {
                 pts += if (k == 0) a else a + (b - a) * ts[k]
                 directions += dir
                 outward += if (line.closed) line.outward[i] else 0
                 curveA += line.curveStart[i] + (line.curveEnd[i] - line.curveStart[i]) * ts[k]
                 curveB += line.curveStart[i] + (line.curveEnd[i] - line.curveStart[i]) * ts[k + 1]
+                sideLean += side
                 plusA += rooms[k][0]; minusA += rooms[k][1]
                 plusB += rooms[k + 1][0]; minusB += rooms[k + 1][1]
             }
@@ -193,7 +273,7 @@ private class Proximity(val lines: List<Polyline>, val width: Double, val minGap
         if (!line.closed) pts += line.points.last()
         return StrokeLine(
             pts, line.closed, directions, outward.toIntArray(),
-            curveA.toDoubleArray(), curveB.toDoubleArray(),
+            curveA.toDoubleArray(), curveB.toDoubleArray(), sideLean.toDoubleArray(),
             plusA.toDoubleArray(), minusA.toDoubleArray(), plusB.toDoubleArray(), minusB.toDoubleArray()
         )
     }

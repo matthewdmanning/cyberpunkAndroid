@@ -63,7 +63,9 @@ internal class Polyline(
     val points: List<Pt>,
     val closed: Boolean,
     val curveStart: DoubleArray = DoubleArray(points.size),
-    val curveEnd: DoubleArray = DoubleArray(points.size)
+    val curveEnd: DoubleArray = DoubleArray(points.size),
+    /** Per segment: true where it came from a straight line in the centerline. */
+    val straight: BooleanArray = BooleanArray(points.size)
 ) {
     /** Per segment of a closed contour: +1 where its +normal side is outside the loop, else -1. */
     val outward: IntArray by lazy { outwardSides(points) }
@@ -195,7 +197,7 @@ internal fun flatten(contours: List<CenterlineContour>, scale: Double, tolerance
         val path = FlatPath(Pt(c.startX * scale, c.startY * scale))
         for (s in c.segments) {
             when (s) {
-                is CenterlineSegment.Line -> path.add(Pt(s.x * scale, s.y * scale), 0.0, 0.0)
+                is CenterlineSegment.Line -> path.add(Pt(s.x * scale, s.y * scale), 0.0, 0.0, straight = true)
                 is CenterlineSegment.Cubic -> {
                     val curve = CubicCurve(arrayOf(path.last, Pt(s.x1 * scale, s.y1 * scale), Pt(s.x2 * scale, s.y2 * scale), Pt(s.x * scale, s.y * scale)))
                     // Pieces that bend one way and are monotonic in x and y, split at the curve's
@@ -235,24 +237,28 @@ private class FlatPath(start: Pt) {
     val points = arrayListOf(start)
     val curveStart = arrayListOf(0.0) // entry k is the segment ending at point k; entry 0 is unused
     val curveEnd = arrayListOf(0.0)
+    val straight = arrayListOf(true) // the implicit closing segment is a straight line
     val last: Pt get() = points.last()
 
-    fun add(p: Pt, kStart: Double, kEnd: Double) {
+    fun add(p: Pt, kStart: Double, kEnd: Double, straight: Boolean = false) {
         if ((p - points.last()).length() <= SamePoint) return
         points += p
         curveStart += kStart
         curveEnd += kEnd
+        this.straight += straight
     }
 
     fun toPolyline(closedRequested: Boolean): Polyline? {
         val pts = ArrayList(points)
         val ks = ArrayList(curveStart)
         val ke = ArrayList(curveEnd)
+        val st = ArrayList(straight)
         var closed = closedRequested
         // A segment ending back at the start is the closing segment: keep its curvature in slot 0.
         if (closed && pts.size > 1 && (pts.first() - pts.last()).length() <= SamePoint) {
             ks[0] = ks.removeAt(ks.lastIndex)
             ke[0] = ke.removeAt(ke.lastIndex)
+            st[0] = st.removeAt(st.lastIndex)
             pts.removeAt(pts.lastIndex)
         }
         if (closed && pts.size < 3) closed = false
@@ -262,7 +268,8 @@ private class FlatPath(start: Pt) {
         return Polyline(
             pts, closed,
             DoubleArray(count) { ks[(it + 1) % pts.size] },
-            DoubleArray(count) { ke[(it + 1) % pts.size] }
+            DoubleArray(count) { ke[(it + 1) % pts.size] },
+            BooleanArray(count) { st[(it + 1) % pts.size] }
         )
     }
 }
@@ -332,7 +339,8 @@ internal fun strokePieces(lines: List<StrokeLine>, strokeWidth: Double, alignmen
         val loB = DoubleArray(segCount)
         val hiB = DoubleArray(segCount)
         val oneSided = closed && alignment != CyberStrokeAlignment.Center
-        val lean = if (oneSided) null else convexLean(line, strokeWidth)
+        // Open contours lean outside; closed ones follow their alignment exactly.
+        val lean = if (closed) DoubleArray(n) else convexLean(line, strokeWidth)
         for (i in 0 until segCount) {
             if (oneSided) {
                 val toward = if (alignment == CyberStrokeAlignment.Outside) line.outward[i] else -line.outward[i]
@@ -340,7 +348,7 @@ internal fun strokePieces(lines: List<StrokeLine>, strokeWidth: Double, alignmen
                 val hi = if (toward > 0) strokeWidth else 0.0
                 loA[i] = lo; hiA[i] = hi; loB[i] = lo; hiB[i] = hi
             } else {
-                val leanA = lean!![i]
+                val leanA = lean[i]
                 val leanB = lean[(i + 1) % lean.size]
                 loA[i] = -strokeWidth * (1 - leanA) / 2; hiA[i] = strokeWidth * (1 + leanA) / 2
                 loB[i] = -strokeWidth * (1 - leanB) / 2; hiB[i] = strokeWidth * (1 + leanB) / 2
@@ -377,24 +385,30 @@ internal fun strokePieces(lines: List<StrokeLine>, strokeWidth: Double, alignmen
 
 /**
  * How far each vertex's stroke leans to one side, −1 (all on −normal) to 1 (all on +normal).
- * The stroke leans toward the convex side of the bend, away from its center, by a share that
- * grows with curvature × width: straight runs stay centered, and a bend tighter than the
- * width puts the whole stroke outside. Then, unsmoothed, the inner reach w(1 − w/r)/2 stays
- * below the radius r, so the stroke never fills the inside of a curl.
+ *
+ * Curves lean toward their convex side, away from the center of the bend, by a share that
+ * grows with curvature × width: a bend tighter than the width puts the whole stroke outside.
+ * Then, unsmoothed, the inner reach w(1 − w/r)/2 stays below the radius r, so the stroke never
+ * fills the inside of a curl.
+ *
+ * Straight lines lean fully to their outside, from [StrokeLine.sideLean]: the side opposite
+ * the nearest place where the line's perpendicular meets another part of the shape.
  *
  * The lean is averaged over one stroke width of arc around each vertex, so it ramps through
- * the curvature jumps where two curves join instead of stepping.
+ * curve joins and corners instead of stepping.
  */
 private fun convexLean(line: StrokeLine, strokeWidth: Double): DoubleArray {
     val pts = line.points
     val n = pts.size
     val segCount = if (line.closed) n else n - 1
     // Curvature > 0 bends toward +normal, so its convex side is −normal.
-    fun lean(k: Double) = -kotlin.math.sign(k) * min(1.0, abs(k) * strokeWidth)
+    fun curveLean(k: Double) = -kotlin.math.sign(k) * min(1.0, abs(k) * strokeWidth)
+    fun leanA(i: Int) = line.sideLean[i].takeUnless { it.isNaN() } ?: curveLean(line.curveA[i])
+    fun leanB(i: Int) = line.sideLean[i].takeUnless { it.isNaN() } ?: curveLean(line.curveB[i])
     val raw = DoubleArray(n) { v ->
         val ends = ArrayList<Double>(2)
-        if (line.closed || v < segCount) ends += lean(line.curveA[v % segCount])
-        if (line.closed || v > 0) ends += lean(line.curveB[(v - 1 + segCount) % segCount])
+        if (line.closed || v < segCount) ends += leanA(v % segCount)
+        if (line.closed || v > 0) ends += leanB((v - 1 + segCount) % segCount)
         ends.average()
     }
     // Vertex arc positions; closed lines repeat once on each side so windows can wrap.

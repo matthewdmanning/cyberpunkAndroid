@@ -194,7 +194,12 @@ A second overload takes a `CyberStrokeShape`. Use it to share one shape with `Mo
 - **Curves keep their center.** Arc radii become r + offset and r − offset.
 - **Closed loops thicken outside by default.** The enclosed area keeps its size.
 - **Open contours thicken on both sides.** They have no inside.
+- **Open contours lean outside.** Closed contours follow `alignment` exactly.
 - **Curves lean to their convex side.** The stroke moves away from the bend's center.
+- **Straight lines fill along their perpendicular.** The perpendicular is cast both ways from the midpoint.
+- **The nearest hit marks the inside.** The fill goes the opposite way.
+- **A line with no hit takes nearby polarity.** It copies the nearest decided segment on its line.
+- **A lone line stays centered.** Nothing marks its inside.
 - **The lean grows with curvature × width.** Straight runs stay centered.
 - **A curl's inside does not fill.** The inner reach stays below the bend radius.
 - **The lean ramps over one stroke width.** It does not step where two curves join.
@@ -222,7 +227,7 @@ Build it with `cyberCenterline(viewportWidth, viewportHeight) { … }`. The buil
 
 | Value | Stroke position on a closed loop |
 | --- | --- |
-| `Center` | Centered, leaning to the convex side of each bend. |
+| `Center` | Half inside and half outside the centerline. |
 | `Outside` | Fully outside. The enclosed area stays the same. |
 | `Inside` | Fully inside. The outer edge stays on the centerline. |
 
