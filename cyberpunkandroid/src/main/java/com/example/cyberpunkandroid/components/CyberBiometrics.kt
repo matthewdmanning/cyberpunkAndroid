@@ -13,7 +13,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.example.cyberpunkandroid.config.CyberPrimitives
 import com.example.cyberpunkandroid.theme.CyberTheme
-import com.example.cyberpunkandroid.effects.cyberComponentSemantics
 
 /**
  * An uncontained, continuous waveform monitor (like an EKG or oscilloscope).
@@ -38,10 +37,16 @@ fun CyberBiometrics(
     appendedA11y: String? = null,
     customA11y: String? = null
 ) {
+    val a11yDescription = customA11y ?: if (!appendedA11y.isNullOrBlank()) {
+        "$contentDescriptionText - $appendedA11y"
+    } else {
+        contentDescriptionText
+    }
+
     Spacer(
-        modifier = modifier.cyberComponentSemantics("CyberBiometrics", appendedA11y, customA11y)
-            .semantics {
-                contentDescription = contentDescriptionText
+        modifier = modifier
+            .semantics(mergeDescendants = true) {
+                contentDescription = a11yDescription
             }
             .drawBehind {
                 if (data.isEmpty()) return@drawBehind

@@ -2,6 +2,7 @@ package com.example.cyberpunkandroid.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -105,14 +106,19 @@ fun CyberDropdown(
         ) {
             Column {
                 items.forEachIndexed { index, item ->
+                    val isSelected = index == selectedIndex
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable {
-                                onItemSelected(index)
-                                expanded = false
-                            }
-                            .background(if (index == selectedIndex) CyberTheme.colors.primary.copy(alpha = 0.2f) else CyberTheme.colors.background)
+                            .selectable(
+                                selected = isSelected,
+                                role = Role.RadioButton,
+                                onClick = {
+                                    onItemSelected(index)
+                                    expanded = false
+                                },
+                            )
+                            .background(if (isSelected) CyberTheme.colors.primary.copy(alpha = 0.2f) else CyberTheme.colors.background)
                             .padding(horizontal = CyberPrimitives.Spacing.dp16, vertical = CyberPrimitives.Spacing.dp12)
                     ) {
                         CompositionLocalProvider(LocalContentColor provides if (index == selectedIndex) CyberTheme.colors.primary else CyberTheme.colors.textPrimary) {

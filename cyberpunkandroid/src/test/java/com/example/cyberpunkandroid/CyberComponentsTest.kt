@@ -19,11 +19,14 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import com.example.cyberpunkandroid.components.CyberAlert
 import com.example.cyberpunkandroid.components.CyberBadge
+import com.example.cyberpunkandroid.components.CyberBiometrics
 import com.example.cyberpunkandroid.components.CyberButton
 import com.example.cyberpunkandroid.components.CyberCard
 import com.example.cyberpunkandroid.components.CyberDropdown
 import com.example.cyberpunkandroid.components.CyberNavigationBar
+import com.example.cyberpunkandroid.components.CyberNavLink
 import com.example.cyberpunkandroid.components.CyberNavStatus
+import com.example.cyberpunkandroid.components.CyberTabs
 import com.example.cyberpunkandroid.components.CyberProgress
 import com.example.cyberpunkandroid.components.CyberRim
 import com.example.cyberpunkandroid.components.CyberSpinner
@@ -106,7 +109,9 @@ class CyberComponentsTest {
             }
         }
 
-        composeTestRule.onNodeWithTag("card").performClick()
+        val node = composeTestRule.onNodeWithTag("card")
+        assertEquals(Role.Button, node.fetchSemanticsNode().config[SemanticsProperties.Role])
+        node.performClick()
         assert(clicked)
     }
 
@@ -313,6 +318,107 @@ class CyberComponentsTest {
         assertEquals(
             listOf("Loading"),
             node.fetchSemanticsNode().config[SemanticsProperties.ContentDescription]
+        )
+    }
+
+    @Test
+    fun `CyberTabs exposes Role Tab and selection state`() {
+        var selected = 0
+        composeTestRule.setContent {
+            CyberTheme {
+                CyberTabs(
+                    tabs = listOf("System", "Net"),
+                    selectedTabIndex = selected,
+                    onTabSelected = { selected = it }
+                )
+            }
+        }
+
+        val tab0 = composeTestRule.onNodeWithText("SYSTEM")
+        val tab1 = composeTestRule.onNodeWithText("NET")
+
+        assertEquals(Role.Tab, tab0.fetchSemanticsNode().config[SemanticsProperties.Role])
+        assertEquals(true, tab0.fetchSemanticsNode().config[SemanticsProperties.Selected])
+
+        assertEquals(Role.Tab, tab1.fetchSemanticsNode().config[SemanticsProperties.Role])
+        assertEquals(false, tab1.fetchSemanticsNode().config[SemanticsProperties.Selected])
+
+        tab1.performClick()
+        assertEquals(1, selected)
+    }
+
+    @Test
+    fun `CyberNavLink exposes Role Tab and selection state`() {
+        composeTestRule.setContent {
+            CyberTheme {
+                CyberNavLink(
+                    label = "Overview",
+                    isSelected = true,
+                    onClick = {}
+                )
+            }
+        }
+
+        val node = composeTestRule.onNodeWithText("OVERVIEW")
+        assertEquals(Role.Tab, node.fetchSemanticsNode().config[SemanticsProperties.Role])
+        assertEquals(true, node.fetchSemanticsNode().config[SemanticsProperties.Selected])
+    }
+
+    @Test
+    fun `CyberDropdown menu items expose Role RadioButton and selection state`() {
+        var selectedIndex = 0
+        composeTestRule.setContent {
+            CyberTheme {
+                CyberDropdown(
+                    items = listOf("Alpha", "Beta"),
+                    selectedIndex = selectedIndex,
+                    onItemSelected = { selectedIndex = it },
+                    modifier = Modifier.testTag("dropdown")
+                )
+            }
+        }
+
+        // Open menu
+        composeTestRule.onNodeWithTag("dropdown").performClick()
+
+        val isRadioButton = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.RadioButton)
+        val item0 = composeTestRule.onNode(hasText("ALPHA") and isRadioButton)
+        val item1 = composeTestRule.onNode(hasText("BETA") and isRadioButton)
+
+        assertEquals(Role.RadioButton, item0.fetchSemanticsNode().config[SemanticsProperties.Role])
+        assertEquals(true, item0.fetchSemanticsNode().config[SemanticsProperties.Selected])
+
+        assertEquals(Role.RadioButton, item1.fetchSemanticsNode().config[SemanticsProperties.Role])
+        assertEquals(false, item1.fetchSemanticsNode().config[SemanticsProperties.Selected])
+    }
+
+    @Test
+    fun `CyberBiometrics respects customA11y and appendedA11y`() {
+        composeTestRule.setContent {
+            CyberTheme {
+                CyberBiometrics(
+                    data = listOf(0.2f, 0.8f),
+                    appendedA11y = "Heart Rate",
+                    modifier = Modifier.testTag("bio-appended")
+                )
+                CyberBiometrics(
+                    data = listOf(0.2f, 0.8f),
+                    customA11y = "Neural Wave",
+                    modifier = Modifier.testTag("bio-custom")
+                )
+            }
+        }
+
+        val bioAppended = composeTestRule.onNodeWithTag("bio-appended")
+        assertEquals(
+            listOf("Biometric data waveform - Heart Rate"),
+            bioAppended.fetchSemanticsNode().config[SemanticsProperties.ContentDescription]
+        )
+
+        val bioCustom = composeTestRule.onNodeWithTag("bio-custom")
+        assertEquals(
+            listOf("Neural Wave"),
+            bioCustom.fetchSemanticsNode().config[SemanticsProperties.ContentDescription]
         )
     }
 }

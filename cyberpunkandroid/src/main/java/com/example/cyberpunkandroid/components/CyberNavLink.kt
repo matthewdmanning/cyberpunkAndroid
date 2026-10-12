@@ -5,7 +5,7 @@ import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
@@ -86,11 +86,12 @@ fun CyberNavLink(
         modifier = modifier.cyberComponentSemantics("CyberNavLink", appendedA11y, customA11y)
             .width(IntrinsicSize.Max)
             .scale(scaleValue)
-            .clickable(
+            .selectable(
+                selected = isSelected,
                 interactionSource = interactionSource,
                 indication = null,
                 role = Role.Tab,
-                onClick = onClick
+                onClick = onClick,
             )
             .padding(
                 horizontal = CyberPrimitives.Spacing.dp8,
