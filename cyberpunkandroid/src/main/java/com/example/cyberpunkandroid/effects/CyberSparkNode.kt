@@ -18,14 +18,11 @@ import androidx.compose.ui.node.invalidateDraw
 import androidx.compose.ui.platform.InspectorInfo
 import com.example.cyberpunkandroid.config.CyberSparkDefaults
 import com.example.cyberpunkandroid.theme.LocalCyberColors
-import com.example.cyberpunkandroid.utils.CyberPathGeometry.hash01
 import com.example.cyberpunkandroid.utils.CyberSparkCooling
-import com.example.cyberpunkandroid.utils.CyberSparkMotion
-import kotlin.math.cos
-import kotlin.math.floor
+import com.example.cyberpunkandroid.utils.CyberSparkDrag
+import com.example.cyberpunkandroid.utils.CyberSparkLaunch
+import com.example.cyberpunkandroid.utils.CyberSparkSpray
 import kotlin.math.min
-import kotlin.math.sin
-import kotlin.random.Random
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.DurationUnit
 import kotlinx.coroutines.isActive
@@ -39,8 +36,10 @@ import kotlinx.coroutines.launch
  * @property warningColor Birth flash and end color for the theme scale. Unspecified gives `#FFB800`.
  * @property sparkCount Number of embers. Zero or less draws nothing.
  * @property intensity Brightness and size multiplier. Zero or less draws nothing.
- * @property speed Playback rate of the spark physics. 1 plays the model at real time.
+ * @property speed Playback rate of the spark physics. 1 is the model time scale.
  * @property cooling Two-regime cooling model. It sets ember life, color and fade.
+ * @property drag Air drag and gravity on each ember in flight.
+ * @property launch Random launch radius, speed and direction of each ember.
  * @property colorScale (kelvin, color) stops for physical color.
  *   Null uses the theme scale. Any order is accepted.
  * @property trigger When the effect runs.
@@ -55,6 +54,8 @@ data class CyberSparkElement(
     val intensity: Float,
     val speed: Float,
     val cooling: CyberSparkCooling,
+    val drag: CyberSparkDrag,
+    val launch: CyberSparkLaunch,
     val colorScale: List<Pair<Float, Color>>?,
     val trigger: CyberInteractionTrigger,
     val interactionSource: InteractionSource?,
@@ -64,7 +65,7 @@ data class CyberSparkElement(
     /** Makes a new node with the current inputs. */
     override fun create() = CyberSparkNode(
         color, secondaryColor, warningColor, sparkCount, intensity, speed,
-        cooling, colorScale, trigger, interactionSource, animationSpec,
+        cooling, drag, launch, colorScale, trigger, interactionSource, animationSpec,
     )
 
     /**
@@ -80,6 +81,8 @@ data class CyberSparkElement(
         node.intensity = intensity
         node.speed = speed
         node.cooling = cooling
+        node.drag = drag
+        node.launch = launch
         node.colorScale = colorScale
         node.trigger = trigger
         node.interactionSource = interactionSource
@@ -97,6 +100,8 @@ data class CyberSparkElement(
         properties["intensity"] = intensity
         properties["speed"] = speed
         properties["cooling"] = cooling
+        properties["drag"] = drag
+        properties["launch"] = launch
         properties["colorScale"] = colorScale
         properties["trigger"] = trigger
         properties["interactionSource"] = interactionSource
@@ -105,10 +110,10 @@ data class CyberSparkElement(
 }
 
 /**
- * Draws ballistic embers that cool and fade.
+ * Draws embers that fly with air drag, cool and fade.
  *
  * Each ember launches from the center in a symmetric upward cone.
- * It then falls under constant screen-down gravity.
+ * Air drag slows it, and gravity pulls it down ([drag]).
  * Its temperature follows [cooling]. Temperature sets color, size and opacity.
  * The ember disappears at the Draper point, then launches again.
  * Each new launch has a new random path.
@@ -123,6 +128,8 @@ class CyberSparkNode(
     var intensity: Float,
     var speed: Float,
     var cooling: CyberSparkCooling,
+    var drag: CyberSparkDrag,
+    var launch: CyberSparkLaunch,
     colorScale: List<Pair<Float, Color>>?,
     var trigger: CyberInteractionTrigger,
     var interactionSource: InteractionSource?,
@@ -138,10 +145,21 @@ class CyberSparkNode(
     /** Animated intensity. It rises from zero to [intensity] on attach. */
     private val level = Animatable(0f)
 
-    /** Wall-clock time since attach, in seconds. */
-    private var timeSeconds = 0f
+    /** The simulated embers. Rebuilt when [sparkCount], [cooling], [drag] or [launch] change. */
+    private var spray: CyberSparkSpray? = null
 
-    /** Starts the fade-in and the frame clock. */
+    /**
+     * Gives the current spray. It makes a new one if an input changed.
+     */
+    private fun currentSpray(): CyberSparkSpray {
+        val old = spray
+        if (old != null && old.count == sparkCount.coerceAtLeast(0) &&
+            old.cooling == cooling && old.drag == drag && old.launch == launch
+        ) return old
+        return CyberSparkSpray(sparkCount, cooling, drag, launch).also { spray = it }
+    }
+
+    /** Starts the fade-in and the frame clock that moves the embers. */
     override fun onAttach() {
         super.onAttach()
         coroutineScope.launch {
@@ -152,10 +170,11 @@ class CyberSparkNode(
             while (isActive) {
                 withInfiniteAnimationFrameNanos { frameNanos ->
                     if (lastFrameNanos == 0L) lastFrameNanos = frameNanos
-                    timeSeconds += (frameNanos - lastFrameNanos).nanoseconds.toDouble(DurationUnit.SECONDS).toFloat()
+                    val frameSeconds = (frameNanos - lastFrameNanos).nanoseconds.toDouble(DurationUnit.SECONDS).toFloat()
+                    currentSpray().advance(frameSeconds, speed)
                     lastFrameNanos = frameNanos
                 }
-                // timeSeconds is not snapshot state, so ask for a redraw each frame.
+                // The spray is not snapshot state, so ask for a redraw each frame.
                 invalidateDraw()
             }
         }
@@ -198,36 +217,22 @@ class CyberSparkNode(
         val warning = warningColor.takeOrElse { Color(CyberSparkDefaults.Look.FallbackWarningArgb) }
         val stops = colorScale
 
-        val motion = CyberSparkDefaults.Motion
         val look = CyberSparkDefaults.Look
-        val salt = CyberSparkDefaults.Salt
+        val sparks = currentSpray()
 
+        // The reference distance maps to one extent, a fixed fraction of the smaller side.
         val origin = Offset(size.width / 2f, size.height / 2f)
-        val extent = min(size.width, size.height) * motion.ExtentFraction
-        val gravity = motion.Gravity * extent
-        val glowSeconds = cooling.glowSeconds
+        val extent = min(size.width, size.height) * CyberSparkDefaults.Motion.ExtentFraction
+        val pixelsPerMeter = extent / sparks.launch.referenceDistanceMeters
 
-        for (i in 0 until sparkCount) {
-            // Each ember has its own playback rate and start offset, so launches do not sync.
-            val rate = speed * (motion.RateMultiplierMin + hash01(i * salt.Rate.toDouble()) * motion.RateMultiplierRange)
-            val cycle = timeSeconds * rate / glowSeconds + hash01(i * salt.Offset.toDouble())
-            val epoch = floor(cycle)
-            val ageSeconds = (cycle - epoch) * glowSeconds
-
-            // Seed by ember and epoch: one smooth path per life, a new path per launch.
-            val random = Random(i * salt.SeedStride + epoch.toInt())
-            val angle = CyberSparkMotion.launchAngle(
-                random.nextFloat(), motion.LaunchCenterRadians, motion.LaunchHalfSpreadRadians,
-            )
-            val launchSpeed = (motion.LaunchSpeedMin + random.nextFloat() * (motion.LaunchSpeedMax - motion.LaunchSpeedMin)) * extent
-            val position = origin + Offset(
-                CyberSparkMotion.displacement(cos(angle) * launchSpeed, 0f, ageSeconds),
-                CyberSparkMotion.displacement(sin(angle) * launchSpeed, gravity, ageSeconds),
-            )
+        for (i in 0 until sparks.count) {
+            val ageSeconds = sparks.ageSeconds(i)
+            val position = origin + Offset(sparks.xMeters(i), sparks.yMeters(i)) * pixelsPerMeter
 
             val kelvin = cooling.kelvinAt(ageSeconds)
             val progress = cooling.coolingProgress(kelvin)
-            val baseRadius = (look.RadiusMinPx + random.nextFloat() * look.RadiusRangePx) * currentIntensity
+            // Larger physical sparks draw larger.
+            val baseRadius = (look.RadiusMinPx + sparks.radiusFraction(i) * look.RadiusRangePx) * currentIntensity
             val radius = baseRadius * (1f - look.RadiusShrink * progress)
 
             val hue = if (stops != null) colorAtKelvin(stops, kelvin) else themeColor(progress, primary, secondary, warning)

@@ -2,14 +2,20 @@ package com.example.cyberpunkandroid
 
 import com.example.cyberpunkandroid.config.CyberSparkDefaults
 import com.example.cyberpunkandroid.utils.CyberSparkCooling
+import com.example.cyberpunkandroid.utils.CyberSparkDrag
+import com.example.cyberpunkandroid.utils.CyberSparkLaunch
+import com.example.cyberpunkandroid.utils.CyberSparkSpray
 import com.example.cyberpunkandroid.utils.CyberSparkMotion
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.exp
+import kotlin.math.pow
 
 /**
- * JVM tests for the pure spark physics: two-regime cooling and ballistic motion.
+ * JVM tests for the pure spark physics: two-regime cooling, drag and the spray.
  * No Android or Compose runtime is necessary.
  */
 class CyberSparkPhysicsTest {
@@ -109,15 +115,118 @@ class CyberSparkPhysicsTest {
         assertEquals(center - low, high - center, eps)
     }
 
-    /** Ballistic displacement is v*t + a*t^2/2. */
-    @Test
-    fun displacementIsConstantAcceleration() {
-        assertEquals(2f * 3f + 0.5f * 4f * 9f, CyberSparkMotion.displacement(2f, 4f, 3f), eps)
-    }
-
     /** Invalid inputs are rejected. */
     @Test(expected = IllegalArgumentException::class)
     fun rejectsRatioBelowOne() {
         CyberSparkCooling(fastToSlowRateRatio = 0.5f)
+    }
+    /** Drag model under test. */
+    private val drag = CyberSparkDrag()
+
+    /** Drag model without gravity, for straight-line checks. */
+    private val dragNoGravity = CyberSparkDrag(gravity = 0f)
+
+    /** Mean launch radius from the source, in meters. */
+    private val radius = CyberSparkDefaults.Launch.RadiusMeanMeters
+
+    /** Mean launch speed from the source, in m/s. */
+    private val speed = CyberSparkDefaults.Launch.SpeedMean
+
+    /** Allen's law gives its prefactor at Re = 1. */
+    @Test
+    fun allenLawAtReynoldsOne() {
+        assertEquals(CyberSparkDefaults.Drag.AllenCoefficient, drag.dragCoefficient(1f), eps)
+    }
+
+    /** The closed-form deceleration matches the force equation from the source. */
+    @Test
+    fun decelerationMatchesForceEquation() {
+        val area = (PI * radius * radius).toFloat()
+        val mass = (4.0 / 3.0 * PI * radius.toDouble().pow(3) * drag.particleDensity).toFloat()
+        val c = drag.dragCoefficient(drag.reynolds(radius, speed))
+        val direct = 0.5f * drag.airDensity * area * c * speed * speed / mass
+        assertEquals(direct, drag.deceleration(radius, speed), direct * eps)
+    }
+
+    /** The stepped flight matches the exact straight-line time. */
+    @Test
+    fun steppedFlightMatchesClosedForm() {
+        val distance = CyberSparkDefaults.Launch.ReferenceDistanceMeters
+        val exact = dragNoGravity.timeToTravel(radius, speed, distance)
+        val state = floatArrayOf(0f, 0f, speed, 0f)
+        dragNoGravity.advance(state, radius, exact)
+        assertEquals(distance, state[CyberSparkDrag.X], distance * 0.01f)
+    }
+
+    /** Speed falls steadily during a flight. */
+    @Test
+    fun speedFallsDuringFlight() {
+        val state = floatArrayOf(0f, 0f, speed, 0f)
+        var last = speed
+        repeat(40) {
+            dragNoGravity.advance(state, radius, 1e-3f)
+            val now = state[CyberSparkDrag.VX]
+            assertTrue(now < last)
+            last = now
+        }
+    }
+
+    /** A spark that falls long enough reaches terminal speed: drag equals gravity. */
+    @Test
+    fun reachesTerminalSpeed() {
+        val state = floatArrayOf(0f, 0f, 0f, 0f)
+        drag.advance(state, radius, 2f)
+        val terminal = (drag.gravity / drag.dragConstant(radius)).pow(1f / (2f - drag.allenReynoldsExponent))
+        assertEquals(terminal, state[CyberSparkDrag.VY], terminal * 0.01f)
+    }
+
+    /** Launch samples stay inside the cut range. */
+    @Test
+    fun launchSamplesStayInRange() {
+        val launch = CyberSparkLaunch()
+        val state = FloatArray(CyberSparkDrag.STATE_SIZE)
+        val random = java.util.Random(1L)
+        repeat(500) {
+            val r = launch.sample(random, state)
+            assertTrue(r in launch.radiusMinMeters..launch.radiusMaxMeters)
+            val v = kotlin.math.hypot(state[CyberSparkDrag.VX], state[CyberSparkDrag.VY])
+            val vMax = launch.speedMean + launch.sigmaLimit * launch.speedStd
+            assertTrue(v <= vMax * (1f + eps))
+            assertTrue("spark must launch upward", state[CyberSparkDrag.VY] < 0f)
+        }
+    }
+
+    /** Equal seeds give equal sprays. */
+    @Test
+    fun sprayIsDeterministic() {
+        val a = CyberSparkSpray(8, seed = 42L)
+        val b = CyberSparkSpray(8, seed = 42L)
+        repeat(100) { a.advance(1f / 60f); b.advance(1f / 60f) }
+        for (i in 0 until 8) {
+            assertEquals(a.xMeters(i), b.xMeters(i), 0f)
+            assertEquals(a.yMeters(i), b.yMeters(i), 0f)
+        }
+    }
+
+    /** Ages stay inside one glow life, also after a long frame. */
+    @Test
+    fun sprayAgesStayInGlowLife() {
+        val spray = CyberSparkSpray(16)
+        repeat(20) { spray.advance(0.5f) }
+        for (i in 0 until spray.count) {
+            assertTrue(spray.ageSeconds(i) >= 0f && spray.ageSeconds(i) < spray.cooling.glowSeconds)
+        }
+    }
+
+    /** A fresh spark is above the launch point and moves fast. */
+    @Test
+    fun freshSparkRisesFast() {
+        val spray = CyberSparkSpray(32)
+        for (i in 0 until spray.count) {
+            if (spray.ageSeconds(i) < spray.cooling.glowSeconds * 0.1f) {
+                assertTrue(spray.yMeters(i) <= 0f)
+                assertTrue(spray.speed(i) > CyberSparkDefaults.Launch.SpeedMean * 0.3f)
+            }
+        }
     }
 }

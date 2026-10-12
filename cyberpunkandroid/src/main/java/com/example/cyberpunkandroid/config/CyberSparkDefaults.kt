@@ -3,11 +3,15 @@ package com.example.cyberpunkandroid.config
 /**
  * Default values for spark motion and cooling.
  *
- * `CyberSparkCooling` and `Modifier.cyberSpark` use these values.
+ * `CyberSparkCooling`, `CyberSparkDrag`, `CyberSparkLaunch` and `Modifier.cyberSpark` use these values.
  * Each value has a reason or a source.
  * This file has no Compose types, so JVM tests can use it.
  *
- * Research sources (electric spark kernels in air):
+ * Motion source (steel grinding sparks):
+ * - From the microstructure of steels to the explosion of sparks,
+ *   Emergent Scientist 3, 1 (2019).
+ *
+ * Cooling sources (electric spark kernels in air):
  * - Two Regime Cooling in Flow Induced by a Spark Discharge, arXiv:1909.09126.
  * - Spark Induced Flow in Quiescent Air, Purdue dissertation AAI30504521.
  * - Trajectory, Development, and Temperature of Spark Kernels, AFRL ADA560399.
@@ -75,10 +79,102 @@ object CyberSparkDefaults {
     }
 
     /**
-     * Motion values for `Modifier.cyberSpark`.
+     * Air drag values for `CyberSparkDrag`.
      *
-     * Units are "extents": one extent is 45% of the smaller side.
-     * Thus the burst scales with the component size.
+     * Source: "From the microstructure of steels to the explosion of sparks",
+     * Emergent Scientist 3, 1 (2019), Section 2.1, Eqs. 1-3.
+     * The study fits real grinding-spark paths with gravity and air drag only.
+     */
+    object Drag {
+        /**
+         * Prefactor of Allen's drag law, C = 18.5 / Re^0.6.
+         * Source: Eq. 3 of the steel-spark study.
+         */
+        const val AllenCoefficient: Float = 18.5f
+
+        /**
+         * Reynolds exponent of Allen's drag law.
+         * Source: Eq. 3 of the steel-spark study.
+         */
+        const val AllenReynoldsExponent: Float = 0.6f
+
+        /**
+         * Air density, in kg/m^3.
+         * ISA sea-level standard value. Not from the spark sources.
+         */
+        const val AirDensity: Float = 1.225f
+
+        /**
+         * Dynamic viscosity of air, in Pa*s.
+         * ISA sea-level standard value. Not from the spark sources.
+         */
+        const val AirViscosity: Float = 1.789e-5f
+
+        /**
+         * Spark density, in kg/m^3.
+         * Typical carbon steel value. Not from the spark sources.
+         * The study used carbon steel sparks.
+         */
+        const val ParticleDensity: Float = 7850f
+
+        /**
+         * Longest physical integration step, in seconds.
+         * About 1% of the drag time constant at launch (about 24 ms).
+         * This keeps the explicit step accurate and stable.
+         */
+        const val MaxStepSeconds: Float = 2.5e-4f
+    }
+
+    /**
+     * Launch values for `CyberSparkLaunch`.
+     *
+     * Source: the steel-spark study, Tables 1 and 2, 75 N row.
+     * One row is used so the values agree with each other.
+     */
+    object Launch {
+        /** Mean spark radius, in meters. Source: Table 1, 50 um. */
+        const val RadiusMeanMeters: Float = 50e-6f
+
+        /** Standard deviation of spark radius, in meters. Source: Table 1, 10 um. */
+        const val RadiusStdMeters: Float = 10e-6f
+
+        /** Mean launch speed, in m/s. Source: Table 1, 40 m/s. */
+        const val SpeedMean: Float = 40f
+
+        /** Standard deviation of launch speed, in m/s. Source: Table 1, 9 m/s. */
+        const val SpeedStd: Float = 9f
+
+        /**
+         * Random samples are cut at this many standard deviations.
+         * This keeps radius and speed above zero. It is a model choice.
+         */
+        const val SigmaLimit: Float = 2f
+
+        /**
+         * Distance where the study starts its distance analysis, in meters.
+         * Source: only distances beyond 40 cm are analyzed.
+         */
+        const val AnalysisStartMeters: Float = 0.40f
+
+        /**
+         * Decay length of the spark distance distribution, in meters.
+         * Source: Table 2, 25.5 cm at 75 N.
+         */
+        const val DecayLengthMeters: Float = 0.255f
+
+        /**
+         * Mean end distance of sparks seen past the analysis start, in meters.
+         * An exponential tail past 40 cm has mean 40 cm plus its decay length.
+         * One glow life on screen shows the flight to this distance.
+         */
+        const val ReferenceDistanceMeters: Float = AnalysisStartMeters + DecayLengthMeters
+    }
+
+    /**
+     * Screen mapping values for `Modifier.cyberSpark`.
+     *
+     * One extent is a fraction of the smaller side.
+     * The reference distance maps to one extent.
      */
     object Motion {
         /** Fraction of the smaller side that is one extent. Same as the old ember reach. */
@@ -96,19 +192,6 @@ object CyberSparkDefaults {
          * Thus the cone is symmetric about its center.
          */
         const val LaunchHalfSpreadRadians: Float = (kotlin.math.PI / 4.0).toFloat()
-
-        /** Lowest launch speed, in extents per second. */
-        const val LaunchSpeedMin: Float = 0.5f
-
-        /** Highest launch speed, in extents per second. */
-        const val LaunchSpeedMax: Float = 1.25f
-
-        /**
-         * Screen-down gravity, in extents per second squared.
-         * Tuned by eye so sparks arc and fall in one glow life.
-         * Source: buoyancy is negligible, so there is no upward lift.
-         */
-        const val Gravity: Float = 1.8f
 
         /** Lowest per-spark playback rate. Same as the old ember range. */
         const val RateMultiplierMin: Float = 0.8f
@@ -147,15 +230,15 @@ object CyberSparkDefaults {
         const val FallbackWarningArgb: Long = 0xFFFFB800
     }
 
-    /** Seeds for the per-spark random values. Each salt keeps one property independent. */
+    /** Seeds for the per-spark random values. Each seed space is separate. */
     object Salt {
-        /** Salt for the per-spark playback rate. */
-        const val Rate: Float = 3.1f
+        /** Seed offset for the fixed per-spark rate and start offset. */
+        const val Schedule: Long = 0x5EED_0001L
 
-        /** Salt for the per-spark start offset. */
-        const val Offset: Float = 7.7f
+        /** Seed offset for the per-launch path values. */
+        const val Launch: Long = 0x5EED_0002L
 
-        /** Multiplier that gives each spark its own seed space per epoch. */
-        const val SeedStride: Int = 10000
+        /** Multiplier that gives each spark its own seed space per launch. */
+        const val SeedStride: Long = 10_000L
     }
 }

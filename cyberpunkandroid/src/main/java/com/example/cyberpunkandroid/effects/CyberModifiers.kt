@@ -31,6 +31,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.example.cyberpunkandroid.utils.CyberSparkCooling
+import com.example.cyberpunkandroid.utils.CyberSparkDrag
+import com.example.cyberpunkandroid.utils.CyberSparkLaunch
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
@@ -527,10 +529,11 @@ fun Modifier.cyberBackdropBlur(
 }
 
 /**
- * Overlays ballistic embers that cool like real sparks.
+ * Overlays embers that fly and cool like real grinding sparks.
  *
  * Embers launch from the center in a symmetric upward cone.
- * They fall under constant screen-down gravity, with no drag.
+ * Air drag slows them, as measured for steel sparks ([drag]).
+ * Gravity pulls them down. Paths are almost straight, as in real sparks.
  * Temperature follows a two-regime cooling model ([cooling]).
  * Temperature sets each ember's color, size and opacity.
  * An ember disappears at the Draper point (798 K), then launches again.
@@ -544,8 +547,10 @@ fun Modifier.cyberBackdropBlur(
  * @param warningColor Birth flash and end color for the theme scale. Unspecified gives `#FFB800`.
  * @param sparkCount Number of embers. Zero or less draws nothing.
  * @param intensity Brightness and ember size multiplier.
- * @param speed Playback rate of the spark physics. 1 plays the model at real time.
+ * @param speed Playback rate of the spark physics. 1 is the model time scale.
  * @param cooling Two-regime cooling model. It sets ember life, color and fade.
+ * @param drag Air drag and gravity on each ember. Defaults to Allen's law for steel sparks.
+ * @param launch Random launch radius, speed and direction. Defaults to measured steel sparks.
  * @param colorScale (kelvin, color) stops for physical color. Null uses the theme scale.
  * @param trigger When the effect runs.
  * @param interactionSource Source for interaction triggers.
@@ -561,6 +566,8 @@ fun Modifier.cyberSpark(
     intensity: Float = 1.0f,
     speed: Float = 1.0f,
     cooling: CyberSparkCooling = CyberSparkCooling(),
+    drag: CyberSparkDrag = CyberSparkDrag(),
+    launch: CyberSparkLaunch = CyberSparkLaunch(),
     colorScale: List<Pair<Float, Color>>? = null,
     trigger: CyberInteractionTrigger = CyberInteractionTrigger.ALWAYS,
     interactionSource: InteractionSource? = null,
@@ -576,6 +583,8 @@ fun Modifier.cyberSpark(
         intensity = intensity,
         speed = speed,
         cooling = cooling,
+        drag = drag,
+        launch = launch,
         colorScale = colorScale,
         trigger = trigger,
         interactionSource = interactionSource,

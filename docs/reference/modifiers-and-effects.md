@@ -103,22 +103,36 @@ Unlike the other shader effects, it clips to its bounds only while active.
 
 **What:** An electrical-spark burst: glowing embers shoot up from the center, arc over and fall under gravity.
 
-**Looks like:** `sparkCount` (default 32) small embers launch from the center. They spread in a symmetric upward cone. Then they fall under constant gravity in parabolic arcs. Each ember cools fast first, then slowly. Temperature sets its color, size and opacity. The ember shrinks to half size as it cools. It fades out at the Draper point (798 K). Then it launches again on a new random path. The default theme scale goes white → warning → primary → secondary → dim warning. For physical color, set `colorScale = CyberPathDefaults.Weld.Blackbody`. Then color goes yellow-white → orange → red.
+**Looks like:** `sparkCount` (default 32) small embers shoot up from the center. They spread in a symmetric upward cone. Air drag slows each ember along an almost straight path. Gravity bends the path only a little, as in real grinding sparks. Each ember cools fast first, then slowly. Temperature sets its color, size and opacity. Larger embers draw larger. Each ember shrinks to half size as it cools. It fades out at the Draper point (798 K). Then it launches again on a new random path. The default theme scale goes white → warning → primary → secondary → dim warning. For physical color, set `colorScale = CyberPathDefaults.Weld.Blackbody`. Then color goes yellow-white → orange → red.
 
-**Physics basis:** The cooling shape comes from spark kernel research. Sources: [arXiv:1909.09126](https://www.arxiv-vanity.com/papers/1909.09126), [Purdue AAI30504521](https://docs.lib.purdue.edu/dissertations/AAI30504521), [AFRL ADA560399](https://apps.dtic.mil/sti/html/tr/ADA560399/index.html). Only dimensionless values come from the sources:
+**Motion basis:** The motion comes from a steel grinding-spark study. Source: [From the microstructure of steels to the explosion of sparks](https://emergent-scientist.edp-open.org/articles/emsci/full_html/2019/01/emsci180006/emsci180006.html) (Emergent Scientist, 2019).
+
+- The study fits real spark paths with gravity and air drag only.
+- Drag follows Allen's law: C = 18.5 / Re^0.6.
+- Launch radius is 50 ± 10 µm (Table 1, 75 N).
+- Launch speed is 40 ± 9 m/s (Table 1, 75 N).
+- Spark distances past 40 cm decay with a 25.5 cm length (Table 2, 75 N).
+
+With the defaults, an ember slows from 40 m/s to about 15 m/s. That happens over 65.5 cm, the mean end distance. Gravity drops it only about 3 mm in that time. One glow life on screen shows that flight. The 65.5 cm distance maps to one extent (45% of the smaller side).
+
+Limits of the motion model:
+
+- Air, gravity and steel values are standard values, not from the study.
+- With cold air, the launch Reynolds number is about 137. The study states about 30.
+- Off-gassing is not a thrust term. The study reports CO₂ pockets that make sparks explode. It reports no thrust.
+- Explosions and fragments are not drawn yet.
+
+**Cooling basis:** The cooling shape comes from spark kernel research. Sources: [arXiv:1909.09126](https://www.arxiv-vanity.com/papers/1909.09126), [Purdue AAI30504521](https://docs.lib.purdue.edu/dissertations/AAI30504521), [AFRL ADA560399](https://apps.dtic.mil/sti/html/tr/ADA560399/index.html). Only dimensionless values come from these sources:
 
 - The fast stage removes 50% of the excess heat.
 - The fast stage is 2–10 times faster than the slow stage.
-- Buoyancy is negligible, so there is no lift.
-- Trajectories are symmetric, so the launch cone is symmetric.
 
-Limits of the model:
+Limits of the cooling model:
 
 - The sources measure microsecond to millisecond events.
 - Thus the time scale (`slowTimeConstantSeconds`) is a screen choice.
 - The source 50% is a gas fraction, not a temperature fraction.
 - The model applies it to excess temperature as an approximation.
-- There is no drag. The sources give no drag data.
 - Values live in `CyberSparkDefaults`. They are not tuned on a device.
 
 **Use for:** Short-circuit / damage moments, a "powering up" accent behind an icon, or celebratory energy. The container clips sparks at its edges, so give it room.
@@ -138,8 +152,10 @@ Box(modifier = Modifier.size(160.dp).cyberSpark(intensity = 1.2f)) {
 | `warningColor` | `Color` | `Color.Unspecified` | Birth flash color and final dim color (resolves to `#FFB800`). |
 | `sparkCount` | `Int` | `32` | Number of embers rendered. |
 | `intensity` | `Float` | `1.0f` | Brightness and ember size multiplier. |
-| `speed` | `Float` | `1.0f` | Playback rate of the spark physics. `1` plays the model at real time. |
+| `speed` | `Float` | `1.0f` | Playback rate of the spark physics. `1` is the model time scale. |
 | `cooling` | `CyberSparkCooling` | `CyberSparkCooling()` | Two-regime cooling model. Sets ember life (about 0.8 s by default), color and fade. |
+| `drag` | `CyberSparkDrag` | `CyberSparkDrag()` | Air drag (Allen's law) and gravity on each ember. |
+| `launch` | `CyberSparkLaunch` | `CyberSparkLaunch()` | Random launch radius, speed and direction. Defaults to measured steel sparks. |
 | `colorScale` | `List<Pair<Float, Color>>?` | `null` | (kelvin, color) stops for physical color. `null` uses the theme scale. |
 | `animationSpec` | `AnimationSpec<Float>` | `tween(300)` | Fade in/out when the trigger changes. |
 
