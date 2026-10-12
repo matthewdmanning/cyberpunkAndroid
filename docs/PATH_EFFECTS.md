@@ -9,7 +9,7 @@ a neon glow.
   They march along the outline while animating.
 
 ```kotlin
-val card = CutCornerShape(topEnd = 20.dp, bottomStart = 20.dp)
+val card = CyberTheme.shapes.cardShape
 
 Box(
     Modifier

@@ -62,7 +62,7 @@ fun SystemStatusTile(
             ) {
                 Text(
                     text = label.uppercase(),
-                    style = CyberTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.labelSmall,
                     color = CyberTheme.colors.textSecondary
                 )
                 CyberIcon(
@@ -78,7 +78,7 @@ fun SystemStatusTile(
 
             Text(
                 text = value,
-                style = CyberTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.headlineSmall,
                 color = statusColor
             )
         }

@@ -50,7 +50,7 @@ fun InteractiveCyberCard(
             .cyberOverload(
                 trigger = CyberInteractionTrigger.PRESS,
                 interactionSource = interactionSource,
-                strength = 0.3f
+                severity = 0.3f
             )
             .clickable(
                 interactionSource = interactionSource,
@@ -74,12 +74,12 @@ fun InteractiveCyberCard(
             Column {
                 Text(
                     text = title,
-                    style = CyberTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleMedium,
                     color = CyberTheme.colors.textPrimary
                 )
                 Text(
                     text = subtitle,
-                    style = CyberTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodySmall,
                     color = CyberTheme.colors.textSecondary
                 )
             }

@@ -24,7 +24,7 @@ Box(
 ### Problems Identified
 1. **Bypasses Theme Dynamic Styling:** Hardcoded hex values will ignore runtime theme changes and high-contrast modes.
 2. **Breaks Shape Harmony:** `CutCornerShape(20.dp)` cuts all four corners, whereas the design system signature cuts only `topEnd` and `bottomStart`.
-3. **Typography Inconsistency:** Ignores the monospace / Neusharp font hierarchy defined in `CyberTheme.typography`.
+3. **Typography Inconsistency:** Ignores the monospace / Oare Sans font hierarchy defined in `CyberTheme.typography`.
 
 ---
 
@@ -40,7 +40,7 @@ Box(
 ) {
     Text(
         text = "TERMINAL",
-        style = CyberTheme.typography.labelMedium,
+        style = CyberTheme.typography.terminal,
         color = CyberTheme.colors.textPrimary
     )
 }

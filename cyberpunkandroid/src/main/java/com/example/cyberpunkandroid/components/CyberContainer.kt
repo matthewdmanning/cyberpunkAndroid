@@ -12,12 +12,13 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.cyberpunkandroid.config.CyberPrimitives
+import com.example.cyberpunkandroid.theme.CyberTheme
 
 @Composable
 fun CyberContainer(
     modifier: Modifier = Modifier,
     backgroundColor: Color = Color(0xFF0F172A),
-    borderColor: Color = CyberPrimitives.Colors.Cyan500,
+    borderColor: Color = CyberTheme.colors.border,
     borderWidth: Dp = 1.dp,
     shape: Shape = RectangleShape,
     effectModifier: Modifier = Modifier,

@@ -166,7 +166,7 @@ fun CyberSpinnerOverlay(
     Box(
         modifier = modifier.cyberComponentSemantics("CyberSpinnerOverlay", appendedA11y, customA11y)
             .fillMaxSize()
-            .background(CyberPrimitives.Colors.Void500.copy(alpha = 0.90f))
+            .background(CyberTheme.colors.background.copy(alpha = 0.90f))
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
