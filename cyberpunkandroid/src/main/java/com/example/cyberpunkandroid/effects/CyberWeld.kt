@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.cyberpunkandroid.config.CyberPathDefaults
 import com.example.cyberpunkandroid.config.CyberPrimitives
+import com.example.cyberpunkandroid.config.CyberSparkDefaults
 import com.example.cyberpunkandroid.utils.CyberPathGeometry
 import com.example.cyberpunkandroid.utils.CyberPathGeometry.hash01
 import com.example.cyberpunkandroid.utils.CyberPathGeometry.window
@@ -33,18 +34,20 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sin
 
-/** Solids stop visibly glowing below this temperature (the Draper point, 798 K). */
-private const val DRAPER_KELVIN = 798f
+/** Solids stop visible glow below this temperature (Draper point). Shared with `cyberSpark`. */
+private const val DRAPER_KELVIN = CyberSparkDefaults.Cooling.DraperKelvin
 
-/** Room temperature the bead cools toward. */
-private const val AMBIENT_KELVIN = 300f
+/** Room temperature the bead cools toward. Shared with `cyberSpark`. */
+private const val AMBIENT_KELVIN = CyberSparkDefaults.Cooling.AmbientKelvin
 
 /** Deterministic per-particle random value; salts keep each property independent. */
 private fun rand(index: Int, salt: Int): Float = hash01(index * 3.1 + salt * 17.7)
 
 /**
  * Color at [kelvin] from (kelvin, color) stops sorted by kelvin, clamped at both ends.
- * @param kelvin TODO: document this
+ *
+ * @param stops (kelvin, color) pairs. Must be sorted by kelvin, low to high.
+ * @param kelvin Temperature to look up. The color is linear between the two nearest stops.
  */
 internal fun colorAtKelvin(stops: List<Pair<Float, Color>>, kelvin: Float): Color {
     if (kelvin <= stops.first().first) return stops.first().second
@@ -109,7 +112,7 @@ data class CyberWeld(
         -coolingSeconds * ln((kelvin - AMBIENT_KELVIN) / (peakKelvin - AMBIENT_KELVIN))
 
     private fun emission(kelvin: Float): Float =
-        ((kelvin - DRAPER_KELVIN) / (peakKelvin - DRAPER_KELVIN)).coerceIn(0f, 1f).pow(0.7f) // perceptual fade-out
+        ((kelvin - DRAPER_KELVIN) / (peakKelvin - DRAPER_KELVIN)).coerceIn(0f, 1f).pow(CyberSparkDefaults.Cooling.EmissionExponent) // perceptual fade-out
 
     /** Jittered polyline along the outline: the weld bead. Stable across frames (no per-frame randomness). */
     private fun seam(outline: Path, closed: Boolean, density: Density): Path = with(density) {

@@ -30,6 +30,7 @@ import androidx.compose.foundation.border
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import com.example.cyberpunkandroid.utils.CyberSparkCooling
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
@@ -526,17 +527,31 @@ fun Modifier.cyberBackdropBlur(
 }
 
 /**
- * Overlays high-velocity popcorn electrical spark particles with parabolic downward gravity arcs,
- * initial upward burst launch, plasma colorscale interpolation, and 50% radius decay.
+ * Overlays ballistic embers that cool like real sparks.
  *
- * @param color Primary spark color.
- * @param secondaryColor Secondary plasma color.
- * @param warningColor Warning/Caution color for initial birth flash.
- * @param sparkCount Number of spark particles rendered.
- * @param intensity Brightness and radius multiplier.
- * @param speed Frequency multiplier for particle movement.
-  * @param appendedA11y TODO: document this
-  * @param customA11y TODO: document this
+ * Embers launch from the center in a symmetric upward cone.
+ * They fall under constant screen-down gravity, with no drag.
+ * Temperature follows a two-regime cooling model ([cooling]).
+ * Temperature sets each ember's color, size and opacity.
+ * An ember disappears at the Draper point (798 K), then launches again.
+ *
+ * Two color modes are available:
+ * - [colorScale] null: theme scale, white to warning to primary to secondary.
+ * - [colorScale] set: physical color, for example `CyberPathDefaults.Weld.Blackbody`.
+ *
+ * @param color Mid-life ember color for the theme scale. Unspecified gives theme `primary`.
+ * @param secondaryColor Late-life ember color for the theme scale. Unspecified gives theme `secondary`.
+ * @param warningColor Birth flash and end color for the theme scale. Unspecified gives `#FFB800`.
+ * @param sparkCount Number of embers. Zero or less draws nothing.
+ * @param intensity Brightness and ember size multiplier.
+ * @param speed Playback rate of the spark physics. 1 plays the model at real time.
+ * @param cooling Two-regime cooling model. It sets ember life, color and fade.
+ * @param colorScale (kelvin, color) stops for physical color. Null uses the theme scale.
+ * @param trigger When the effect runs.
+ * @param interactionSource Source for interaction triggers.
+ * @param animationSpec Fade-in of [intensity] when the effect attaches.
+ * @param appendedA11y Text added after the default accessibility label. Null adds nothing.
+ * @param customA11y Text that replaces the accessibility label. Null keeps the default.
  */
 fun Modifier.cyberSpark(
     color: Color = Color.Unspecified,
@@ -545,6 +560,8 @@ fun Modifier.cyberSpark(
     sparkCount: Int = 32,
     intensity: Float = 1.0f,
     speed: Float = 1.0f,
+    cooling: CyberSparkCooling = CyberSparkCooling(),
+    colorScale: List<Pair<Float, Color>>? = null,
     trigger: CyberInteractionTrigger = CyberInteractionTrigger.ALWAYS,
     interactionSource: InteractionSource? = null,
     animationSpec: AnimationSpec<Float> = tween(300),
@@ -558,6 +575,8 @@ fun Modifier.cyberSpark(
         sparkCount = sparkCount,
         intensity = intensity,
         speed = speed,
+        cooling = cooling,
+        colorScale = colorScale,
         trigger = trigger,
         interactionSource = interactionSource,
         animationSpec = animationSpec

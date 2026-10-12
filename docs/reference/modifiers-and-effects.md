@@ -103,7 +103,23 @@ Unlike the other shader effects, it clips to its bounds only while active.
 
 **What:** An electrical-spark burst: glowing embers shoot up from the center, arc over and fall under gravity.
 
-**Looks like:** `sparkCount` (default 32) pinpoint embers launching upward from the center, curving back down in parabolic arcs, and fading out. Each ember changes color over its life: white-hot → warning color (yellow) → primary (cyan) → secondary (magenta) → dim warning, and it shrinks to half size. Bursts restart at staggered times, so it pops continuously like popcorn. The fallback draws small (3–6 px) colored dots on similar arcs.
+**Looks like:** `sparkCount` (default 32) small embers launch from the center. They spread in a symmetric upward cone. Then they fall under constant gravity in parabolic arcs. Each ember cools fast first, then slowly. Temperature sets its color, size and opacity. The ember shrinks to half size as it cools. It fades out at the Draper point (798 K). Then it launches again on a new random path. The default theme scale goes white → warning → primary → secondary → dim warning. For physical color, set `colorScale = CyberPathDefaults.Weld.Blackbody`. Then color goes yellow-white → orange → red.
+
+**Physics basis:** The cooling shape comes from spark kernel research. Sources: [arXiv:1909.09126](https://www.arxiv-vanity.com/papers/1909.09126), [Purdue AAI30504521](https://docs.lib.purdue.edu/dissertations/AAI30504521), [AFRL ADA560399](https://apps.dtic.mil/sti/html/tr/ADA560399/index.html). Only dimensionless values come from the sources:
+
+- The fast stage removes 50% of the excess heat.
+- The fast stage is 2–10 times faster than the slow stage.
+- Buoyancy is negligible, so there is no lift.
+- Trajectories are symmetric, so the launch cone is symmetric.
+
+Limits of the model:
+
+- The sources measure microsecond to millisecond events.
+- Thus the time scale (`slowTimeConstantSeconds`) is a screen choice.
+- The source 50% is a gas fraction, not a temperature fraction.
+- The model applies it to excess temperature as an approximation.
+- There is no drag. The sources give no drag data.
+- Values live in `CyberSparkDefaults`. They are not tuned on a device.
 
 **Use for:** Short-circuit / damage moments, a "powering up" accent behind an icon, or celebratory energy. The container clips sparks at its edges, so give it room.
 
@@ -117,12 +133,14 @@ Box(modifier = Modifier.size(160.dp).cyberSpark(intensity = 1.2f)) {
 
 | Parameter | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `color` | `Color` | `Color.Unspecified` | Mid-life ember color (resolves to theme `primary`). |
+| `color` | `Color` | `Color.Unspecified` | Mid-life ember color for the theme scale (resolves to theme `primary`). |
 | `secondaryColor` | `Color` | `Color.Unspecified` | Late-life ember color (resolves to theme `secondary`). |
 | `warningColor` | `Color` | `Color.Unspecified` | Birth flash color and final dim color (resolves to `#FFB800`). |
 | `sparkCount` | `Int` | `32` | Number of embers rendered. |
 | `intensity` | `Float` | `1.0f` | Brightness and ember size multiplier. |
-| `speed` | `Float` | `1.0f` | Frequency multiplier for particle movement. |
+| `speed` | `Float` | `1.0f` | Playback rate of the spark physics. `1` plays the model at real time. |
+| `cooling` | `CyberSparkCooling` | `CyberSparkCooling()` | Two-regime cooling model. Sets ember life (about 0.8 s by default), color and fade. |
+| `colorScale` | `List<Pair<Float, Color>>?` | `null` | (kelvin, color) stops for physical color. `null` uses the theme scale. |
 | `animationSpec` | `AnimationSpec<Float>` | `tween(300)` | Fade in/out when the trigger changes. |
 
 ---

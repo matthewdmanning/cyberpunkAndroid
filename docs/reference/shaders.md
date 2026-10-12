@@ -134,7 +134,7 @@ Modifier.cyberOverload(…)            public API, CyberModifiers.kt
 **Fallback:**
 - **Dots:** `sparkCount` dots of 3–6 px × `intensity`.
 - **Launch angle:** ±45° from vertical, with launch speed scaled to 45% of the short side.
-- **Life:** same color stages, fading out and halving in radius over each spark's life.
+- **Life:** set by `CyberSparkCooling` (two-regime cooling). Color, fade and size follow temperature. See `Modifier.cyberSpark` in the modifiers catalog.
 
 ---
 
