@@ -256,9 +256,31 @@ private class Proximity(val lines: List<Polyline>, val width: Double, val minGap
             when {
                 !line.straight[i] -> Double.NaN
                 own[i] != 0.0 -> own[i]
-                else -> nearestDecided(li, i, own)
+                else -> outsideOfCurveCorner(li, i) ?: nearestDecided(li, i, own)
             }
         }
+    }
+
+    /**
+     * Edge-case patch: an undecided straight segment that meets a curve at a corner would copy
+     * the curve's polarity and put its stroke on the inside of that corner. It takes the
+     * corner's outer side instead. Null when no curve meets it at a corner.
+     */
+    private fun outsideOfCurveCorner(li: Int, i: Int): Double? {
+        val line = lines[li]
+        val n = segCount[li]
+        fun direction(k: Int) = (b(li, k) - a(li, k)) * (1.0 / length[li][k])
+        for (other in listOf(i - 1, i + 1)) {
+            if (!line.closed && (other < 0 || other >= n)) continue
+            val k = (other + n) % n
+            if (line.straight[k]) continue
+            val (first, second) = if (other < i) k to i else i to k
+            val turn = direction(first).cross(direction(second))
+            if (abs(kotlin.math.asin(turn.coerceIn(-1.0, 1.0))) <= CurveCornerTurn) continue // a smooth join, not a corner
+            // turn > 0 bends toward +normal, so the corner's outer side is −normal.
+            return if (turn > 0) -1.0 else 1.0
+        }
+        return null
     }
 
     private fun nearestDecided(li: Int, i: Int, own: DoubleArray): Double {
@@ -377,6 +399,9 @@ private class Proximity(val lines: List<Polyline>, val width: Double, val minGap
 // A point on the same line counts as "other" once the line turns more than this to reach it:
 // right-angle neighbors don't crowd each other; hairpins, loops and notches do.
 private const val SameRunTurn = kotlin.math.PI / 2 + 1e-6
+
+// A line and a curve meeting at more than this turn form a corner (for the edge-case patch).
+private const val CurveCornerTurn = 20.0 * kotlin.math.PI / 180.0
 
 // Only lines within 60° of a side's normal crowd that side.
 private const val SideCone = 0.5
