@@ -117,3 +117,13 @@ than passing them as literal platform values.
 - **High:** Add a 40–80 ms color-channel split on press, keyframed exits, and
   wireframe stroke entry animations. Use this level only when it doesn't delay
   functional feedback.
+
+## Theme & design system conventions
+
+- **Theme object accessors:** Every accessor property on `object CyberTheme` (`colors`, `typography`, `shapes`, `elevation`, `spacing`, `semantics`, `status`) must use `@Composable @ReadOnlyComposable get() = Local...current` to eliminate Compose runtime slot-table and recomposition tracking overhead.
+- **Theme subsystems:** Group design tokens in `@Immutable` data classes provided down the tree via `staticCompositionLocalOf` with production-grade fallback factories.
+- **Component parameter defaults:** Default visual parameters in `@Composable` components must reference `CyberTheme.<subsystem>.<token>` rather than hardcoding `CyberPrimitives`.
+- **Material 3 interoperability:**
+  - `CyberTheme(...)` provides `LocalContentColor provides colors.textPrimary` and `ProvideTextStyle(value = typography.body)` so child composables inherit theme defaults.
+  - Expose extension accessors on `MaterialTheme` (`MaterialTheme.cyberColors`, `cyberShapes`, `cyberElevation`, etc.) for idiomatic discovery.
+  - Support `wrapMaterialTheme: Boolean = true` in `CyberTheme(...)` to allow non-intrusive subtree embedding inside existing Material 3 apps.

@@ -59,9 +59,9 @@ fun CyberNavStatus(
         modifier = modifier.cyberComponentSemantics("CyberNavStatus", appendedA11y, customA11y)
             .border(
                 width = CyberPrimitives.BorderWidths.dp1,
-                color = CyberPrimitives.Colors.Green500
+                color = CyberTheme.semantics.colors.success
             )
-            .background(CyberPrimitives.Colors.Green500.copy(alpha = 0.15f))
+            .background(CyberTheme.semantics.colors.success.copy(alpha = 0.15f))
             .padding(
                 horizontal = CyberPrimitives.Spacing.dp8,
                 vertical = CyberPrimitives.Spacing.dp4
@@ -74,13 +74,13 @@ fun CyberNavStatus(
             modifier = Modifier
                 .size(CyberPrimitives.Spacing.dp8)
                 .clip(CircleShape)
-                .background(CyberPrimitives.Colors.Green500.copy(alpha = dotAlpha))
+                .background(CyberTheme.semantics.colors.success.copy(alpha = dotAlpha))
         )
 
         Text(
             text = text.uppercase(),
             style = CyberTheme.typography.terminal.copy(
-                color = CyberPrimitives.Colors.Green500
+                color = CyberTheme.semantics.colors.success
             )
         )
     }

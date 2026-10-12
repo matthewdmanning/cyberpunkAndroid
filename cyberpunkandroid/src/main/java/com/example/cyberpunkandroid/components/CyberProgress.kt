@@ -17,8 +17,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import com.example.cyberpunkandroid.config.CyberPrimitives
 
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import com.example.cyberpunkandroid.effects.cyberBorder
-import com.example.cyberpunkandroid.effects.cyberSemantics
 import com.example.cyberpunkandroid.theme.CyberTheme
 
 /**
@@ -61,9 +65,21 @@ fun CyberProgress(
         label = "ProgressAnimation"
     )
 
+    val boundedProgress = progress.coerceIn(0f, 1f)
+    val a11yDescription = customA11y ?: if (!appendedA11y.isNullOrBlank()) "Progress - $appendedA11y" else null
+
     Box(
         modifier = modifier
-            .cyberSemantics("CyberProgress", appendedA11y, customA11y)
+            .semantics(mergeDescendants = true) {
+                progressBarRangeInfo = ProgressBarRangeInfo(
+                    current = boundedProgress,
+                    range = 0f..1f
+                )
+                stateDescription = "${(boundedProgress * 100).toInt()}%"
+                if (a11yDescription != null) {
+                    contentDescription = a11yDescription
+                }
+            }
             .fillMaxWidth()
             .height(CyberPrimitives.Spacing.dp12)
             .clip(CyberTheme.shapes.cyberCutCornerShapeSmall)

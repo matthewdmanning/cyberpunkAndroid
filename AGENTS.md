@@ -20,6 +20,7 @@ Use the following routes:
 | Contribution workflow & branching | [Contributing guidelines](CONTRIBUTING.md) |
 | Physical-device feedback batch | [Feedback flow runbook](docs/agents/feedback_flow.md) |
 | Verification protocol & test gates | [Testing plan](docs/testing_plan.md) |
+| Accessibility semantics, state labeling, & screen reader support | [Accessibility plan](docs/agents/accessibility-plan.md) |
 | Local issue or specification | [Issue tracker conventions](docs/agents/issue-tracker.md) and the referenced `.scratch/` ticket |
 | Domain terminology or decisions | [Domain-document routing](docs/agents/domain.md), then the relevant `CONTEXT.md` when one exists |
 

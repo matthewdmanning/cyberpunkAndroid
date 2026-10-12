@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import com.example.cyberpunkandroid.effects.cyberBorder
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -74,6 +75,7 @@ fun CyberCard(
         cardModifier = cardModifier.clickable(
             interactionSource = interactionSource,
             indication = null,
+            role = Role.Button,
             onClick = onClick
         )
     }

@@ -46,7 +46,7 @@ fun PrimaryCyberAction(
         ) {
             Text(
                 text = text.uppercase(),
-                style = CyberTheme.typography.labelLarge,
+                style = MaterialTheme.typography.labelLarge,
                 color = if (enabled) CyberTheme.colors.primary else CyberTheme.colors.textSecondary
             )
 
