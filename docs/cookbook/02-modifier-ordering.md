@@ -9,16 +9,17 @@ In Jetpack Compose, modifier functions produce an ordered, immutable sequence. T
 
 ## 1. Canonical Ordering Sequence
 
-Every composite Cyber modifier chain must follow this seven-step order:
+Every composite Cyber modifier chain must follow this eight-step order:
 
 ```text
 1. Sizing & Layout Constraints      (e.g., fillMaxWidth, height, size)
-2. Outer Emissive Glows             (e.g., cyberTextGlow, cyberGlowBorder)
-3. Shape Clipping                   (e.g., clip)
-4. Background & Surface Fills       (e.g., background, cyberHoloBackground)
-5. Surface FX & Edge Tracing        (e.g., cyberScanlines, cyberBorder, cyberLaserOutliner)
-6. Touch Handling & Gestures        (e.g., clickable, cyberPress)
-7. Inner Content Padding            (e.g., padding)
+2. Semantic Grouping & Overrides    (e.g., semantics(mergeDescendants = true), cyberComponentSemantics)
+3. Outer Emissive Glows             (e.g., cyberTextGlow, cyberGlowBorder)
+4. Shape Clipping                   (e.g., clip)
+5. Background & Surface Fills       (e.g., background, cyberHoloBackground)
+6. Surface FX & Edge Tracing        (e.g., cyberScanlines, cyberBorder, cyberLaserOutliner)
+7. Touch Handling & Native Roles    (e.g., clickable(role = Role.Button), toggleable, selectable)
+8. Inner Content Padding            (e.g., padding)
 ```
 
 ---
@@ -94,7 +95,7 @@ ordering:
 Modifier
     .clip(CyberTheme.shapes.cardShape)
     .background(CyberTheme.colors.surfacePrimary)
-    .clickable(onClick = onSelect)
+    .clickable(role = Role.Button, onClick = onSelect)
     .padding(16.dp)
 
 // FAILS: Hit box is smaller than visible surface
@@ -107,14 +108,49 @@ Modifier
 
 ---
 
+### Constraint D: Semantics Grouping, Roles & Indicator Suppression
+```yaml
+ordering:
+  effect: semantics / clearAndSetSemantics
+  guideline:
+    - container: semantics(mergeDescendants = true)
+    - interactions: provide native Role and onClickLabel
+    - indicators: clearAndSetSemantics on decorative inner chevrons/icons
+  order_sensitive: true
+```
+- **Rationale:** Screen readers must perceive compound widgets as unified controls without code names or redundant nested focus targets. Dynamic states must use `stateDescription` instead of string concatenation. Inner decorative indicators handled by the parent container must be stripped with `Modifier.clearAndSetSemantics { }`.
+
+```kotlin
+// PREFERRED: Unified focus target, native role, dynamic stateDescription, pruned inner chevron
+Row(
+    modifier = Modifier
+        .semantics(mergeDescendants = true) {
+            stateDescription = if (expanded) "Expanded" else "Collapsed"
+            onClick(label = if (expanded) "Collapse section" else "Expand section") {
+                onToggle()
+                true
+            }
+        }
+        .toggleable(value = expanded, role = Role.Button, onValueChange = { onToggle() })
+        .padding(12.dp)
+) {
+    Text("DIAGNOSTICS", modifier = Modifier.weight(1f))
+    Text("⌄", modifier = Modifier.clearAndSetSemantics { }) // Pruned
+}
+```
+
+---
+
 ## 3. Order Reference Matrix
 
 | Modifier | Must Precede | Must Follow |
 | :--- | :--- | :--- |
+| `semantics(mergeDescendants = true)` | Emissive glows, background, clip | Layout constraints |
 | `cyberTextGlow` | `clip`, `background` | `size`, `fillMaxWidth` |
 | `cyberGlowBorder` | `clip`, `background` | Sizing constraints |
 | `clip` | `background`, `clickable` | Emissive glows |
 | `cyberHoloBackground` | `cyberBorder`, `padding` | `clip` |
 | `cyberBorder` | `clickable`, `padding` | `background` |
 | `cyberLaserOutliner` | `clickable`, `padding` | `background` |
-| `clickable` | Content `padding` | `clip`, `background` |
+| `clickable` / `toggleable` / `selectable` | Content `padding` | `clip`, `background` |
+| `clearAndSetSemantics` | Parent row content arrangement | Decorative inner elements only |
