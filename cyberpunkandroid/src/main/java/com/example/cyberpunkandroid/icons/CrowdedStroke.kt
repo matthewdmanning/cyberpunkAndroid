@@ -376,6 +376,13 @@ private class Proximity(val lines: List<Polyline>, val width: Double, val minGap
                 ts += t1; rooms += r1
                 t0 = t1
             }
+            if (line.straight[i]) {
+                // A straight line keeps its slope: its edges stay parallel to it, so each side's
+                // room is the tightest along the whole line, not a taper.
+                val plus = rooms.minOf { it[0] }
+                val minus = rooms.minOf { it[1] }
+                for (r in rooms) { r[0] = plus; r[1] = minus }
+            }
             for (k in 0 until ts.size - 1) {
                 pts += if (k == 0) a else a + (b - a) * ts[k]
                 directions += dir

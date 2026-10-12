@@ -217,6 +217,98 @@ class StrokeRegionTest {
     }
 
     @Test
+    fun straightLinesKeepTheirSlope() {
+        val shapes = listOf(
+            cyberCenterline(24f, 24f) { moveTo(4f, 2f); lineTo(4f, 20f); lineTo(20f, 20f); lineTo(20f, 2f) } to CyberStrokeAlignment.Center,
+            cyberCenterline(24f, 12f) { moveTo(0f, 10f); lineTo(6f, 2f); lineTo(12f, 10f); lineTo(18f, 2f); lineTo(24f, 10f) } to CyberStrokeAlignment.Center,
+            cyberCenterline(24f, 24f) { moveTo(2f, 4f); lineTo(20f, 4f); lineTo(20f, 22f) } to CyberStrokeAlignment.Center,
+            cyberCenterline(24f, 24f) { moveTo(6f, 2f); lineTo(6f, 14f); arcTo(14f, 18f, -150f) } to CyberStrokeAlignment.Center,
+            cyberCenterline(24f, 24f) { moveTo(2f, 20f); lineTo(10f, 20f); cubicTo(14f, 8f, 18f, 2f, 22f, 4f); lineTo(22f, 16f) } to CyberStrokeAlignment.Center,
+            cyberCenterline(24f, 24f) {
+                for (k in 0 until 10) {
+                    val radius = if (k % 2 == 0) 11.0 else 5.0
+                    val a = -PI / 2 + k * PI / 5
+                    if (k == 0) moveTo((12 + radius * cos(a)).toFloat(), (12 + radius * sin(a)).toFloat())
+                    else lineTo((12 + radius * cos(a)).toFloat(), (12 + radius * sin(a)).toFloat())
+                }
+                close()
+            } to CyberStrokeAlignment.Outside,
+            // A centered line between two converging lines: the room on both sides narrows
+            // along it, but its edges must stay parallel to it.
+            cyberCenterline(40f, 24f) {
+                moveTo(0f, 12f); lineTo(40f, 12f)
+                moveTo(0f, 4f); lineTo(40f, 11f)
+                moveTo(0f, 20f); lineTo(40f, 13f)
+            } to CyberStrokeAlignment.Center
+        )
+        for ((index, pair) in shapes.withIndex()) for (stroke in listOf(4.0, 8.0)) {
+            assertStraightLinesKeepSlope("shape $index stroke $stroke", pair.first, stroke, pair.second)
+        }
+    }
+
+    @Test
+    fun cornersBetweenTwoLinesAreMiters() {
+        // An L and an open U: both lines at each corner put their stroke outside it, so each
+        // corner is the miter where the two outer offset lines meet.
+        val l = cyberCenterline(24f, 24f) { moveTo(2f, 4f); lineTo(20f, 4f); lineTo(20f, 22f) }
+        val u = cyberCenterline(24f, 24f) { moveTo(4f, 2f); lineTo(4f, 20f); lineTo(20f, 20f); lineTo(20f, 2f) }
+        for (shape in listOf(l, u)) for (stroke in listOf(4.0, 8.0)) {
+            val pieces = CenterlineStroker(shape.contours, 10.0, CyberStrokeAlignment.Center).pieces(stroke)
+            assertTrue(pieces.none { it.size == 3 })
+        }
+        // The U's outer corners sit exactly one stroke out on both axes: the right angle is kept.
+        val r = region(u, 8.0, CyberStrokeAlignment.Center, scale = 10.0)
+        assertEquals(40.0 - 8.0, r.bounds.left, 1e-6)
+        assertEquals(200.0 + 8.0, r.bounds.bottom, 1e-6)
+        assertTrue(r.solids[0].any { abs(it.x - 32.0) < 1e-6 && abs(it.y - 208.0) < 1e-6 })
+    }
+
+    /**
+     * Along each straight segment, away from its ends, the nearest edge on each side of the
+     * centerline sits at the same offset: the stroke's edges stay parallel to the line.
+     */
+    private fun assertStraightLinesKeepSlope(label: String, shape: CyberCenterline, stroke: Double, alignment: CyberStrokeAlignment) {
+        val stroker = CenterlineStroker(shape.contours, 10.0, alignment)
+        // The offsets themselves: equal at both ends of every straight piece, and along its line.
+        assertEquals(label, emptyList<String>(), straightSlopeViolations(crowdedLines(stroker.lines(stroke), stroke, DefaultMinGap), stroke, alignment))
+        val r = checkNotNull(stroker.region(stroke))
+        val loops = r.solids + r.holes
+        fun nearestEdge(p: Pt, dir: Pt): Double {
+            var best = Double.POSITIVE_INFINITY
+            for (loop in loops) for (k in loop.indices) {
+                val a = loop[k]
+                val e = loop[(k + 1) % loop.size] - a
+                val den = dir.cross(e)
+                if (abs(den) < 1e-12) continue
+                val t = (a - p).cross(e) / den
+                val u = (a - p).cross(dir) / den
+                if (u in 0.0..1.0 && t >= -1e-6) best = minOf(best, maxOf(t, 0.0))
+            }
+            return best
+        }
+        for (line in stroker.lines(stroke)) {
+            val count = if (line.closed) line.points.size else line.points.size - 1
+            for (i in 0 until count) {
+                if (!line.straight[i]) continue
+                val a = line.points[i]
+                val b = line.points[(i + 1) % line.points.size]
+                val len = (b - a).length()
+                if (len < 8 * stroke) continue // too short to have an interior away from its corners
+                val d = (b - a) * (1.0 / len)
+                val n = Pt(-d.y, d.x)
+                val samples = listOf(0.45, 0.5, 0.55).map { t ->
+                    val p = a + d * (len * t)
+                    nearestEdge(p, n) to nearestEdge(p, n * -1.0)
+                }
+                for (sample in samples) {
+                    assertEquals("$label segment $i +side", samples[0].first, sample.first, 1e-6)
+                    assertEquals("$label segment $i -side", samples[0].second, sample.second, 1e-6)
+                }
+            }
+        }
+    }
+
+    @Test
     fun tightCornerKeepsAGapOnItsInside() {
         // A 20° V with a stroke far wider than the space between its arms near the tip.
         val half = 10.0 * PI / 180.0

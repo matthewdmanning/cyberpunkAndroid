@@ -341,6 +341,66 @@ internal fun strokeBounds(lines: List<StrokeLine>, strokeWidth: Double, alignmen
     return if (l <= r && t <= b) Bounds(l, t, r, b) else null
 }
 
+/** Offsets along each segment's normal at its start (A) and end (B), for the low and high sides. */
+internal fun segmentOffsets(line: StrokeLine, strokeWidth: Double, alignment: CyberStrokeAlignment): List<DoubleArray> {
+    val closed = line.closed
+    val segCount = if (closed) line.points.size else line.points.size - 1
+    val loA = DoubleArray(segCount)
+    val hiA = DoubleArray(segCount)
+    val loB = DoubleArray(segCount)
+    val hiB = DoubleArray(segCount)
+    val oneSided = closed && alignment != CyberStrokeAlignment.Center
+    // Open contours lean outside; closed ones follow their alignment exactly.
+    val lean = if (closed) DoubleArray(segCount) to DoubleArray(segCount) else convexLean(line, strokeWidth)
+    for (i in 0 until segCount) {
+        if (oneSided) {
+            val toward = if (alignment == CyberStrokeAlignment.Outside) line.outward[i] else -line.outward[i]
+            val lo = if (toward > 0) 0.0 else -strokeWidth
+            val hi = if (toward > 0) strokeWidth else 0.0
+            loA[i] = lo; hiA[i] = hi; loB[i] = lo; hiB[i] = hi
+        } else {
+            val leanA = lean.first[i]
+            val leanB = lean.second[i]
+            loA[i] = -strokeWidth * (1 - leanA) / 2; hiA[i] = strokeWidth * (1 + leanA) / 2
+            loB[i] = -strokeWidth * (1 - leanB) / 2; hiB[i] = strokeWidth * (1 + leanB) / 2
+        }
+        loA[i] = max(loA[i], -line.minusA[i]); hiA[i] = min(hiA[i], line.plusA[i])
+        loB[i] = max(loB[i], -line.minusB[i]); hiB[i] = min(hiB[i], line.plusB[i])
+    }
+    limitEdgeSlope(line, segCount, loA, hiA, loB, hiB)
+    return listOf(loA, hiA, loB, hiB)
+}
+
+/**
+ * The global-shape check for straight lines: a straight line's stroke edges must stay parallel
+ * to it, at the same offsets along its whole length. Returns one message per straight piece
+ * whose offsets change along it or differ from the rest of its line; empty when every
+ * straight line keeps its slope (and so every corner between two lines keeps its angle).
+ */
+internal fun straightSlopeViolations(lines: List<StrokeLine>, strokeWidth: Double, alignment: CyberStrokeAlignment): List<String> {
+    val problems = ArrayList<String>()
+    for ((index, line) in lines.withIndex()) {
+        val (loA, hiA, loB, hiB) = segmentOffsets(line, strokeWidth, alignment)
+        for (i in loA.indices) {
+            if (line.sideLean[i].isNaN()) continue
+            if (abs(loA[i] - loB[i]) > SlopeTolerance || abs(hiA[i] - hiB[i]) > SlopeTolerance) {
+                problems += "line $index piece $i: offsets change along it (${loA[i]}..${loB[i]}, ${hiA[i]}..${hiB[i]})"
+            }
+            val j = i - 1
+            // The previous piece of the same straight line: same direction, also straight.
+            if (j >= 0 && !line.sideLean[j].isNaN() && line.directions[j] == line.directions[i] &&
+                (abs(loB[j] - loA[i]) > SlopeTolerance || abs(hiB[j] - hiA[i]) > SlopeTolerance)
+            ) {
+                problems += "line $index piece $i: offsets differ from the rest of its line"
+            }
+        }
+    }
+    return problems
+}
+
+// Offsets within this many px count as the same (the edge stays parallel).
+private const val SlopeTolerance = 1e-9
+
 /** Emits each convex piece of [strokePieces] as three or four corners (the fourth null for a triangle). */
 private inline fun forEachPiece(
     lines: List<StrokeLine>,
@@ -355,30 +415,7 @@ private inline fun forEachPiece(
         val segCount = if (closed) n else n - 1
         val dirs = line.directions
         val normals = Array(segCount) { Pt(-dirs[it].y, dirs[it].x) }
-        // Offsets along the normal at each segment's start (A) and end (B).
-        val loA = DoubleArray(segCount)
-        val hiA = DoubleArray(segCount)
-        val loB = DoubleArray(segCount)
-        val hiB = DoubleArray(segCount)
-        val oneSided = closed && alignment != CyberStrokeAlignment.Center
-        // Open contours lean outside; closed ones follow their alignment exactly.
-        val lean = if (closed) DoubleArray(segCount) to DoubleArray(segCount) else convexLean(line, strokeWidth)
-        for (i in 0 until segCount) {
-            if (oneSided) {
-                val toward = if (alignment == CyberStrokeAlignment.Outside) line.outward[i] else -line.outward[i]
-                val lo = if (toward > 0) 0.0 else -strokeWidth
-                val hi = if (toward > 0) strokeWidth else 0.0
-                loA[i] = lo; hiA[i] = hi; loB[i] = lo; hiB[i] = hi
-            } else {
-                val leanA = lean.first[i]
-                val leanB = lean.second[i]
-                loA[i] = -strokeWidth * (1 - leanA) / 2; hiA[i] = strokeWidth * (1 + leanA) / 2
-                loB[i] = -strokeWidth * (1 - leanB) / 2; hiB[i] = strokeWidth * (1 + leanB) / 2
-            }
-            loA[i] = max(loA[i], -line.minusA[i]); hiA[i] = min(hiA[i], line.plusA[i])
-            loB[i] = max(loB[i], -line.minusB[i]); hiB[i] = min(hiB[i], line.plusB[i])
-        }
-        limitEdgeSlope(line, segCount, loA, hiA, loB, hiB)
+        val (loA, hiA, loB, hiB) = segmentOffsets(line, strokeWidth, alignment)
         for (i in 0 until segCount) {
             val a = pts[i]
             val b = pts[(i + 1) % n]
@@ -427,9 +464,12 @@ private fun limitEdgeSlope(line: StrokeLine, segCount: Int, loA: DoubleArray, hi
         line.outward[j] == line.outward[i] &&
             abs(atan2(line.directions[j].cross(line.directions[i]), line.directions[j].dot(line.directions[i]))) <= SmoothJoinTurn
     }
+    // Straight lines are left as they are, so they keep their slope; curves next to them adapt.
+    val straight = BooleanArray(segCount) { !line.sideLean[it].isNaN() }
     // A closed line's limit can wrap round, so it takes a second lap.
     repeat(if (line.closed) 2 else 1) {
         for (i in 0 until segCount) { // forward
+            if (straight[i]) continue
             if (smooth[i]) {
                 val j = (i - 1 + segCount) % segCount
                 hiA[i] = min(hiA[i], hiB[j]); loA[i] = max(loA[i], loB[j])
@@ -438,10 +478,12 @@ private fun limitEdgeSlope(line: StrokeLine, segCount: Int, loA: DoubleArray, hi
             loB[i] = max(loB[i], loA[i] - MaxEdgeSlope * length[i])
         }
         for (i in segCount - 1 downTo 0) { // backward
-            hiA[i] = min(hiA[i], hiB[i] + MaxEdgeSlope * length[i])
-            loA[i] = max(loA[i], loB[i] - MaxEdgeSlope * length[i])
-            if (smooth[i]) {
-                val j = (i - 1 + segCount) % segCount
+            if (!straight[i]) {
+                hiA[i] = min(hiA[i], hiB[i] + MaxEdgeSlope * length[i])
+                loA[i] = max(loA[i], loB[i] - MaxEdgeSlope * length[i])
+            }
+            val j = (i - 1 + segCount) % segCount
+            if (smooth[i] && !straight[j]) {
                 hiB[j] = min(hiB[j], hiA[i]); loB[j] = max(loB[j], loA[i])
             }
         }
@@ -531,13 +573,17 @@ internal fun convexLean(line: StrokeLine, strokeWidth: Double): Pair<DoubleArray
         val turn = abs(atan2(line.directions[j].cross(line.directions[i]), line.directions[j].dot(line.directions[i])))
         val lineBefore = !line.sideLean[j].isNaN()
         val lineAfter = !line.sideLean[i].isNaN()
+        // Two straight lines keep their own sides and slopes; the corner's miter joins them.
+        if (lineBefore && lineAfter) continue
         joins += when {
-            // A smooth join: the direction isn't known here, so model it with an overlapping Bézier.
+            // Where a line meets a curve its direction is known, so the line's lean wins and the
+            // curve adapts: the line keeps its slope.
+            lineBefore -> Join(arc[v], leanB[j])
+            lineAfter -> Join(arc[v], leanA[i])
+            // A smooth join of two curves: the direction isn't known, so model it with an
+            // overlapping Bézier.
             turn <= SmoothJoinTurn -> Join(arc[v], null)
-            // A corner where a line meets a curve: the line's direction is known, so its lean wins.
-            lineBefore && !lineAfter -> Join(arc[v], leanB[j])
-            lineAfter && !lineBefore -> Join(arc[v], leanA[i])
-            // Two lines, or two curves: meet halfway.
+            // A corner between two curves: meet halfway.
             else -> Join(arc[v], (leanB[j] + leanA[i]) / 2)
         }
     }
@@ -575,6 +621,7 @@ internal fun convexLean(line: StrokeLine, strokeWidth: Double): Pair<DoubleArray
         return target + (known - target) * weight
     }
     for (i in 0 until segCount) {
+        if (!line.sideLean[i].isNaN()) continue // straight lines keep their lean: constant offsets, constant slope
         leanA[i] = blend(leanA[i], i)
         leanB[i] = blend(leanB[i], (i + 1) % n)
     }
