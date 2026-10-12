@@ -1,4 +1,4 @@
-# CyberpunkAndroid
+# CyberpunkAndroid  
 
 A Cyberpunk-themed UI component and effects library for Jetpack Compose. 
 It provides hardware-accelerated, futuristic visual effects and highly customizable UI elements out of the box.
@@ -72,6 +72,15 @@ CyberGlowIcon(
 - **Pre-API 33 Fallbacks:** For older devices, the library falls back to procedural Canvas drawing. While optimized, applying heavy visual modifiers to dozens of items in a deeply nested `LazyColumn` on an older device may impact frame rates. Apply them strategically to focal points.
 - **Triggering Effects:** Use `CyberInteractionTrigger` effectively. Instead of running continuous animated effects (`ALWAYS`) on every item, bind heavy effects to `PRESS` or `FOCUS` states. This ensures they only consume rendering resources when the user is actively engaging with the component.
 - **Keep it Lean:** The library's effects are built using the modern `Modifier.Node` API to guarantee zero allocations during recomposition. If you wrap these effects in your own custom modifiers, try to use `Modifier.Node` yourself or standard composable functions to preserve these performance gains.
+
+## Accessibility Best Practices (A11y)
+
+The library provides accessibility integration via Compose semantics and custom modifier parameters (`customA11y`, `appendedA11y`). To ensure your application remains fully accessible to users relying on TalkBack, Switch Access, or other assistive services:
+
+- **UX Context Over Code Names:** Always provide meaningful, user-facing descriptions in plain English. Avoid referencing internal class or component names (such as `"CyberSwitch"`, `"CyberAccordion"`, or `"CyberButton"`). Screen readers announce the component's semantic role (e.g., *switch*, *button*) automatically, so labels should describe *what* the element does or controls (e.g., `"Overload cyberware"`, not `"CyberSwitch"`).
+- **State-Aware Action Labels:** For interactive elements that toggle visibility or state (such as disclosure chevrons, accordions, and expandable panels), ensure accessibility labels describe the actionable outcome (e.g., `"Expand section"` or `"Collapse section"`), or leverage Compose `stateDescription` (`"Expanded"` / `"Collapsed"`).
+- **Preserve Child Content Hierarchies:** Avoid blanket `contentDescription` overrides on container elements that obscure child text. For composite or container components (such as dropdowns or cards), let child text labels speak for themselves or pass contextual labels that reflect the current selection.
+- **Customizing Semantics:** Use `customA11y` when you need to completely replace an element's accessibility announcement with a clear, localized description, or `appendedA11y` when appending additional status context to existing content.
 
 ## Documentation
 

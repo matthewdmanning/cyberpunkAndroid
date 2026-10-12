@@ -59,8 +59,8 @@ fun Modifier.cyberTextGlow(
     dropoffPower: Float = 3f,
     outsideGlowOnly: Boolean = false,
     appendedA11y: String? = null,
-    customA11y: String? = null
-): Modifier = this.cyberSemantics("CyberTextGlow", appendedA11y, customA11y)
+    customA11y: String? = null,
+): Modifier = (if (appendedA11y.isNullOrBlank() && customA11y.isNullOrBlank()) this else this.cyberSemantics("CyberTextGlow", appendedA11y, customA11y))
     // Offscreen so the DstOut mask below erases only this element's glow, not what is behind it
     .then(if (outsideGlowOnly) Modifier.graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen } else Modifier)
     .drawWithCache {

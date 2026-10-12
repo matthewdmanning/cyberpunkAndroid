@@ -103,12 +103,12 @@ class CyberNotificationAccordionTest {
         composeTestRule.setContent {
             CyberTheme {
                 CyberAccordion(
-                    title = "Ignored",
+                    title = "Settings",
                     expanded = expanded,
                     onExpandedChange = { expanded = it },
                     headerContent = { Text("Custom Header") },
                 ) {
-                    Text("Expanded Content")
+                    Text("Expanded Settings Body")
                 }
             }
         }
@@ -122,6 +122,10 @@ class CyberNotificationAccordionTest {
         toggleChevron.performSemanticsAction(SemanticsActions.OnClick)
         composeTestRule.waitForIdle()
         assertTrue(expanded)
+
+        // After expansion, chevron changes to "Collapse section"
+        composeTestRule.onNodeWithContentDescription("Collapse section", useUnmergedTree = true)
+            .assertIsDisplayed()
     }
 
     @Test

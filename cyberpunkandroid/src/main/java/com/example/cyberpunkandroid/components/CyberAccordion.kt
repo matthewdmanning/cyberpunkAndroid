@@ -1,19 +1,20 @@
 package com.example.cyberpunkandroid.components
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
@@ -26,10 +27,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.IntSize
@@ -38,6 +40,7 @@ import com.example.cyberpunkandroid.effects.cyberBorder
 import com.example.cyberpunkandroid.effects.cyberOverload
 import com.example.cyberpunkandroid.effects.cyberScanlines
 import com.example.cyberpunkandroid.effects.cyberTextGlow
+import com.example.cyberpunkandroid.icons.CyberIcons
 import com.example.cyberpunkandroid.theme.CyberTheme
 
 /**
@@ -49,10 +52,12 @@ import com.example.cyberpunkandroid.theme.CyberTheme
  * the chevron remains the expansion control so interactive header content such as [CyberTextField] can receive input.
  * @param onExpandedChange Called when the header or chevron requests an expansion-state change.
  * @param content Expanded body content.
-  * @param modifier TODO: document this
-  * @param borderColor TODO: document this
-  * @param appendedA11y TODO: document this
-  * @param customA11y TODO: document this
+ * @param modifier Composable modifier applied to the accordion container.
+ * @param expansionAnimationSpec Animation specification for expand/collapse transitions.
+ * @param overloadAnimationSpec Animation specification for overload effect.
+ * @param borderColor Neon border color framing the accordion surface.
+ * @param appendedA11y Optional text appended to the accessibility label.
+ * @param customA11y Optional text overriding the accessibility label.
  */
 @Composable
 fun CyberAccordion(
@@ -130,8 +135,17 @@ fun CyberAccordion(
                     }
                 }
             }
-            Text(
-                text = if (expanded) "⌃" else "⌄",
+
+            val chevronA11y = customA11y ?: if (!appendedA11y.isNullOrBlank()) {
+                "$actionLabel - $appendedA11y"
+            } else {
+                actionLabel
+            }
+
+            Icon(
+                painter = painterResource(id = if (expanded) CyberIcons.ChevronUp else CyberIcons.ChevronDown),
+                contentDescription = null,
+                tint = CyberTheme.colors.primary,
                 modifier = Modifier
                     .size(CyberPrimitives.IconSizes.dp24)
                     .then(
@@ -144,20 +158,17 @@ fun CyberAccordion(
                                         onExpandedChange(!expanded)
                                         true
                                     }
-                                    this.contentDescription = customA11y ?: if (!appendedA11y.isNullOrBlank()) {
-                                        "$actionLabel - $appendedA11y"
-                                    } else {
-                                        actionLabel
-                                    }
+                                    this.contentDescription = chevronA11y
                                 }
                         } else {
                             Modifier.clearAndSetSemantics { }
                         },
                     )
                     .graphicsLayer { alpha = 0.95f }
-                    .cyberTextGlow(color = CyberTheme.colors.primary, intensity = if (expanded) 1f else 0.75f),
-                color = CyberTheme.colors.primary,
-                style = CyberTheme.typography.terminal,
+                    .cyberTextGlow(
+                        color = CyberTheme.colors.primary,
+                        intensity = if (expanded) 1f else 0.75f,
+                    ),
             )
         }
 
