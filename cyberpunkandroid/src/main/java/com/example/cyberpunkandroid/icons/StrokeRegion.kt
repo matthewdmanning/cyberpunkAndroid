@@ -82,14 +82,15 @@ internal class StrokeRegion(val solids: List<List<Pt>>, val holes: List<List<Pt>
 internal class StrokeFit(val strokeWidth: Double, val maxStrokeWidth: Double, val load: Double, val bounds: Bounds)
 
 // Largest distance, in px, between a flattened curve (or its offset) and the true curve.
-private const val FlattenTolerance = 0.2
+// Outlines are built ahead of time, so this favors smoothness over speed.
+private const val FlattenTolerance = 0.05
 
-// Turn limits per flattened step: 15° keeps thin offsets smooth; 1° stops runaway subdivision.
-private const val MaxStepTurn = 15.0 * PI / 180.0
-private const val MinStepTurn = 1.0 * PI / 180.0
+// Turn limits per flattened step: 5° keeps offsets smooth; 0.5° stops runaway subdivision.
+private const val MaxStepTurn = 5.0 * PI / 180.0
+private const val MinStepTurn = 0.5 * PI / 180.0
 
 // Turn limits are rounded down to steps of this size, so nearby thicknesses share a flattening.
-private const val TurnBucket = 0.5 * PI / 180.0
+private const val TurnBucket = 0.25 * PI / 180.0
 
 // Cubic subdivision depth; 2^16 pieces is far past any visible error.
 private const val MaxCubicDepth = 16
@@ -120,7 +121,8 @@ internal class CenterlineStroker(
     fun pieces(strokeWidth: Double): List<List<Pt>> =
         strokePieces(crowdedLines(lines(strokeWidth), strokeWidth, minGap), strokeWidth, alignment)
 
-    fun bounds(strokeWidth: Double): Bounds? = Bounds.of(pieces(strokeWidth))
+    fun bounds(strokeWidth: Double): Bounds? =
+        strokeBounds(crowdedLines(lines(strokeWidth), strokeWidth, minGap), strokeWidth, alignment)
 
     fun region(strokeWidth: Double): StrokeRegion? {
         val pieces = pieces(strokeWidth)
@@ -144,7 +146,7 @@ internal class CenterlineStroker(
         // One flattening for the whole search: it moves the bounds by far less than a pixel.
         val lines = crowdedLines(lines(requested), requested, minGap)
         fun fits(w: Double): Bounds? =
-            Bounds.of(strokePieces(lines, w, alignment))?.takeIf { it.width <= maxWidth && it.height <= maxHeight }
+            strokeBounds(lines, w, alignment)?.takeIf { it.width <= maxWidth && it.height <= maxHeight }
         if (maxWidth.isInfinite() && maxHeight.isInfinite()) {
             val bounds = bounds(requested) ?: return null
             return StrokeFit(requested, Double.POSITIVE_INFINITY, 0.0, bounds)
@@ -165,7 +167,7 @@ internal class CenterlineStroker(
                 hi *= 2.0
             }
         }
-        repeat(FitSteps) {
+        while (hi - lo > FitPrecision) {
             val mid = (lo + hi) / 2.0
             val b = fits(mid)
             if (b != null) {
@@ -181,8 +183,8 @@ internal class CenterlineStroker(
     }
 
     private companion object {
-        // Bisection steps; each halves the bracket, so these resolve far below a pixel.
-        const val FitSteps = 30
+        // The thickest fitting stroke is found to within this many px.
+        const val FitPrecision = 0.01
 
         // A stroke this wide (px) is past any screen, so the space doesn't limit it.
         const val UnboundedStroke = 1e6
@@ -326,6 +328,26 @@ private fun distanceToLine(p: Pt, a: Pt, b: Pt): Double {
  */
 internal fun strokePieces(lines: List<StrokeLine>, strokeWidth: Double, alignment: CyberStrokeAlignment): List<List<Pt>> {
     val pieces = ArrayList<List<Pt>>()
+    forEachPiece(lines, strokeWidth, alignment) { a, b, c, d -> pieces += if (d == null) listOf(a, b, c) else listOf(a, b, c, d) }
+    return pieces
+}
+
+/** The bounds of [strokePieces], without building the pieces: the thickness search needs only this. */
+internal fun strokeBounds(lines: List<StrokeLine>, strokeWidth: Double, alignment: CyberStrokeAlignment): Bounds? {
+    var l = Double.POSITIVE_INFINITY; var t = Double.POSITIVE_INFINITY
+    var r = Double.NEGATIVE_INFINITY; var b = Double.NEGATIVE_INFINITY
+    fun take(p: Pt) { l = min(l, p.x); t = min(t, p.y); r = max(r, p.x); b = max(b, p.y) }
+    forEachPiece(lines, strokeWidth, alignment) { p0, p1, p2, p3 -> take(p0); take(p1); take(p2); if (p3 != null) take(p3) }
+    return if (l <= r && t <= b) Bounds(l, t, r, b) else null
+}
+
+/** Emits each convex piece of [strokePieces] as three or four corners (the fourth null for a triangle). */
+private inline fun forEachPiece(
+    lines: List<StrokeLine>,
+    strokeWidth: Double,
+    alignment: CyberStrokeAlignment,
+    emit: (Pt, Pt, Pt, Pt?) -> Unit
+) {
     for (line in lines) {
         val pts = line.points
         val n = pts.size
@@ -357,7 +379,7 @@ internal fun strokePieces(lines: List<StrokeLine>, strokeWidth: Double, alignmen
             loB[i] = max(loB[i], -line.minusB[i]); hiB[i] = min(hiB[i], line.plusB[i])
             val a = pts[i]
             val b = pts[(i + 1) % n]
-            pieces += listOf(a + normals[i] * loA[i], b + normals[i] * loB[i], b + normals[i] * hiB[i], a + normals[i] * hiA[i])
+            emit(a + normals[i] * loA[i], b + normals[i] * loB[i], b + normals[i] * hiB[i], a + normals[i] * hiA[i])
         }
         val corners = if (closed) 0 until n else 1 until n - 1
         for (k in corners) {
@@ -377,10 +399,9 @@ internal fun strokePieces(lines: List<StrokeLine>, strokeWidth: Double, alignmen
             // The offset lines meet ahead of segment j's end and behind segment i's start: the
             // corner keeps the centerline's angle. When the two sides' offsets differ (the
             // stroke is tapering here) they can meet far away or behind; then bevel.
-            pieces += if (t >= 0 && (corner - b).dot(dirs[i]) <= 0) listOf(p, a, corner, b) else listOf(p, a, b)
+            if (t >= 0 && (corner - b).dot(dirs[i]) <= 0) emit(p, a, corner, b) else emit(p, a, b, null)
         }
     }
-    return pieces
 }
 
 /**
@@ -475,7 +496,8 @@ private fun convexLean(line: StrokeLine, strokeWidth: Double): Pair<DoubleArray,
         if (d >= zone) return known
         val t = d / zone
         val weight = t * t * (3 - 2 * t) // smoothstep: 0 at the join, 1 at the zone's edge
-        return modeled(v) + (known - modeled(v)) * weight
+        val model = modeled(v)
+        return model + (known - model) * weight
     }
     for (i in 0 until segCount) {
         leanA[i] = blend(leanA[i], i)
@@ -487,8 +509,8 @@ private fun convexLean(line: StrokeLine, strokeWidth: Double): Pair<DoubleArray,
 // The zone around a smooth join where the lean is modeled, in stroke widths of arc.
 private const val JoinZoneWidths = 2.0
 
-// Turns at most this sharp are smooth joins, not corners (flattened curves step by ≤ 15°).
-private val SmoothJoinTurn = 20.0 * PI / 180.0
+// Turns at most this sharp are smooth joins, not corners (flattened curves step by ≤ 5°).
+private const val SmoothJoinTurn = 20.0 * PI / 180.0
 
 // Sine of the smallest turn that still gets a corner wedge.
 private const val ParallelTurn = 1e-9
@@ -860,37 +882,6 @@ private class SplitList {
             }
         }
         return Grouped(start, order)
-    }
-}
-
-private class IntArrayList {
-    private var data = IntArray(64)
-    var size = 0
-        private set
-
-    fun add(v: Int) {
-        if (size == data.size) data = data.copyOf(size * 2)
-        data[size++] = v
-    }
-
-    operator fun get(i: Int) = data[i]
-}
-
-private class LongArrayList {
-    private var data = LongArray(64)
-    private var size = 0
-
-    fun add(v: Long) {
-        if (size == data.size) data = data.copyOf(size * 2)
-        data[size++] = v
-    }
-
-    fun sortedUnique(): LongArray {
-        val sorted = data.copyOf(size)
-        sorted.sort()
-        var n = 0
-        for (i in sorted.indices) if (i == 0 || sorted[i] != sorted[i - 1]) sorted[n++] = sorted[i]
-        return sorted.copyOf(n)
     }
 }
 
