@@ -181,6 +181,42 @@ class StrokeRegionTest {
     }
 
     @Test
+    fun bothSidesOfEveryJoinShareOneLean() {
+        val shapes = listOf(
+            cyberCenterline(24f, 24f) { moveTo(6f, 2f); lineTo(6f, 14f); arcTo(14f, 18f, -150f) }, // line into an arc at a corner
+            cyberCenterline(24f, 24f) { moveTo(2f, 20f); lineTo(10f, 20f); cubicTo(14f, 8f, 18f, 2f, 22f, 4f); lineTo(22f, 16f) },
+            cyberCenterline(24f, 12f) { moveTo(0f, 10f); lineTo(6f, 2f); lineTo(12f, 10f); lineTo(18f, 2f); lineTo(24f, 10f) },
+            cursiveL
+        )
+        for ((index, shape) in shapes.withIndex()) for (stroke in listOf(4.0, 18.0)) {
+            val stroker = CenterlineStroker(shape.contours, 10.0, CyberStrokeAlignment.Center)
+            for (line in crowdedLines(stroker.lines(stroke), stroke, DefaultMinGap)) {
+                val (leanA, leanB) = convexLean(line, stroke)
+                for (v in 1 until leanA.size) {
+                    assertEquals("shape $index stroke $stroke vertex $v", leanB[v - 1], leanA[v], 1e-9)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun lineToCurveCornersKeepTheirAngle() {
+        // With both sides of each corner sharing one lean, their outer offsets match, so every
+        // corner is a miter (four points) and none falls back to a bevel (three points).
+        val shapes = listOf(
+            cyberCenterline(24f, 24f) { moveTo(6f, 2f); lineTo(6f, 14f); arcTo(14f, 18f, -150f) },
+            cyberCenterline(24f, 24f) { moveTo(2f, 20f); lineTo(10f, 20f); cubicTo(14f, 8f, 18f, 2f, 22f, 4f); lineTo(22f, 16f) }
+        )
+        for (shape in shapes) for (stroke in listOf(4.0, 18.0)) {
+            val stroker = CenterlineStroker(shape.contours, 10.0, CyberStrokeAlignment.Center)
+            assertTrue(stroker.pieces(stroke).none { it.size == 3 })
+            val r = region(shape, stroke, CyberStrokeAlignment.Center, scale = 10.0)
+            assertEquals(1, r.solids.size)
+            assertSimple(r)
+        }
+    }
+
+    @Test
     fun tightCornerKeepsAGapOnItsInside() {
         // A 20° V with a stroke far wider than the space between its arms near the tip.
         val half = 10.0 * PI / 180.0

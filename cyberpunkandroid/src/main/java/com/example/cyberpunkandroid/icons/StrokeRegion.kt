@@ -377,6 +377,9 @@ private inline fun forEachPiece(
             }
             loA[i] = max(loA[i], -line.minusA[i]); hiA[i] = min(hiA[i], line.plusA[i])
             loB[i] = max(loB[i], -line.minusB[i]); hiB[i] = min(hiB[i], line.plusB[i])
+        }
+        limitEdgeSlope(line, segCount, loA, hiA, loB, hiB)
+        for (i in 0 until segCount) {
             val a = pts[i]
             val b = pts[(i + 1) % n]
             emit(a + normals[i] * loA[i], b + normals[i] * loB[i], b + normals[i] * hiB[i], a + normals[i] * hiA[i])
@@ -405,12 +408,61 @@ private inline fun forEachPiece(
 }
 
 /**
+ * Keeps each edge of the stroke from turning much faster than the centerline: along a smooth
+ * run, an edge's offset may change by at most [MaxEdgeSlope] per px of arc. Where lean or
+ * room changes quickly (near joins, crossings and tight gaps) the edge would otherwise bend
+ * far more sharply than the centerline. The limit only ever pulls an edge in toward the
+ * centerline, so every gap the room keeps open stays open. Corners are not smoothed across, so
+ * they keep their angle.
+ */
+private fun limitEdgeSlope(line: StrokeLine, segCount: Int, loA: DoubleArray, hiA: DoubleArray, loB: DoubleArray, hiB: DoubleArray) {
+    val pts = line.points
+    val n = pts.size
+    val length = DoubleArray(segCount) { (pts[(it + 1) % n] - pts[it]).length() }
+    // Vertex i joins segment i − 1 to segment i; smooth vertices pass the limit through.
+    val smooth = BooleanArray(segCount) { i ->
+        if (i == 0 && !line.closed) return@BooleanArray false
+        val j = (i - 1 + segCount) % segCount
+        // A closed loop that switches its outside here (a figure eight's crossing) is not one run.
+        line.outward[j] == line.outward[i] &&
+            abs(atan2(line.directions[j].cross(line.directions[i]), line.directions[j].dot(line.directions[i]))) <= SmoothJoinTurn
+    }
+    // A closed line's limit can wrap round, so it takes a second lap.
+    repeat(if (line.closed) 2 else 1) {
+        for (i in 0 until segCount) { // forward
+            if (smooth[i]) {
+                val j = (i - 1 + segCount) % segCount
+                hiA[i] = min(hiA[i], hiB[j]); loA[i] = max(loA[i], loB[j])
+            }
+            hiB[i] = min(hiB[i], hiA[i] + MaxEdgeSlope * length[i])
+            loB[i] = max(loB[i], loA[i] - MaxEdgeSlope * length[i])
+        }
+        for (i in segCount - 1 downTo 0) { // backward
+            hiA[i] = min(hiA[i], hiB[i] + MaxEdgeSlope * length[i])
+            loA[i] = max(loA[i], loB[i] - MaxEdgeSlope * length[i])
+            if (smooth[i]) {
+                val j = (i - 1 + segCount) % segCount
+                hiB[j] = min(hiB[j], hiA[i]); loB[j] = max(loB[j], loA[i])
+            }
+        }
+    }
+}
+
+// Steepest an edge may move away from or toward the centerline, per px of arc (tan 20°).
+private const val MaxEdgeSlope = 0.364
+
+/**
  * How far each vertex's stroke leans to one side, −1 (all on −normal) to 1 (all on +normal).
  *
  * Returned per segment end (start, end). Where the direction vector is known, each end uses it:
  * a straight line's side from [StrokeLine.sideLean] (away from the nearest place its
  * perpendicular, the reciprocal slope, meets the shape, or its line's nearby polarity), or a
- * curve's own curvature. At a corner each side keeps its own lean; the corner's wedge joins them.
+ * curve's own curvature.
+ *
+ * Where two sides meet with different leans, both take one lean at the vertex, so their outer
+ * offsets match and a corner keeps its angle: at a line-to-curve corner the line's (its
+ * direction is known), at other corners the average. Each side blends back to its own lean
+ * within two stroke widths, never past halfway to the next join.
  *
  * At a smooth join where the two sides disagree (two curves, or a curve and a line, meeting
  * with different bends) the direction isn't known, so the centerline there is modeled by an
@@ -422,7 +474,7 @@ private inline fun forEachPiece(
  * a bend tighter than the width puts the whole stroke outside, and the inner reach stays
  * below the bend radius, so the stroke never fills the inside of a curl.
  */
-private fun convexLean(line: StrokeLine, strokeWidth: Double): Pair<DoubleArray, DoubleArray> {
+internal fun convexLean(line: StrokeLine, strokeWidth: Double): Pair<DoubleArray, DoubleArray> {
     val pts = line.points
     val n = pts.size
     val segCount = if (line.closed) n else n - 1
@@ -466,38 +518,61 @@ private fun convexLean(line: StrokeLine, strokeWidth: Double): Pair<DoubleArray,
     val leanA = DoubleArray(segCount) { line.sideLean[it].takeUnless(Double::isNaN) ?: curveLean(line.curveA[it]) }
     val leanB = DoubleArray(segCount) { line.sideLean[it].takeUnless(Double::isNaN) ?: curveLean(line.curveB[it]) }
 
-    // Smooth joins where the two sides disagree: there the direction isn't known.
-    val joins = ArrayList<Double>()
+    // Joins where the two sides' leans disagree. Left alone they'd step at a smooth join and
+    // cut a corner's angle (unequal outer offsets can't meet in a miter), so both sides take
+    // one lean at the vertex and blend back to their own nearby.
+    class Join(val at: Double, val target: Double?) // target null: modeled across the join
+    val joins = ArrayList<Join>()
     val corners = if (line.closed) 0 until n else 1 until n - 1
     for (v in corners) {
         val j = (v - 1 + segCount) % segCount
         val i = v % segCount
-        val turn = abs(kotlin.math.atan2(line.directions[j].cross(line.directions[i]), line.directions[j].dot(line.directions[i])))
-        // At a real corner each side keeps its own lean, and the corner's wedge joins them.
-        if (turn <= SmoothJoinTurn && abs(leanB[j] - leanA[i]) > 1e-9) joins += arc[v]
+        if (abs(leanB[j] - leanA[i]) <= 1e-9) continue
+        val turn = abs(atan2(line.directions[j].cross(line.directions[i]), line.directions[j].dot(line.directions[i])))
+        val lineBefore = !line.sideLean[j].isNaN()
+        val lineAfter = !line.sideLean[i].isNaN()
+        joins += when {
+            // A smooth join: the direction isn't known here, so model it with an overlapping Bézier.
+            turn <= SmoothJoinTurn -> Join(arc[v], null)
+            // A corner where a line meets a curve: the line's direction is known, so its lean wins.
+            lineBefore && !lineAfter -> Join(arc[v], leanB[j])
+            lineAfter && !lineBefore -> Join(arc[v], leanA[i])
+            // Two lines, or two curves: meet halfway.
+            else -> Join(arc[v], (leanB[j] + leanA[i]) / 2)
+        }
     }
     if (joins.isEmpty()) return leanA to leanB
 
-    // Near those joins the centerline is modeled by an overlapping cubic Bézier, fitted across
-    // the join, and the lean blends from that model at the join to the known lean at the
-    // zone's edge, so the width changes smoothly instead of stepping.
-    val zone = JoinZoneWidths * strokeWidth
-    fun distanceToJoin(s: Double) = joins.minOf { val d = abs(it - s); if (line.closed) min(d, total - d) else d }
+    // Each join blends over up to two stroke widths of arc, but never past halfway to the next
+    // join, so neighboring blends don't overlap.
+    val zoneLimit = JoinZoneWidths * strokeWidth
+    fun separation(a: Double, b: Double): Double { val d = abs(a - b); return if (line.closed) min(d, total - d) else d }
+    val zones = DoubleArray(joins.size) { k ->
+        var zone = zoneLimit
+        for (m in joins.indices) if (m != k) zone = min(zone, separation(joins[k].at, joins[m].at) / 2)
+        zone
+    }
     fun modeled(v: Int): Double {
         val s = arc[v]
         val chords = (pts[v] - pts[(v - 1 + n) % n]).length() + (pts[(v + 1) % n] - pts[v]).length()
-        val reach = max(zone, 2.0 * chords) / 2 // wide enough to see the curve, not one chord
+        val reach = max(zoneLimit, 2.0 * chords) / 2 // wide enough to see the curve, not one chord
         val from = if (line.closed) s - reach else max(0.0, s - reach)
         val to = if (line.closed) s + reach else min(total, s + reach)
         return curveLean(overlappingCurvature(s, from, to))
     }
     fun blend(known: Double, v: Int): Double {
-        val d = distanceToJoin(arc[v])
-        if (d >= zone) return known
+        var nearest = -1
+        var d = Double.POSITIVE_INFINITY
+        for (k in joins.indices) {
+            val dk = separation(joins[k].at, arc[v])
+            if (dk < d) { d = dk; nearest = k }
+        }
+        val zone = zones[nearest]
+        if (d >= zone || zone <= 0.0) return known
         val t = d / zone
         val weight = t * t * (3 - 2 * t) // smoothstep: 0 at the join, 1 at the zone's edge
-        val model = modeled(v)
-        return model + (known - model) * weight
+        val target = joins[nearest].target ?: modeled(v)
+        return target + (known - target) * weight
     }
     for (i in 0 until segCount) {
         leanA[i] = blend(leanA[i], i)
@@ -506,7 +581,7 @@ private fun convexLean(line: StrokeLine, strokeWidth: Double): Pair<DoubleArray,
     return leanA to leanB
 }
 
-// The zone around a smooth join where the lean is modeled, in stroke widths of arc.
+// The zone around a join where the lean blends, in stroke widths of arc.
 private const val JoinZoneWidths = 2.0
 
 // Turns at most this sharp are smooth joins, not corners (flattened curves step by ≤ 5°).
@@ -616,31 +691,42 @@ internal fun unionOutline(pieces: List<List<Pt>>): List<List<Pt>> {
         }
     }
 
-    // 2. Sub-edges between merged vertices, each once regardless of direction.
+    // 2. Sub-edges between merged vertices, each once regardless of direction. Each keeps the
+    // midpoint of its unmerged source span: merging can move an end by up to the merge distance,
+    // and a midpoint moved off its own piece's edge would read as inside that piece.
     val vertices = VertexIndex(size * 1e-7)
     val bySplit = splits.groupedByEdge(n)
-    val keys = LongArrayList()
+    val firstOfKey = HashMap<Long, Int>()
+    val keyFrom = IntArrayList(); val keyTo = IntArrayList()
+    val midX = DoubleArrayList(); val midY = DoubleArrayList()
     for (i in 0 until n) {
-        var prev = vertices.id(edges.ax[i], edges.ay[i])
+        var prevX = edges.ax[i]; var prevY = edges.ay[i]
+        var prev = vertices.id(prevX, prevY)
         for (s in bySplit.start[i] until bySplit.start[i + 1] + 1) {
-            val next = if (s == bySplit.start[i + 1]) vertices.id(edges.bx[i], edges.by[i])
-            else bySplit.order[s].let { vertices.id(splits.x[it], splits.y[it]) }
+            val last = s == bySplit.start[i + 1]
+            val nextX = if (last) edges.bx[i] else splits.x[bySplit.order[s]]
+            val nextY = if (last) edges.by[i] else splits.y[bySplit.order[s]]
+            val next = vertices.id(nextX, nextY)
             if (next != prev) {
-                keys.add(min(prev, next).toLong() shl 32 or max(prev, next).toLong())
+                val key = min(prev, next).toLong() shl 32 or max(prev, next).toLong()
+                if (firstOfKey.putIfAbsent(key, keyFrom.size) == null) {
+                    keyFrom.add(prev); keyTo.add(next)
+                    midX.add((prevX + nextX) / 2); midY.add((prevY + nextY) / 2)
+                }
                 prev = next
+                prevX = nextX; prevY = nextY
             }
         }
     }
-    val unique = keys.sortedUnique()
 
     // 3. Keep the sub-edges with filled space on exactly one side; filled goes on the left of
     // the direction (cross > 0), which is the right-hand side on screen.
     val keptFrom = IntArrayList()
     val keptTo = IntArrayList()
-    for (key in unique) {
-        val a = (key ushr 32).toInt()
-        val b = key.toInt()
-        when (set.filledSides(vertices.x[a], vertices.y[a], vertices.x[b], vertices.y[b], onLine)) {
+    for (k in 0 until keyFrom.size) {
+        val a = keyFrom[k]
+        val b = keyTo[k]
+        when (set.filledSides(midX[k], midY[k], vertices.x[b] - vertices.x[a], vertices.y[b] - vertices.y[a], onLine)) {
             FilledLeft -> { keptFrom.add(a); keptTo.add(b) }
             FilledRight -> { keptFrom.add(b); keptTo.add(a) }
         }
@@ -782,15 +868,13 @@ private class PieceSet(pieces: List<List<Pt>>, size: Double) {
     }
 
     /**
-     * Which side of the sub-edge a→b is inside some piece. Exact for the slivers where two
+     * Which side of the sub-edge with midpoint ([mx], [my]) and direction ([dx], [dy]) is inside some piece. Exact for the slivers where two
      * offset lines meet at a small angle: a piece whose edge carries the sub-edge fills only its
      * own side; a piece that holds the midpoint strictly inside fills both sides.
      */
-    fun filledSides(ax: Double, ay: Double, bx: Double, by: Double, onLine: Double): Int {
-        val mx = (ax + bx) * 0.5
-        val my = (ay + by) * 0.5
-        val leftX = -(by - ay)
-        val leftY = bx - ax
+    fun filledSides(mx: Double, my: Double, dx: Double, dy: Double, onLine: Double): Int {
+        val leftX = -dy
+        val leftY = dx
         var sides = 0
         forCandidates(mx, my) { k ->
             if (mx < left[k] - onLine || mx > right[k] + onLine || my < top[k] - onLine || my > bottom[k] + onLine) return@forCandidates false
