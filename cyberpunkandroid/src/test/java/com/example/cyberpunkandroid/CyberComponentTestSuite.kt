@@ -68,7 +68,7 @@ class CyberComponentTestSuite(
                 "None" to { this },
                 "cyberDatastream" to { cyberDatastream(color = Color.Cyan) },
                 "cyberOverload" to { cyberOverload() },
-                "cyberNeonBorder" to { cyberNeonBorder(color = Color.Cyan, shape = RoundedCornerShape(4.dp)) },
+                "cyberGlowBorder" to { cyberGlowBorder(color = Color.Cyan, shape = RoundedCornerShape(4.dp)) },
                 "cyberScanlines" to { cyberScanlines() },
                 "cyberTextGlow" to { cyberTextGlow(color = Color.Cyan) }
             )
