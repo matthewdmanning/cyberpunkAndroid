@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -45,6 +46,12 @@ import kotlin.math.roundToInt
 /** Design: simulation step for dwell time, in milliseconds. Ten steps per second keep the score smooth. */
 private const val SIM_TICK_MILLIS = 100L
 
+/**
+ * Design: idle time, in milliseconds, before the depth thumb snaps into its detent.
+ * It is under the 250 ms limit for functional feedback in `docs/agents/api-conventions.md`.
+ */
+private const val DETENT_SNAP_DELAY_MILLIS = 150L
+
 /** Milliseconds in one second. */
 private const val MILLIS_PER_SECOND = 1_000f
 
@@ -67,7 +74,10 @@ private val NODE_Y = listOf(0.5f, 0.28f, 0.68f, 0.35f, 0.6f)
 /** Design: radius of a topology node, as a fraction of the screen height. */
 private const val NODE_RADIUS_FRACTION = 0.06f
 
-/** Design: radius of the trace-lock reticle, as a fraction of the screen height. */
+/**
+ * Design: largest radius of the trace-lock reticle, as a fraction of the screen height.
+ * The drawn radius is smaller when the entry node is close to an edge.
+ */
 private const val RETICLE_RADIUS_FRACTION = 0.2f
 
 /** Format for one-decimal readouts. */
@@ -192,6 +202,17 @@ private fun IceDisplayTab(
 ) {
     var purgeArmed by remember { mutableStateOf(false) }
     val tiers = PenetrationTier.entries
+    // The thumb follows the finger freely. The tier changes at each half step.
+    var sliderPosition by remember { mutableFloatStateOf(state.tier.ordinal.toFloat()) }
+    LaunchedEffect(state.tier) {
+        // Follow tier changes from outside the slider, for example a reconnect.
+        if (sliderPosition.roundToInt() != state.tier.ordinal) sliderPosition = state.tier.ordinal.toFloat()
+    }
+    LaunchedEffect(sliderPosition) {
+        // When the thumb stops moving, it snaps into the nearest detent.
+        delay(DETENT_SNAP_DELAY_MILLIS)
+        sliderPosition = sliderPosition.roundToInt().toFloat()
+    }
 
     Column(verticalArrangement = Arrangement.spacedBy(CyberTheme.spacing.dp12)) {
         ShowcaseSectionLabel("INTRUSION TOPOLOGY")
@@ -215,13 +236,16 @@ private fun IceDisplayTab(
             valueColor = CyberTheme.colors.primary,
         )
         CyberSlider(
-            value = state.tier.ordinal.toFloat(),
+            value = sliderPosition,
             valueRange = 0f..tiers.lastIndex.toFloat(),
             modifier = Modifier.padding(vertical = CyberTheme.spacing.dp12),
             enabled = state.connected,
             tickCount = tiers.size,
             appendedA11y = "Penetration depth",
-            onValueChange = { onTierChange(tiers[it.roundToInt().coerceIn(tiers.indices)]) },
+            onValueChange = { position ->
+                sliderPosition = position
+                onTierChange(tiers[position.roundToInt().coerceIn(tiers.indices)])
+            },
         )
 
         Row(
@@ -326,7 +350,14 @@ private fun IntrusionTopology(state: IceMatrixState) {
                 }
                 if (locked) {
                     val center = points.first()
-                    val radius = RETICLE_RADIUS_FRACTION * size.height
+                    // Shrink the reticle when the node is near an edge, so the whole ring stays on screen.
+                    val radius = minOf(
+                        RETICLE_RADIUS_FRACTION * size.height,
+                        center.x,
+                        center.y,
+                        size.width - center.x,
+                        size.height - center.y,
+                    )
                     drawCircle(tracerColor, radius = radius, center = center, style = Stroke(strokePx))
                     drawLine(tracerColor, center - Offset(radius, 0f), center + Offset(radius, 0f), strokePx)
                     drawLine(tracerColor, center - Offset(0f, radius), center + Offset(0f, radius), strokePx)
@@ -402,7 +433,11 @@ private fun IceBackboneTab(state: IceMatrixState) {
             }
             ShowcaseReadoutRow(
                 label = "${tier.bandStartPercent.roundToInt()}–${tier.bandEndPercent.roundToInt()}% ${tier.label}",
-                value = if (markers.isEmpty()) "·" else "◀ ${markers.joinToString(" + ")}",
+                value = when (markers.size) {
+                    0 -> "·"
+                    1 -> "◀ ${markers.single()}"
+                    else -> "◀ BOTH"
+                },
                 valueColor = CyberTheme.colors.primary,
             )
         }
@@ -415,7 +450,7 @@ private fun IceBackboneTab(state: IceMatrixState) {
         ShowcaseReadoutRow("LATENCY PENALTY", if (filterState == "ACTIVE") "ADDED" else "NONE")
 
         ShowcaseSectionLabel("SUBSYSTEMS")
-        ShowcaseReadoutRow("PIEZO SIREN (SILENT)", sirenText(state.sirenState))
+        ShowcaseReadoutRow("SIREN (MUTED)", sirenText(state.sirenState))
         ShowcaseReadoutRow("HAPTIC MOTORS", if (state.traceLocked) "ENGAGED" else "IDLE")
         ShowcaseReadoutRow("OPTICAL RELAYS", if (state.connected) "CLOSED" else "OPEN")
         ShowcaseReadoutRow(

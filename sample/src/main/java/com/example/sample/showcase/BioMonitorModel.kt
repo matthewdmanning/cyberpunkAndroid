@@ -83,7 +83,7 @@ enum class BioStage(
     Fibrillation("V-FIB // BLACK ICE", "210+", null, "<15%"),
 
     /** Dossier §4.4: after the cold-jack, a clean baseline trace. The dossier gives no numbers. */
-    Stabilized("NEURAL BUS ISOLATED", "—", 71f, "—"),
+    Stabilized("BUS ISOLATED", "—", 71f, "—"),
 }
 
 /** Seconds in one minute. */

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -54,8 +55,22 @@ import kotlin.math.roundToInt
  */
 private const val COLD_JACK_HOLD_MILLIS = 1_500L
 
-/** Design: number of bezel corona sparks during fibrillation. */
-private const val CORONA_SPARK_COUNT = 24
+/** Design: number of corona sparks at each bezel corner during fibrillation. */
+private const val CORONA_SPARKS_PER_CORNER = 6
+
+/**
+ * Design: spark size multiplier. The library default (1) makes large bursts.
+ * A corona discharge is a small, sharp snap, so the card uses a smaller value.
+ */
+private const val CORONA_SPARK_INTENSITY = 0.4f
+
+/** Dossier §1: brass grounding screws hold the bezel; the corona arcs to them at the corners. */
+private val BEZEL_SCREW_CORNERS = listOf(
+    Alignment.TopStart,
+    Alignment.TopEnd,
+    Alignment.BottomStart,
+    Alignment.BottomEnd,
+)
 
 /** Factor that turns a 0–1 fraction into a percent. */
 private const val PERCENT = 100
@@ -186,16 +201,28 @@ private fun BioDisplayTab(
                 CrtTrace(stage = stage, clockSeconds = clockSeconds, color = phosphor)
             }
             if (state.sparksActive) {
+                // Corona sparks snap at the four bezel corners, where the screws are (dossier §4.3).
+                // The clip keeps every particle inside the CRT chamber.
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .cyberSpark(
-                            color = CyberTheme.colors.primary,
-                            secondaryColor = CyberTheme.colors.textSecondary,
-                            warningColor = CyberTheme.semantics.colors.warning,
-                            sparkCount = CORONA_SPARK_COUNT,
-                        ),
-                )
+                        .clip(CyberTheme.shapes.cyberCutCornerShape),
+                ) {
+                    BEZEL_SCREW_CORNERS.forEach { corner ->
+                        Box(
+                            modifier = Modifier
+                                .align(corner)
+                                .size(ShowcaseDimens.CoronaEmitterSize)
+                                .cyberSpark(
+                                    color = CyberTheme.colors.primary,
+                                    secondaryColor = CyberTheme.colors.textSecondary,
+                                    warningColor = CyberTheme.semantics.colors.warning,
+                                    sparkCount = CORONA_SPARKS_PER_CORNER,
+                                    intensity = CORONA_SPARK_INTENSITY,
+                                ),
+                        )
+                    }
+                }
             }
         }
 
@@ -357,17 +384,17 @@ private fun BioBackboneTab(state: BioMonitorState, onThreatChange: (BioStage) ->
         )
         ShowcaseReadoutRow(
             label = "CAPACITOR BANK",
-            value = if (linked) {
-                "ARMED // ${BioMonitorSpec.CAPACITOR_ABSORB_KILOVOLTS} kV IN ${BioMonitorSpec.CAPACITOR_ABSORB_MICROSECONDS} µs"
-            } else {
-                "FEEDBACK DUMPED"
-            },
+            value = if (linked) "ARMED" else "FEEDBACK DUMPED",
+        )
+        ShowcaseReadoutRow(
+            label = "ABSORB RATING",
+            value = "${BioMonitorSpec.CAPACITOR_ABSORB_KILOVOLTS} kV / ${BioMonitorSpec.CAPACITOR_ABSORB_MICROSECONDS} µs",
         )
         ShowcaseReadoutRow("ARC CHUTE", if (linked) "IDLE" else "ARC FLASH LOGGED")
 
         ShowcaseSectionLabel("CRT DRIVE")
-        ShowcaseReadoutRow("FLYBACK (SILENT)", "${BioMonitorSpec.FLYBACK_KILOHERTZ} kHz")
-        ShowcaseReadoutRow("R-WAVE SOUNDER (SILENT)", if (linked) "PULSES PER BEAT" else "OFF")
+        ShowcaseReadoutRow("FLYBACK (MUTED)", "${BioMonitorSpec.FLYBACK_KILOHERTZ} kHz")
+        ShowcaseReadoutRow("SOUNDER (MUTED)", if (linked) "PER R-WAVE" else "OFF")
     }
 }
 
@@ -378,7 +405,7 @@ private fun BioBackboneTab(state: BioMonitorState, onThreatChange: (BioStage) ->
 private fun threatButtonText(stage: BioStage): String = when (stage) {
     BioStage.Patrol -> "PATROL"
     BioStage.Stress -> "HOSTILE"
-    BioStage.Fibrillation -> "BLACK ICE"
+    BioStage.Fibrillation -> "STRIKE"
     BioStage.Stabilized -> "ISOLATED"
 }
 

@@ -80,7 +80,7 @@ fun BusDiagnosticCard(modifier: Modifier = Modifier) {
                     style = CyberTheme.typography.terminal,
                     color = CyberTheme.colors.primary,
                 )
-                CyberBadge(text = "ACTIVE LOAD", variant = CyberBadgeVariant.Info)
+                CyberBadge(text = "ACTIVE", variant = CyberBadgeVariant.Info)
             }
         },
     ) {

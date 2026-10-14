@@ -3,6 +3,7 @@ package com.example.sample.showcase
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -33,6 +34,9 @@ object ShowcaseDimens {
 
     /** Roadmap §2B: inner capacitive actuators are at least 56 dp wide. */
     val LeverWidth = 56.dp
+
+    /** Design: square area at each bezel corner that emits corona sparks. */
+    val CoronaEmitterSize = 48.dp
 }
 
 /**
@@ -57,6 +61,7 @@ fun ShowcaseSectionLabel(text: String, modifier: Modifier = Modifier) {
  * One label and value pair, with the label at the start and the value at the end.
  *
  * The row merges into one accessibility node, so a screen reader reads "label, value" together.
+ * The label takes the remaining width and wraps first, so the value stays on one line.
  *
  * @param label What the value measures.
  * @param value The present value as text. Text carries the state, so state never depends on color alone.
@@ -77,7 +82,14 @@ fun ShowcaseReadoutRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = label, style = CyberTheme.typography.terminal, color = CyberTheme.colors.textSecondary)
-        Text(text = value, style = CyberTheme.typography.terminal, color = valueColor)
+        Text(
+            text = label,
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = CyberTheme.spacing.dp8),
+            style = CyberTheme.typography.terminal,
+            color = CyberTheme.colors.textSecondary,
+        )
+        Text(text = value, style = CyberTheme.typography.terminal, color = valueColor, maxLines = 1)
     }
 }

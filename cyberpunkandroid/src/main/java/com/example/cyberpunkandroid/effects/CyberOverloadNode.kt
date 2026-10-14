@@ -56,7 +56,7 @@ internal class CyberOverloadNode(
     shaderSource = CyberShaders.OverloadShader,
     trigger = trigger,
     interactionSource = interactionSource,
-    targetOpacity = intensity,
+    targetOpacity = if (enabled) intensity else 0f,
     animationSpec = animationSpec
 ) {
     fun update(
@@ -74,7 +74,14 @@ internal class CyberOverloadNode(
         this.timeScale = timeScale
         this.bounceAmount = bounceAmount
         this.exitAnimationSpec = exitAnimationSpec
-        updateBase(trigger, interactionSource, intensity, animationSpec, true)
+        // A disabled overload animates to 0 so the shader layer is removed instead of freezing its last frame.
+        updateBase(
+            trigger = trigger,
+            interactionSource = interactionSource,
+            targetOpacity = if (enabled) intensity else 0f,
+            animationSpec = if (enabled) animationSpec else exitAnimationSpec,
+            clipWhenIdle = true,
+        )
     }
 
     override fun applyShaderUniforms(shader: RuntimeShader, size: Size, clock: Float, current: Float) {
