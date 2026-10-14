@@ -40,7 +40,7 @@ To maintain imposing visual weight and avoid cramped "mail slot" containers, all
 
 ---
 
-## 3. Current Implementation Status (Cards 1–5)
+## 3. Current Implementation Status (Cards 1–8)
 
 | Card | Level | Base Physical Item | Visual & Interactive Mechanics | Status |
 | :--- | :---: | :--- | :--- | :---: |
@@ -49,10 +49,15 @@ To maintain imposing visual weight and avoid cramped "mail slot" containers, all
 | **Breach Cipher** | 2 | Neural jack-in port terminal | `CyberDecrypter` string descrambler, 8-segment `CyberProgress`, lock indicator. | **Live on Pixel 7** |
 | **Cryo Regulator** | 3 | Dual-channel thermal governor | 5.8 GHz overclock switch + LN2 coolant slider driving coupled temperature on 92dp `CyberSectorRim` gauge. | **Live on Pixel 7** |
 | **Conduit Siphon** | 4 | High-voltage tap & weld splice | Welded chamber with traveling arc (`cyberWeld`), 10x spark eruption (`cyberSpark`), full-width surge trigger, decoupling clamp. | **Live on Pixel 7** |
+| **Mil-Spec Bus Diagnostic** | 1 | Optical hardware bus tap | 32 light-pipe compute-drift bank, steady firewall bar, segmented booster-current bar, rail readouts. Controls are `TODO`. | **Built; emulator only** |
+| **ICE Detection Matrix** | 3 | Intrusion overwatch console | Display and Backbone tabs. Stepped depth slider + stealth switch drive the dossier overwatch equation; 20-block ICE bar; two-step purge. `f(tier)` and stealth efficiency are placeholders. | **Built; emulator only** |
+| **CRT Biomonitor** | 4 | Dumpshock cold-jack console | Display and Backbone tabs. `cyberCrt` EKG trace, `cyberSpark` bezel corona in fibrillation, hold-to-pull cold-jack lever that swaps the CRT shader for `cyberOverload` while held. | **Built; emulator only** |
 
 ---
 
-## 4. Planned Cards (Completing the 8-Card Mandate)
+## 4. Card Design Notes (Cards 6–8)
+
+Cards 6–8 are built on `feature/showcase-cards-6-8`. Design and review notes are in `.scratch/showcase-cards-6-8/` (`PROPOSAL.md`, `UX_REVIEW.md`). Level 3 and 4 cards use a Display tab (the lore surface) and a Backbone tab (the hidden equipment). The original plans follow.
 
 ### Card 6 — Level 1 (Card 2): Mil-Spec Hardware Bus Diagnostic
 - **Source:** [`docs/inspirations/mil-spec-hardware-bus-diagnostic.md`](docs/inspirations/mil-spec-hardware-bus-diagnostic.md)

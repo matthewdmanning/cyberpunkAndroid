@@ -61,6 +61,9 @@ import com.example.cyberpunkandroid.effects.cyberWeld
 import com.example.cyberpunkandroid.icons.CyberIcon
 import com.example.cyberpunkandroid.icons.CyberIcons
 import com.example.cyberpunkandroid.theme.CyberTheme
+import com.example.sample.showcase.BioMonitorCard
+import com.example.sample.showcase.BusDiagnosticCard
+import com.example.sample.showcase.IceMatrixCard
 import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
@@ -176,6 +179,9 @@ fun SampleApp(modifier: Modifier = Modifier) {
                 }
             }
         }
+
+        // LEVEL 1 (CARD 2): Roadmap card 6, Mil-Spec Hardware Bus Diagnostic.
+        BusDiagnosticCard()
 
         // =========================================================================
         // LEVEL 2 (CARD 1): Interactive tactile input linking state to other icons
@@ -544,6 +550,9 @@ fun SampleApp(modifier: Modifier = Modifier) {
             }
         }
 
+        // LEVEL 3 (CARD 2): Roadmap card 7, ICE Detection Matrix (Display and Backbone tabs).
+        IceMatrixCard()
+
         // =========================================================================
         // LEVEL 4: High-impact visual spectacle linked with interactivity
         // Base Item: High-voltage power conduit tap with active arc weld and decoupling clamp
@@ -749,5 +758,8 @@ fun SampleApp(modifier: Modifier = Modifier) {
                 }
             }
         }
+
+        // LEVEL 4 (CARD 2): Roadmap card 8, CRT Biomonitor (Display and Backbone tabs).
+        BioMonitorCard()
     }
 }
