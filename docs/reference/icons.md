@@ -25,9 +25,21 @@ CyberIcon(
 | `iconRes` | `@DrawableRes Int` | required | Which icon, from [`CyberIcons`](#catalog) (or any vector drawable). |
 | `contentDescription` | `String?` | required | Screen reader label. Use `null` for decorative icons next to a text label. |
 | `modifier` | `Modifier` | `Modifier` | Layout and effects (e.g. `cyberPing`, `cyberIconSpin`). |
-| `size` | `Dp` | `24.dp` (`CyberPrimitives.IconSizes.dp24`) | Width and height. Standard sizes: 16 inline, 24 default, 32 large, 48 XL, 64 hero. |
+| `size` | `Dp` | `24.dp` (`CyberPrimitives.IconSizes.dp24`) | Width and height. Standard sizes: 16 inline, 24 default, 32 large, 48 XL, 64 hero. See sizing rules below. |
 | `tint` | `Color` | `LocalContentColor` | Stroke/fill color. Inherits from the surrounding text color by default. |
 | `variant` | `CyberIconVariant` | `Outline` | Render style; see below. |
+
+### Interactive Highlight & Hero Sizing
+
+Do not default to the smallest allowable size for interactive controls. Using `dp16`, `dp24`, or `dp32` for a primary interactive control is an anti-pattern. 
+- **Inline / Metadata:** `IconSizes.dp16` (16.dp) for text badges, inline status glyphs.
+- **Standard Controls:** `IconSizes.dp24` (24.dp) for standard buttons, list icons, navigation bars.
+- **Headers & Accents:** `IconSizes.dp32` (32.dp) for container headers, secondary panel icons.
+- **Primary CTAs:** `IconSizes.dp48` (48.dp) for prominent single-tap action buttons.
+- **Hero Interactive Actuators:** `IconSizes.dp64` (64.dp) for tactile centerpieces, hold-to-charge capacitors, and primary user interactive focal points.
+
+> [!IMPORTANT]
+> The central interactive control on a card must scream **"HOLD ME!"** or **"ACTUATE ME!"** Pair `IconSizes.dp64` with a circular button bound to `Modifier.cyberLongPressFill`, surrounded by `CyberRim` and `CyberDialTicks` (total footprint 120dp–144dp) to give touch targets prominent visual and physical affordance.
 
 ### Variants
 
