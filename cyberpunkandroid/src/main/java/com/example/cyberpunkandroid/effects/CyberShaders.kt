@@ -53,11 +53,14 @@ internal object CyberShaders {
         const val SplitOffset = "splitOffset"
         const val Jitter = "jitter"
         const val EdgeColor = "edgeColor"
+        const val Time = "time"
+        const val StochasticMode = "stochasticMode"
 
         /** Every uniform name, used by the source-consistency test. */
         val All = listOf(
             Resolution, Contents, Axis, Frontier, RevealBehind, BlockSize, BandWidth,
             EdgeWidth, EdgeThreshold, SplitOffset, Jitter, EdgeColor,
+            Time, StochasticMode,
         )
     }
 
@@ -93,6 +96,8 @@ internal object CyberShaders {
         uniform float splitOffset;      // peak red/blue shift along the axis, in pixels
         uniform float jitter;           // total random shift of the frontier per block column, in pixels (0 = straight line)
         layout(color) uniform half4 edgeColor;
+        uniform float time;             // animation progress/time for temporal autocorrelation
+        uniform float stochasticMode;   // 0: smooth wave, 1: cyber glitch, 2: harmonic surge
 
         // Number of block sizes in the band. Each step halves the block size.
         const int LevelCount = 3;
@@ -103,19 +108,55 @@ internal object CyberShaders {
             return dot(rgb, LumaWeights);
         }
 
-        // Pseudo-random value from 0 to 1 for a whole number. The two constants are the widely used
-        // "sine hash" values. Any pair that scrambles the sine output works.
-        float hash(float n) {
-            return fract(sin(n * 12.9898) * 43758.5453);
+        // Pseudo-random value from 0 to 1 for a 2D coordinate.
+        float hash2(float2 p) {
+            return fract(sin(dot(p, float2(127.1, 311.7))) * 43758.5453);
         }
 
-        // Frontier position for the block column that contains a point. Each column of the largest blocks
-        // gets its own shift of up to half of jitter in each direction, so the frontier is ragged.
-        // The value depends only on the point, so the old and new screen layers agree.
+        // Pre-calculated Fourier series coefficients (amp, k_spatial, omega_temporal, phase).
+        // Evaluates a continuous, band-limited stochastic field with spatial and temporal autocorrelation.
+        float fourierField(float spatialCoord, float t, int preset) {
+            float val = 0.0;
+            if (preset == 1) {
+                // Preset 1: High-frequency cyber glitch / telemetry jitter
+                val += 0.40 * sin(spatialCoord * 0.012 + t * 5.0 + 0.5);
+                val += 0.30 * sin(spatialCoord * 0.028 + t * 9.2 + 2.1);
+                val += 0.20 * sin(spatialCoord * 0.055 + t * 14.0 + 3.7);
+                val += 0.10 * sin(spatialCoord * 0.110 + t * 22.0 + 1.2);
+            } else if (preset == 2) {
+                // Preset 2: Harmonic surge / undulating pulse
+                val += 0.55 * sin(spatialCoord * 0.005 + t * 1.8 + 1.0);
+                val += 0.25 * sin(spatialCoord * 0.011 + t * 3.2 + 0.2);
+                val += 0.12 * sin(spatialCoord * 0.022 + t * 5.5 + 3.1);
+                val += 0.08 * sin(spatialCoord * 0.045 + t * 8.0 + 5.0);
+            } else {
+                // Preset 0: Natural rolling continuous undulation (1/f power spectrum)
+                val += 0.50 * sin(spatialCoord * 0.008 + t * 2.5 + 0.0);
+                val += 0.28 * sin(spatialCoord * 0.016 + t * 4.1 + 1.3);
+                val += 0.14 * sin(spatialCoord * 0.032 + t * 6.7 + 2.8);
+                val += 0.08 * sin(spatialCoord * 0.064 + t * 9.3 + 4.1);
+            }
+            return val;
+        }
+
+        // Stochastic width multiplier derived from the Fourier series field
+        float localBandWidthAt(float2 point) {
+            float2 across = float2(axis.y, axis.x);
+            float s = dot(point, across);
+            int preset = int(clamp(stochasticMode, 0.0, 2.0));
+            float f = fourierField(s, time, preset);
+            // Dynamic width scale smoothly varying between 0.7x and 1.4x with spatial & temporal continuity
+            return bandWidth * (1.0 + 0.35 * f);
+        }
+
+        // Frontier position for the block column that contains a point.
+        // Incorporates spatial-temporal correlated fluctuation alongside micro-jitter.
         float frontierAt(float2 point) {
-            float2 across = float2(axis.y, axis.x); // direction across the sweep
-            float column = floor(dot(point, across) / blockSize);
-            return frontier + (hash(column) - 0.5) * jitter;
+            float2 across = float2(axis.y, axis.x);
+            float column = floor(dot(point, across) / max(blockSize, 1.0));
+            int preset = int(clamp(stochasticMode, 0.0, 2.0));
+            float f = fourierField(dot(point, across), time, preset);
+            return frontier + (hash2(float2(column, floor(time * 30.0))) - 0.5) * jitter + f * (jitter * 0.8);
         }
 
         // Reads the content at a point, kept half a pixel inside the layer so the read is always valid.
@@ -124,8 +165,6 @@ internal object CyberShaders {
         }
 
         // Returns 1.0 when this pixel lies within edgeWidth of a block side that needs an outline.
-        // A side needs an outline when the neighbor block is on the other side of the frontier,
-        // or when the neighbor block differs in brightness by at least edgeThreshold.
         float sideEdge(float2 neighborCenter, half centerLuma, float distanceToSide, bool ahead) {
             if (distanceToSide > edgeWidth) {
                 return 0.0;
@@ -139,41 +178,73 @@ internal object CyberShaders {
         }
 
         half4 main(float2 fragCoord) {
-            // Pick the block for this pixel. The loop runs from the finest level to the coarsest,
-            // so the coarsest level whose reach covers the block wins.
+            float localBand = localBandWidthAt(fragCoord);
+
+            // Pick the block for this pixel. The loop runs from the finest level to the coarsest.
             float2 samplePoint = fragCoord;
             float cell = 0.0; // 0.0 means the pixel is outside the band
             for (int i = 0; i < LevelCount; i++) {
                 int level = LevelCount - 1 - i;
-                float size = blockSize / exp2(float(level));
+                float size = max(blockSize / exp2(float(level)), 1.0);
                 float2 center = (floor(fragCoord / size) + 0.5) * size;
-                float reach = bandWidth * float(level + 1) / float(LevelCount);
+                float reach = localBand * float(level + 1) / float(LevelCount);
                 if (abs(dot(center, axis) - frontierAt(center)) < reach) {
                     samplePoint = center;
                     cell = size;
                 }
             }
 
-            // The whole block is shown or hidden, based on the block center.
-            bool ahead = dot(samplePoint, axis) - frontierAt(samplePoint) >= 0.0;
-            bool visible = revealBehind > 0.5 ? !ahead : ahead;
+            // distAdvancing:
+            // 0 at the sharp frontier edge (where the new screen starts to reveal and old screen starts to erode).
+            // Negative behind the frontier (already fully traversed / revealed).
+            // Positive ahead along the advancing direction into untouched territory.
+            float distAdvancing = dot(samplePoint, axis) - frontierAt(samplePoint);
+            bool ahead = distAdvancing >= 0.0;
+
+            // Gaussian decay along the advancing direction:
+            // Sharp line at distAdvancing = 0 (density = 1.0).
+            // Behind the frontier (distAdvancing < 0): 0 decay ahead.
+            // Ahead of the frontier (distAdvancing >= 0): decays smoothly with sigma = localBand * 1.5.
+            float sigma = max(localBand * 1.5, 1.0);
+            float gaussianDensity = ahead ? exp(- (distAdvancing * distAdvancing) / (2.0 * sigma * sigma)) : 1.0;
+
+            // Stochastic modulation with spatial-temporal autocorrelation (Fourier field)
+            int preset = int(clamp(stochasticMode, 0.0, 2.0));
+            float densityField = fourierField(dot(samplePoint, float2(axis.y, axis.x)) * 0.5, time * 1.5, preset);
+            float targetDensity = clamp(gaussianDensity + 0.2 * densityField * gaussianDensity, 0.0, 1.0);
+
+            float pixelHash = hash2(floor(samplePoint / max(cell, 1.0)));
+            bool dropPixel = (cell > 0.0) && (pixelHash > targetDensity);
+
+            bool visible;
+            if (revealBehind > 0.5) {
+                // Incoming screen layer (revealed behind the frontier)
+                // Fully visible behind frontier (!ahead); decays into floating pixels ahead in advancing direction
+                visible = !ahead || (!dropPixel && cell > 0.0);
+            } else {
+                // Outgoing screen layer (eroding ahead of frontier)
+                // Sharp cut behind frontier; dissolves out along advancing direction
+                visible = ahead && (cell == 0.0 || !dropPixel);
+            }
+
             if (!visible) {
                 return half4(0.0);
             }
+
             if (cell == 0.0) {
                 return contents.eval(fragCoord);
             }
 
-            // Closeness to the frontier: 1.0 on the frontier, 0.0 at the edge of the band.
-            float proximity = 1.0 - clamp(abs(dot(samplePoint, axis) - frontierAt(samplePoint)) / bandWidth, 0.0, 1.0);
+            // Proximity along the active band for chromatic aberration and edge neon
+            float proximity = clamp(1.0 - abs(distAdvancing) / max(localBand, 1.0), 0.0, 1.0);
 
             // Block color with a red/blue split along the axis.
             float2 split = axis * splitOffset * proximity;
             half4 middle = sampleInside(samplePoint);
             half4 color = half4(sampleInside(samplePoint + split).r, middle.g, sampleInside(samplePoint - split).b, middle.a);
 
-            // Outlines on the four block sides.
-            float2 local = fragCoord - (samplePoint - 0.5 * cell); // pixel position inside the block, 0..cell
+            // Outlines on the block sides
+            float2 local = fragCoord - (samplePoint - 0.5 * cell);
             half centerLuma = luma(middle.rgb);
             float edge = 0.0;
             edge = max(edge, sideEdge(samplePoint + float2(-cell, 0.0), centerLuma, local.x, ahead));
@@ -195,6 +266,8 @@ internal object CyberShaders {
         val height: Float,
         /** True when the frontier sweeps top to bottom. False when it sweeps left to right. */
         val vertical: Boolean,
+        /** True to reverse the sweep (bottom-to-top if vertical, right-to-left if horizontal). */
+        val reverse: Boolean = false,
         /** Frontier position along the sweep axis. */
         val frontier: Float,
         /** True for the new screen (shown behind the frontier). False for the old screen. */
@@ -213,6 +286,10 @@ internal object CyberShaders {
         val jitter: Float,
         /** Outline color as a packed ARGB integer. */
         val edgeColorArgb: Int,
+        /** Normalized time or progress driving temporal autocorrelation. */
+        val time: Float = 0f,
+        /** Preset selector for pre-calculated Fourier series autocorrelation (0: smooth wave, 1: cyber glitch, 2: harmonic surge). */
+        val stochasticMode: Float = 0f,
     )
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -228,11 +305,18 @@ internal object CyberShaders {
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     internal fun pixelFrontierEffect(shader: RuntimeShader, spec: PixelFrontierSpec): androidx.compose.ui.graphics.RenderEffect {
         shader.setFloatUniform(PixelFrontierUniforms.Resolution, spec.width, spec.height)
-        shader.setFloatUniform(
-            PixelFrontierUniforms.Axis,
-            if (spec.vertical) 0f else 1f,
-            if (spec.vertical) 1f else 0f,
-        )
+        val ax = when {
+            spec.vertical && !spec.reverse -> 0f
+            spec.vertical && spec.reverse -> 0f
+            !spec.vertical && !spec.reverse -> 1f
+            else -> -1f
+        }
+        val ay = when {
+            spec.vertical && !spec.reverse -> 1f
+            spec.vertical && spec.reverse -> -1f
+            else -> 0f
+        }
+        shader.setFloatUniform(PixelFrontierUniforms.Axis, ax, ay)
         shader.setFloatUniform(PixelFrontierUniforms.Frontier, spec.frontier)
         shader.setFloatUniform(PixelFrontierUniforms.RevealBehind, if (spec.revealBehind) 1f else 0f)
         shader.setFloatUniform(PixelFrontierUniforms.BlockSize, spec.blockSize)
@@ -242,6 +326,8 @@ internal object CyberShaders {
         shader.setFloatUniform(PixelFrontierUniforms.SplitOffset, spec.splitOffset)
         shader.setFloatUniform(PixelFrontierUniforms.Jitter, spec.jitter)
         shader.setColorUniform(PixelFrontierUniforms.EdgeColor, spec.edgeColorArgb)
+        shader.setFloatUniform(PixelFrontierUniforms.Time, spec.time)
+        shader.setFloatUniform(PixelFrontierUniforms.StochasticMode, spec.stochasticMode)
         return android.graphics.RenderEffect
             .createRuntimeShaderEffect(shader, PixelFrontierUniforms.Contents)
             .asComposeRenderEffect()

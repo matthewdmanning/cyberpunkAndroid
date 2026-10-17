@@ -4,6 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,9 +28,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.example.cyberpunkandroid.components.CyberButton
 import com.example.cyberpunkandroid.components.CyberButtonSize
 import com.example.cyberpunkandroid.components.CyberButtonStyle
+import com.example.cyberpunkandroid.components.CyberPixelFrontierTransition
 import com.example.cyberpunkandroid.theme.CyberTheme
 import com.example.sample.showcase.BioMonitorCard
 import com.example.sample.showcase.BreachCipherCard
@@ -35,9 +40,17 @@ import com.example.sample.showcase.BusDiagnosticCard
 import com.example.sample.showcase.ConduitTapCard
 import com.example.sample.showcase.CryoRegulatorCard
 import com.example.sample.showcase.IceMatrixCard
-import com.example.sample.showcase.PixelFrontierCard
+import com.example.sample.showcase.SplashScreen
 import com.example.sample.showcase.SynapticGovernorCard
 import com.example.sample.showcase.TelemetryBeaconsCard
+
+/**
+ * Top-level application destinations for full-screen transitions.
+ */
+enum class AppScreen {
+    SPLASH,
+    CATALOGUE
+}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,11 +58,38 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             CyberTheme {
-                Scaffold(
-                    modifier = Modifier.fillMaxSize(),
-                    containerColor = CyberTheme.colors.background
-                ) { innerPadding ->
-                    SampleApp(modifier = Modifier.padding(innerPadding))
+                var currentScreen by remember { mutableStateOf(AppScreen.SPLASH) }
+
+                CyberPixelFrontierTransition(
+                    targetState = currentScreen,
+                    orientation = Orientation.Horizontal,
+                    reverse = true,
+                    blockSizePx = 0.5f,
+                    bandBlocks = 120f,
+                    glowStrength = 0.8f,
+                    edgeColor = androidx.compose.ui.graphics.Color(0xFFB026FF),
+                    animationSpec = tween(durationMillis = 2000, easing = LinearEasing),
+                    stochasticMode = 0,
+                    modifier = Modifier.fillMaxSize()
+                ) { screen ->
+                    when (screen) {
+                        AppScreen.SPLASH -> {
+                            SplashScreen(
+                                onEnterCatalogue = { currentScreen = AppScreen.CATALOGUE }
+                            )
+                        }
+                        AppScreen.CATALOGUE -> {
+                            Scaffold(
+                                modifier = Modifier.fillMaxSize(),
+                                containerColor = CyberTheme.colors.background
+                            ) { innerPadding ->
+                                SampleApp(
+                                    modifier = Modifier.padding(innerPadding),
+                                    onReplaySplash = { currentScreen = AppScreen.SPLASH }
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -73,7 +113,10 @@ enum class CatalogueCategory(val label: String) {
  * shaders, borders, kinetic animations, and interactive assemblies.
  */
 @Composable
-fun SampleApp(modifier: Modifier = Modifier) {
+fun SampleApp(
+    modifier: Modifier = Modifier,
+    onReplaySplash: () -> Unit = {}
+) {
     val insets = WindowInsets.systemBars.asPaddingValues()
     var selectedCategory by remember { mutableStateOf(CatalogueCategory.ALL) }
 
@@ -93,7 +136,7 @@ fun SampleApp(modifier: Modifier = Modifier) {
         // Catalogue Header
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(CyberTheme.spacing.dp4)
+            verticalArrangement = Arrangement.spacedBy(CyberTheme.spacing.dp8)
         ) {
             Text(
                 text = "CYBERPUNK ANDROID",
@@ -105,11 +148,32 @@ fun SampleApp(modifier: Modifier = Modifier) {
                 style = CyberTheme.typography.terminal,
                 color = CyberTheme.colors.textPrimary
             )
-            Text(
-                text = "Interactive showcase of components, effects, shaders & assemblies",
-                style = CyberTheme.typography.body,
-                color = CyberTheme.colors.textSecondary
-            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Interactive showcase of components, effects & shaders",
+                    style = CyberTheme.typography.body,
+                    color = CyberTheme.colors.textSecondary,
+                    modifier = Modifier.weight(1f).padding(end = CyberTheme.spacing.dp8)
+                )
+
+                CyberButton(
+                    style = CyberButtonStyle.Outline,
+                    size = CyberButtonSize.Small,
+                    onClick = onReplaySplash
+                ) {
+                    Text(
+                        text = "REPLAY INTRO",
+                        style = CyberTheme.typography.terminal,
+                        maxLines = 1,
+                        softWrap = false
+                    )
+                }
+            }
         }
 
         // Category Filter Chips
@@ -164,17 +228,12 @@ fun SampleApp(modifier: Modifier = Modifier) {
             ConduitTapCard()
         }
 
-        // 7. Pixel Frontier Transition (AGSL shader full-screen / panel sweep & multi-scale blocks)
-        if (selectedCategory == CatalogueCategory.ALL || selectedCategory == CatalogueCategory.SHADERS_EFFECTS) {
-            PixelFrontierCard()
-        }
-
-        // 8. Arasaka IDM-800 ICE Matrix (Topology vector canvas, perimeter LED bars, detents & purge)
+        // 7. Arasaka IDM-800 ICE Matrix (Topology vector canvas, perimeter LED bars, detents & purge)
         if (selectedCategory == CatalogueCategory.ALL || selectedCategory == CatalogueCategory.SHADERS_EFFECTS) {
             IceMatrixCard()
         }
 
-        // 9. TT-CRT7 Biomonitor & Cold-Jack (Curved CRT shader, scanlines, EKG sweep & emergency lever)
+        // 8. TT-CRT7 Biomonitor & Cold-Jack (Curved CRT shader, scanlines, EKG sweep & emergency lever)
         if (selectedCategory == CatalogueCategory.ALL || selectedCategory == CatalogueCategory.SHADERS_EFFECTS) {
             BioMonitorCard()
         }

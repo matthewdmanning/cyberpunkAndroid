@@ -5,6 +5,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -17,6 +18,27 @@ class SampleAppScreensTest {
 
     @get:Rule
     val composeTestRule = createAndroidComposeRule<MainActivity>()
+
+    @Before
+    fun enterCatalogue() {
+        val enterButtons = composeTestRule.onAllNodesWithText("INITIALIZE INTERFACE", substring = true)
+        if (enterButtons.fetchSemanticsNodes().isNotEmpty()) {
+            enterButtons[0].performClick()
+            composeTestRule.waitForIdle()
+            composeTestRule.mainClock.advanceTimeBy(2000L)
+            composeTestRule.waitForIdle()
+        }
+    }
+
+    @Test
+    fun testSplashScreenAndReplayTransition() {
+        composeTestRule.onNodeWithText("REPLAY INTRO", ignoreCase = true).performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.mainClock.advanceTimeBy(2000L)
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("CYBERPUNK", ignoreCase = true).assertExists()
+        composeTestRule.onNodeWithText("INITIALIZE INTERFACE", ignoreCase = true, substring = true).assertExists()
+    }
 
     @Test
     fun testTelemetryBeaconsCardExists() {
@@ -72,13 +94,6 @@ class SampleAppScreensTest {
         composeTestRule.onAllNodesWithText("BACKBONE", ignoreCase = true)[0].performScrollTo().performClick()
         composeTestRule.onNodeWithText("SECURITY COPROCESSOR", ignoreCase = true).assertExists()
         composeTestRule.onNodeWithText("INTRUSION TOPOLOGY", ignoreCase = true).assertDoesNotExist()
-    }
-
-    /** Pixel Frontier transition card displays in the catalogue. */
-    @Test
-    fun testPixelFrontierCardExists() {
-        composeTestRule.onNodeWithText("PIXEL FRONTIER TRANSITION", ignoreCase = true).assertExists()
-        composeTestRule.onNodeWithText("TRIGGER SWEEP", ignoreCase = true).assertExists()
     }
 
     /** Card 8 opens on its Display tab with the lever, and its Backbone tab shows the shunt. */

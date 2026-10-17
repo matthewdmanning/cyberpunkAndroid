@@ -116,7 +116,11 @@ fun CyberBadge(
         )
         CompositionLocalProvider(LocalContentColor provides color) {
             ProvideTextStyle(value = CyberTheme.typography.terminal) {
-                androidx.compose.material3.Text(text = text.uppercase())
+                androidx.compose.material3.Text(
+                    text = text.uppercase(),
+                    maxLines = 1,
+                    softWrap = false
+                )
             }
         }
     }

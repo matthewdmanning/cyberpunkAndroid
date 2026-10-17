@@ -523,19 +523,27 @@ Throws if used outside `CyberDragDropProvider`.
 
 ## Screen transitions
 
-### `CyberPixelFrontierTransition` (prototype)
+### `CyberPixelFrontierTransition`
 
-**What:** A full-screen switch from one screen to another. A frontier sweeps across the screen. The old screen breaks into pixel blocks and disappears ahead of it. The new screen appears behind it.
+**What:** A full-screen switch from one screen to another. A frontier sweeps across the display with a wide stochastic micro-pixel matrix, density fade-out, and pre-calculated Fourier series autocorrelation.
 
-**Looks like:** A line moves from the top to the bottom of the screen (or left to right). Near the line, both screens turn into square pixel blocks. The blocks are largest at the line and get smaller (3 steps: full, half, quarter size) away from it, so the picture sharpens with distance. The line is a ragged, stepped edge: each block column shifts it by its own random amount. Neon outlines in the theme color follow block sides at the frontier and wherever two neighbor blocks differ in brightness. A red/blue color split along the sweep, strongest at the line, and a soft glow along the line complete the look. Below Android 13 (API 33), the default `AnimatedContent` transition (fade and scale) runs instead.
+**Looks like:** A razor-sharp cyber wave sweeps across the screen (horizontally or vertically). Along a broad dissolving band, both screens dissolve into micro-pixels (defaulting to sub-pixel hardware resolution `0.5px`). The density fades out toward the edges of the band, while the transition width and density undulate smoothly via a spatial-temporal autocorrelated Fourier series. Neon tracer outlines, chromatic aberration, and an emissive glow contour the frontier. Below Android 13 (API 33), the default `AnimatedContent` transition runs as a graceful fallback.
 
-**Use for:** Switching between whole screens or large panels, when the change should feel like a signal glitch or a data scan. Do not use it for small elements or for frequent, rapid changes.
+**Use for:** Switching between whole screens or major app modes (e.g., Splash to Main Catalogue, entering a cyber terminal, or switching views).
 
 ```kotlin
-CyberPixelFrontierTransition(targetState = currentScreen) { screen ->
+CyberPixelFrontierTransition(
+    targetState = currentScreen,
+    orientation = Orientation.Horizontal,
+    reverse = true,
+    blockSizePx = 0.5f,
+    bandBlocks = 120f,
+    edgeColor = Color(0xFFB026FF), // Neon Purple
+    stochasticMode = 0,
+) { screen ->
     when (screen) {
-        Screen.Home -> HomeScreen()
-        Screen.Map -> MapScreen()
+        AppScreen.SPLASH -> SplashScreen()
+        AppScreen.CATALOGUE -> CatalogueScreen()
     }
 }
 ```
@@ -546,17 +554,21 @@ Draw the `screen` value the lambda receives, not the outer state. The old screen
 | --- | --- | --- | --- |
 | `targetState` | `S` | required | The screen to show. A change starts the transition. |
 | `orientation` | `Orientation` | `Vertical` | `Vertical` sweeps top to bottom. `Horizontal` sweeps left to right. |
-| `blockSize` | `Dp` | `32.dp` | Edge length of the largest block, at the frontier. |
-| `bandBlocks` | `Float` | `6f` | Width of the pixelated band, in largest blocks (minimum 1). Wider costs more GPU time. |
-| `edgeWidth` | `Dp` | `2.dp` | Thickness of the neon outlines. |
+| `reverse` | `Boolean` | `false` | Inverts sweep direction (`true` + `Horizontal` sweeps Right-to-Left). |
+| `blockSize` | `Dp` | `32.dp` | Edge length of largest block in Dp (used if `blockSizePx` is null). |
+| `blockSizePx` | `Float?` | `0.5f` | Edge length directly in hardware device pixels, bypassing Dp scaling for crisp 0.5–1.0px micro-dissolution. |
+| `bandBlocks` | `Float` | `120f` | Width of the transition wave in block units. High values create a broad, cinematic dissolving zone. |
+| `edgeWidth` | `Dp` | `2.dp` | Thickness of neon contour outlines in Dp. |
+| `edgeWidthPx` | `Float?` | `null` | Explicit outline thickness in hardware device pixels. |
 | `edgeThreshold` | `Float` | `0.12f` | Smallest brightness difference (0..1) between neighbor blocks that draws an outline. |
 | `splitOffset` | `Dp` | `4.dp` | Peak red/blue shift along the sweep. 0 turns it off. |
-| `frontierJitter` | `Dp` | `32.dp` | Total random shift of the frontier per block column. 0 gives a straight line. |
-| `glowStrength` | `Float` | `0.35f` | Peak opacity of the soft glow along the frontier. 0 turns it off. |
+| `splitOffsetPx` | `Float?` | `null` | Explicit chromatic aberration offset in hardware device pixels. |
+| `frontierJitter` | `Dp` | `32.dp` | Random column shift magnitude in Dp. |
+| `frontierJitterPx` | `Float?` | `null` | Explicit random column shift in hardware device pixels. |
+| `glowStrength` | `Float` | `0.65f` | Peak opacity of the emissive glow along the frontier. 0 turns the glow off. |
 | `animationSpec` | `FiniteAnimationSpec<Float>` | `tween(300)` | Timing of the sweep. |
-| `edgeColor` | `Color` | theme `primary` | Color of the outlines and the glow. |
-
-**Known limits:** If `targetState` changes again before the transition ends, it restarts and can show a jump. Both screens must fill the host. Not measured on a device yet. See the [Pixel frontier test plan](../test-drives/2026-10-08_pixel_frontier_test_plan.md). Source of the look and the shader details: [shaders.md](shaders.md#pixelfrontiershader).
+| `edgeColor` | `Color` | theme `primary` | Color of the outlines and the glow (e.g. Neon Purple `#B026FF`). |
+| `stochasticMode` | `Int` | `0` | Selects Fourier harmonic preset (0: continuous rolling wave, 1: cyber glitch/telemetry, 2: harmonic surge). |
 
 ---
 
