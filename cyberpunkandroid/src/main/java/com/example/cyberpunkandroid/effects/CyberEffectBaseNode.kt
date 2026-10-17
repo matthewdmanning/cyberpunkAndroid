@@ -60,6 +60,16 @@ internal abstract class CyberEffectBaseNode(
     /**
      * Updates the base node properties. Subclasses must call this inside their `update()` implementation
      * to ensure the underlying coroutine bindings react to recomposition of the modifier parameters.
+     *
+     * When [targetOpacity] changes, the effect level animates to the new target with [animationSpec].
+     * A target of `0f` removes the shader layer once the level reaches zero, so this is how an
+     * effect's `enabled = false` takes effect at runtime.
+     *
+     * @param trigger When the effect is active.
+     * @param interactionSource Source of press or hover interactions for interaction triggers.
+     * @param targetOpacity Level that the effect animates to. `0f` means off.
+     * @param animationSpec Animation used to reach [targetOpacity].
+     * @param clipWhenIdle `true` to clip the layer to its bounds even while the effect is off.
      */
     protected fun updateBase(
         trigger: CyberInteractionTrigger,
@@ -68,6 +78,7 @@ internal abstract class CyberEffectBaseNode(
         animationSpec: AnimationSpec<Float>,
         clipWhenIdle: Boolean
     ) {
+        val targetChanged = this.targetOpacity != targetOpacity
         this.targetOpacity = targetOpacity
         this.clipWhenIdle = clipWhenIdle
         val triggerChanged = this.trigger != trigger || this.interactionSource != interactionSource
@@ -75,7 +86,7 @@ internal abstract class CyberEffectBaseNode(
         this.interactionSource = interactionSource
         this.animationSpec = animationSpec
 
-        if (triggerChanged && isAttached) {
+        if ((triggerChanged || targetChanged) && isAttached) {
             launchTrigger()
         }
         invalidatePlacement()

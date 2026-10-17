@@ -30,15 +30,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.setProgress
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.cyberpunkandroid.effects.cyberDatastream
 import com.example.cyberpunkandroid.effects.cyberGlowBorder
-import com.example.cyberpunkandroid.effects.cyberSemantics
 import com.example.cyberpunkandroid.theme.CyberTheme
 import kotlin.math.roundToInt
 
@@ -98,14 +99,18 @@ fun CyberSlider(
         dragValue = (dragValue + deltaValue).coerceIn(lowerBound, upperBound)
         onValueChange(dragValue)
     }
+    val a11yDescription = customA11y ?: appendedA11y
     BoxWithConstraints(
         modifier = modifier
-            .cyberSemantics("CyberSlider", appendedA11y, customA11y)
             .semantics {
                 progressBarRangeInfo = androidx.compose.ui.semantics.ProgressBarRangeInfo(
                     current = boundedValue,
                     range = lowerBound..upperBound,
                 )
+                stateDescription = "${(fraction * 100).toInt()}%"
+                if (!a11yDescription.isNullOrBlank()) {
+                    contentDescription = a11yDescription
+                }
                 if (enabled) {
                     setProgress { target ->
                         onValueChange(target.coerceIn(lowerBound, upperBound))

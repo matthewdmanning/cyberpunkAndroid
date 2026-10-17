@@ -23,8 +23,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.example.cyberpunkandroid.config.CyberPrimitives
-import com.example.cyberpunkandroid.effects.cyberSemantics
 import com.example.cyberpunkandroid.theme.CyberTheme
 
 /**
@@ -86,9 +87,15 @@ fun CyberBadge(
         label = "PulseAlpha"
     )
 
+    val a11yDescription = customA11y ?: if (!appendedA11y.isNullOrBlank()) "$text - $appendedA11y" else null
+
     Row(
         modifier = modifier
-            .cyberSemantics("CyberBadge", appendedA11y, customA11y)
+            .semantics(mergeDescendants = true) {
+                if (a11yDescription != null) {
+                    contentDescription = a11yDescription
+                }
+            }
             .clip(CyberTheme.shapes.cyberCutCornerShapeSmall)
             .background(backgroundColor)
             .border(

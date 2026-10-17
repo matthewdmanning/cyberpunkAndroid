@@ -20,21 +20,23 @@ Find your design intent in the table below to jump directly to the correct recip
 | **Indicate active process or state** | `Modifier.cyberPing` beacon / `cyberOverload` | [recipes/ui-recipes.md](recipes/ui-recipes.md) |
 | **Holographic rotating surface** | `Modifier.cyberHoloBackground` | [recipes/ui-recipes.md](recipes/ui-recipes.md) |
 | **CRT monitor screen simulation** | `Modifier.cyberCrt` | [recipes/ui-recipes.md](recipes/ui-recipes.md) |
+| **Model physical physics & continuous states** | `animateFloatAsState` (thermal lag) + `lerp` + RPM coupling | [patterns/natural-behavior-modeling.md](patterns/natural-behavior-modeling.md) |
 
 ---
 
 ## 2. Cookbook Structure
 
 ### Core Invariants
-- **[00-agent-rules.md](00-agent-rules.md)**: 8 mandatory agent rules for UI construction.
+- **[00-agent-rules.md](00-agent-rules.md)**: 9 mandatory agent rules for UI construction (including physical behavior modeling).
 - **[01-token-selection.md](01-token-selection.md)**: Intent-to-token ontology and substitution rules.
-- **[02-modifier-ordering.md](02-modifier-ordering.md)**: Seven-step modifier chain order and order constraints.
+- **[02-modifier-ordering.md](02-modifier-ordering.md)**: Eight-step modifier chain order, accessibility semantics, and order constraints.
 - **[03-icons.md](03-icons.md)**: Semantic icon selection, variants, RTL rules, and accessibility.
 
 ### Implementation Recipes
 - **[recipes/ui-recipes.md](recipes/ui-recipes.md)**: All core recipes for setting up backgrounds, framing objects, and adding reactive state feedback.
 
 ### Canonical Patterns
+- **[patterns/natural-behavior-modeling.md](patterns/natural-behavior-modeling.md)**: Thermodynamic energy balance, thermal mass, continuous radiance, and mechanical RPM coupling.
 - **[patterns/interactive-card.md](patterns/interactive-card.md)**: Grouped controls, item slots, and metrics cards.
 - **[patterns/primary-action.md](patterns/primary-action.md)**: Primary cut-corner CTA button with glow.
 - **[patterns/status-indicator.md](patterns/status-indicator.md)**: Coordinated status tiles with iconography.
@@ -42,6 +44,6 @@ Find your design intent in the table below to jump directly to the correct recip
 
 ### Anti-Patterns
 - **[anti-patterns/raw-values.md](anti-patterns/raw-values.md)**: Hardcoding colors and dimensions.
-- **[anti-patterns/modifier-order.md](anti-patterns/modifier-order.md)**: Glow clipping and shrunk touch targets.
+- **[anti-patterns/modifier-order.md](anti-patterns/modifier-order.md)**: Glow clipping, shrunk touch targets, and accessibility semantics collision.
 - **[anti-patterns/effect-overuse.md](anti-patterns/effect-overuse.md)**: Stacked shaders and frame drop causes.
 - **[anti-patterns/icon-misuse.md](anti-patterns/icon-misuse.md)**: Broken `Solid` variants and visual guessing.

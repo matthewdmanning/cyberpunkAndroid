@@ -43,9 +43,9 @@ Box(
     modifier = Modifier
         .fillMaxWidth()
         .height(140.dp)
-        .border(2.dp, CyberTheme.colors.primary, CutCornerShape(12.dp))
+        .border(2.dp, CyberTheme.colors.primary, CyberTheme.shapes.cyberCutCornerShape)
         .cyberScanlines(spacing = 6.dp, opacity = 0.5f)
-        .background(CyberTheme.colors.surfaceSecondary, CutCornerShape(12.dp))
+        .background(CyberTheme.colors.surfaceSecondary, CyberTheme.shapes.cyberCutCornerShape)
         .padding(16.dp),
     contentAlignment = Alignment.Center
 ) {
@@ -162,7 +162,7 @@ Box(
     Box(
         modifier = Modifier
             .matchParentSize()
-            .cyberBackdropBlur(tint = Color.Black.copy(alpha = 0.35f))
+            .cyberBackdropBlur(tint = CyberTheme.colors.background.copy(alpha = 0.35f))
     )
 }
 ```
@@ -180,7 +180,7 @@ GlowingText(
     fontSize = 56.sp,
     glowRadius = 24.dp,
     glowColor = CyberTheme.colors.primary,
-    textColor = Color.White
+    textColor = CyberTheme.colors.textPrimary
 )
 ```
 
@@ -213,8 +213,8 @@ Box(modifier = Modifier.padding(24.dp)) {
         modifier = Modifier
             .fillMaxWidth()
             .height(120.dp)
-            .cyberGlowBorder(color = CyberTheme.colors.primary, shape = CutCornerShape(20.dp), glowRadius = 24.dp, width = 2.dp)
-            .background(CyberTheme.colors.surfaceSecondary, shape = CutCornerShape(20.dp))
+            .cyberGlowBorder(color = CyberTheme.colors.primary, shape = CyberTheme.shapes.cardShape, glowRadius = 24.dp, width = 2.dp)
+            .background(CyberTheme.colors.surfaceSecondary, shape = CyberTheme.shapes.cardShape)
     )
 }
 

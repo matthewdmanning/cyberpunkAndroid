@@ -21,6 +21,7 @@ import com.example.cyberpunkandroid.components.CyberSlider
 import com.example.cyberpunkandroid.components.CyberSwitch
 import com.example.cyberpunkandroid.theme.CyberTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -70,8 +71,55 @@ class CyberControlsTest {
             }
         }
 
-        composeTestRule.onNodeWithTag("switch").assertIsDisplayed().performClick()
+        val node = composeTestRule.onNodeWithTag("switch").assertIsDisplayed()
+        assertFalse(node.fetchSemanticsNode().config.contains(SemanticsProperties.ContentDescription))
+        assertEquals(Role.Switch, node.fetchSemanticsNode().config[SemanticsProperties.Role])
+        assertEquals("Turn on", node.fetchSemanticsNode().config[SemanticsActions.OnClick].label)
+
+        node.performClick()
         assertTrue(checked)
         composeTestRule.onNodeWithTag("switch").assertIsOn()
+        assertEquals("Turn off", composeTestRule.onNodeWithTag("switch").fetchSemanticsNode().config[SemanticsActions.OnClick].label)
+    }
+
+    @Test
+    fun `switch applies developer label cleanly without class name prefix`() {
+        composeTestRule.setContent {
+            CyberTheme {
+                CyberSwitch(
+                    checked = false,
+                    appendedA11y = "Overdrive",
+                    modifier = Modifier.testTag("switch"),
+                    onCheckedChange = {},
+                )
+            }
+        }
+
+        val node = composeTestRule.onNodeWithTag("switch")
+        assertEquals(
+            listOf("Overdrive"),
+            node.fetchSemanticsNode().config[SemanticsProperties.ContentDescription]
+        )
+    }
+
+    @Test
+    fun `slider exposes dynamic stateDescription and avoids class name defaults`() {
+        composeTestRule.setContent {
+            CyberTheme {
+                CyberSlider(
+                    value = 0.75f,
+                    valueRange = 0f..1f,
+                    modifier = Modifier.testTag("slider"),
+                    onValueChange = {},
+                )
+            }
+        }
+
+        val node = composeTestRule.onNodeWithTag("slider")
+        assertEquals(
+            "75%",
+            node.fetchSemanticsNode().config[SemanticsProperties.StateDescription]
+        )
+        assertFalse(node.fetchSemanticsNode().config.contains(SemanticsProperties.ContentDescription))
     }
 }

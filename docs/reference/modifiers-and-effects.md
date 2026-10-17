@@ -468,6 +468,13 @@ No trigger: always on.
 | `shape` | `Shape` | `CutCornerShape(12.dp)` | Outline to trace. |
 | `pathEffect` | `PathEffect?` | 10 px dash, 10 px gap | Dash pattern; `null` = solid. |
 
+> [!IMPORTANT]
+> **High-DPI Stroke Legibility & Dotted/Dashed Visibility**
+> On modern high-density mobile displays (xxhdpi/xxxhdpi, 400+ dpi), a `1.dp` dashed or dotted border rendered with reduced alpha (<0.7f) or small dash patterns becomes an imperceptible hairline scatter or invisible artifact.
+> - **Anti-Pattern:** Defaulting to `1.dp` simply because it is the smallest permitted non-prohibited value.
+> - **Visibility Rule:** For dotted, dashed, or ticked strokes (`cyberBorder`, `CyberDialTicks`), always specify at least `width = CyberPrimitives.BorderWidths.dp2` (2.dp) or `dp4` (4.dp), with calibrated dash intervals (minimum 12–20px dash length) and strong contrast (alpha ≥ 0.75f or emissive neon glow). Reserve `1.dp` strictly for high-contrast, fully opaque solid dividing rules.
+
+
 ### `Modifier.cyberBackdropBlur`
 
 **What:** A glassmorphism overlay using translucent tint, gradient `Brush`, and optional blur on API 31+.

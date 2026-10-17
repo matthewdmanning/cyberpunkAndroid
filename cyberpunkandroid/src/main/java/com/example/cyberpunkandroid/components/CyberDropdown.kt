@@ -2,6 +2,7 @@ package com.example.cyberpunkandroid.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,8 +21,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import com.example.cyberpunkandroid.config.CyberPrimitives
 
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import com.example.cyberpunkandroid.effects.cyberBorder
-import com.example.cyberpunkandroid.effects.cyberSemantics
 import com.example.cyberpunkandroid.theme.CyberTheme
 
 /**
@@ -49,8 +54,15 @@ fun CyberDropdown(
     onItemSelected: (Int) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(value = false) }
+    val actionLabel = if (expanded) "Close options menu" else "Open options menu"
+    val currentText = if (selectedIndex in items.indices) items[selectedIndex] else placeholder
+    val triggerA11yLabel = customA11y ?: if (!appendedA11y.isNullOrBlank()) {
+        "$currentText - $appendedA11y"
+    } else {
+        null
+    }
 
-    Box(modifier = modifier.cyberSemantics("CyberDropdown", appendedA11y, customA11y)) {
+    Box(modifier = modifier) {
         // Trigger
         Box(
             modifier = Modifier
@@ -59,10 +71,23 @@ fun CyberDropdown(
                 .background(CyberTheme.colors.surface)
                 .cyberBorder(color = CyberTheme.colors.primary,
                     width = CyberPrimitives.BorderWidths.dp1, shape = CyberTheme.shapes.cyberCutCornerShapeSmall)
-                .clickable { expanded = true }
+                .semantics {
+                    this.stateDescription = if (expanded) "Expanded" else "Collapsed"
+                    this.onClick(label = actionLabel) {
+                        expanded = !expanded
+                        true
+                    }
+                    if (triggerA11yLabel != null) {
+                        this.contentDescription = triggerA11yLabel
+                    }
+                }
+                .clickable(
+                    role = Role.Button,
+                    onClickLabel = actionLabel,
+                ) { expanded = !expanded }
                 .padding(CyberPrimitives.Spacing.dp12)
         ) {
-            val text = if (selectedIndex in items.indices) items[selectedIndex] else placeholder
+            val text = currentText
             CompositionLocalProvider(LocalContentColor provides CyberTheme.colors.primary) {
                 ProvideTextStyle(value = CyberTheme.typography.terminal) {
                     Text(text = text.uppercase())
@@ -81,14 +106,19 @@ fun CyberDropdown(
         ) {
             Column {
                 items.forEachIndexed { index, item ->
+                    val isSelected = index == selectedIndex
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable {
-                                onItemSelected(index)
-                                expanded = false
-                            }
-                            .background(if (index == selectedIndex) CyberTheme.colors.primary.copy(alpha = 0.2f) else CyberTheme.colors.background)
+                            .selectable(
+                                selected = isSelected,
+                                role = Role.RadioButton,
+                                onClick = {
+                                    onItemSelected(index)
+                                    expanded = false
+                                },
+                            )
+                            .background(if (isSelected) CyberTheme.colors.primary.copy(alpha = 0.2f) else CyberTheme.colors.background)
                             .padding(horizontal = CyberPrimitives.Spacing.dp16, vertical = CyberPrimitives.Spacing.dp12)
                     ) {
                         CompositionLocalProvider(LocalContentColor provides if (index == selectedIndex) CyberTheme.colors.primary else CyberTheme.colors.textPrimary) {

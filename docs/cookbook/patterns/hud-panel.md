@@ -51,7 +51,7 @@ fun ScannedHudPanel(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = headerTitle.uppercase(),
-                    style = CyberTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.titleSmall,
                     color = CyberTheme.colors.textPrimary
                 )
             }

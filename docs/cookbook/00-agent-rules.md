@@ -16,14 +16,15 @@ This document defines mandatory rules for AI agents implementing user interfaces
    Never write raw `Color(0x...)`, hardcoded `dp` corner cut values, or literal animation durations. Reference `CyberTheme`, `CyberPrimitives`, or `CyberConfig`.
 
 4. **Preserve documented modifier ordering.**
-   Compose modifiers are ordered and immutable. Order changes rendering and touch target behavior. Apply modifiers in this sequence:
-   1. Sizing and layout (`fillMaxWidth`, `height`, `padding`)
-   2. Outer visual effects and emissive glows (`cyberTextGlow`, `cyberGlowBorder`)
-   3. Bounds clipping (`clip`)
-   4. Background and surface fills (`background`, `cyberHoloBackground`)
-   5. Borders and contour tracers (`cyberBorder`, `cyberGlowBorder`, `cyberLaserOutliner`)
-   6. Touch and interaction handlers (`clickable`, `combinedClickable`)
-   7. Content padding and inner children layout (`padding`)
+   Compose modifiers are ordered and immutable. Order changes rendering, touch target behavior, and semantic structure. Apply modifiers in this sequence:
+   1. Sizing and layout (`fillMaxWidth`, `height`, `size`)
+   2. Semantic grouping and container overrides (`semantics(mergeDescendants = true)`)
+   3. Outer visual effects and emissive glows (`cyberTextGlow`, `cyberGlowBorder`)
+   4. Bounds clipping (`clip`)
+   5. Background and surface fills (`background`, `cyberHoloBackground`)
+   6. Borders and contour tracers (`cyberBorder`, `cyberGlowBorder`, `cyberLaserOutliner`)
+   7. Touch and interaction handlers with native roles (`clickable(role = Role.Button)`, `toggleable`, `selectable`)
+   8. Content padding and inner children layout (`padding`)
 
 5. **Use semantic icon aliases and variants intentionally.**
    Select icons by semantic purpose (e.g., `CyberIcons.Warning` for caution, `CyberIcons.Check` for success). Use `CyberIconVariant.Solid` only for active selection and `CyberIconVariant.Overload` for error/hacked accents.
@@ -34,5 +35,14 @@ This document defines mandatory rules for AI agents implementing user interfaces
 7. **Do not combine heavy decorative effects.**
    Do not stack multiple GPU shaders or multi-pass glows on the same component unless the recipe explicitly specifies it. Pair at most one distortion shader (`cyberCrt`, `cyberOverload`, or `cyberScanlines`) with a surface.
 
-8. **Preserve accessibility semantics for interactive controls.**
-   Every interactive surface and standalone icon must provide a descriptive `contentDescription` or explicit `Modifier.cyberSemantics`. Purely decorative icons must pass `contentDescription = null`.
+8. **Preserve accessibility semantics and zero code-names in the semantic tree.**
+   Allow natural visible text to surface as the primary announcement. Never inject synthetic class names or library prefixes into `contentDescription`. Assign native `Role.*` values to interactive controls, use dynamic `stateDescription` (never string concatenation) for state transitions, supply action-oriented `onClickLabel` hints, and suppress inner decorative chevrons/icons via `Modifier.clearAndSetSemantics { }`. Purely decorative standalone icons must pass `contentDescription = null`.
+
+9. **Connect component behavior with natural physical behavior.**
+   When creating or animating a component, always ask: *How does it work in the real world? How can the parameters reflect that behavior?*
+   Never apply sudden, abrupt visual snaps to continuous physical processes (such as overheating, cooling, pressure changes, or charging).
+   - **Thermal Inertia & Mass:** Temperatures climb and drop progressively through animation curves (`animateFloatAsState` with easing), modeling natural heat dissipation rather than jumping instantly.
+   - **Continuous Spectrums:** Radiance and thermal shifts glide smoothly along the blackbody spectrum (`lerp`) rather than snapping between discrete threshold colors.
+   - **Mechanical Parameter Coupling:** Mechanical components (turbines, pumps, actuators) must have physical velocity (rotation RPM, cycle duration) coupled directly to input parameters (flow rate, throttle).
+   - **Progressive Stress:** Visual degradation (glitch, overload jitter, steam/sparks) must scale proportionally with underlying physical stress rather than switching abruptly on a binary boolean.
+

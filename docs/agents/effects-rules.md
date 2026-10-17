@@ -41,10 +41,10 @@ Because Compose modifier ordering is highly effect-dependent and unpredictable f
   }
   ```
 
-**3. Shape-based Borders (`cyberNeonBorder`, `cyberNeonBorderFlow`)**
+**3. Shape-based Borders (`cyberGlowBorder`, `cyberGlowBorderFlow`)**
 - **How they work:** Uses standard Compose `border()` drawing mechanics on a given `Shape`.
 - **The Rule:** Apply to the outer container. Ensure the `Shape` provided matches the component's clip shape.
-- **Correct Order:** `Modifier.background(Color, Shape).cyberNeonBorder(Shape)`
+- **Correct Order:** `Modifier.background(Color, Shape).cyberGlowBorder(Shape)`
 
 **4. Content Transforms (`cyberGlow`, `cyberIconPulse`, `cyberPing`, `cyberFloat`, `cyberBounce`)**
 - **How they work:** Animates alpha, scale, or translation of a specific vector or element.

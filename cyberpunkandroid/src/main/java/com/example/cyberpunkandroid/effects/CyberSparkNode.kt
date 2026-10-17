@@ -15,6 +15,7 @@ import androidx.compose.ui.node.currentValueOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.isActive
 import androidx.compose.animation.core.withInfiniteAnimationFrameNanos
+import androidx.compose.ui.unit.dp
 
 class CyberSparkElement(
     val color: Color,
@@ -32,6 +33,7 @@ class CyberSparkElement(
     )
 
     override fun update(node: CyberSparkNode) {
+        val oldIntensity = node.intensity
         node.color = color
         node.secondaryColor = secondaryColor
         node.warningColor = warningColor
@@ -41,6 +43,9 @@ class CyberSparkElement(
         node.trigger = trigger
         node.interactionSource = interactionSource
         node.animationSpec = animationSpec
+        if (oldIntensity != intensity) {
+            node.updateIntensity(intensity, animationSpec)
+        }
     }
 
     override fun InspectorInfo.inspectableProperties() {
@@ -99,6 +104,12 @@ class CyberSparkNode(
     private val level = Animatable(0f)
     private var time = 0f
 
+    fun updateIntensity(newIntensity: Float, spec: AnimationSpec<Float>) {
+        coroutineScope.launch {
+            level.animateTo(newIntensity, spec)
+        }
+    }
+
     override fun onAttach() {
         super.onAttach()
         coroutineScope.launch {
@@ -122,14 +133,13 @@ class CyberSparkNode(
         
         val primary = if (color == Color.Unspecified) currentValueOf(com.example.cyberpunkandroid.theme.LocalCyberColors).primary else color
         val secondary = if (secondaryColor == Color.Unspecified) currentValueOf(com.example.cyberpunkandroid.theme.LocalCyberColors).secondary else secondaryColor
-        // Assuming warning color can be picked from somewhere, defaulting to a specific yellow if needed, or theme semantics
         val warning = if (warningColor == Color.Unspecified) Color(0xFFFFB800) else warningColor
 
         val currentIntensity = level.value
         if (currentIntensity <= 0f || sparkCount <= 0) return
 
         val center = Offset(size.width / 2f, size.height / 2f)
-        val maxExtent = minOf(size.width, size.height) * 0.45f
+        val maxExtent = maxOf(size.width, size.height) * 0.75f
 
         fun hash(n: Float): Float = (kotlin.math.sin(n * 127.1f) * 43758.545f).let { it - kotlin.math.floor(it) }
 
@@ -151,15 +161,16 @@ class CyberSparkNode(
 
             val vx = kotlin.math.cos(angle) * spd
             val vy = kotlin.math.sin(angle) * spd
-            val gravity = 1.2f * maxExtent
+            val gravity = 1.0f * maxExtent
 
             val sparkPos = Offset(
                 center.x + vx * easedT,
                 center.y + vy * easedT + 0.5f * gravity * easedT * easedT
             )
 
-            val baseRadius = (3f + random.nextFloat() * 3f) * currentIntensity
-            val currentRadius = baseRadius * (1.0f - 0.5f * t)
+            // Scaled ~10x from original 3f..6f to 25f..55f for bold high-impact particle rendering
+            val baseRadius = (25f + random.nextFloat() * 30f) * currentIntensity
+            val currentRadius = baseRadius * (1.0f - 0.4f * t)
 
             val plasmaColor = when {
                 t < 0.25f -> {
@@ -179,14 +190,22 @@ class CyberSparkNode(
             val alphaDecay = (1.0f - t)
             val finalColor = plasmaColor.copy(alpha = plasmaColor.alpha * alphaDecay)
 
+            // Outer plasma halo
             drawCircle(
-                color = finalColor.copy(alpha = finalColor.alpha * 0.3f),
-                radius = currentRadius * 2.5f,
+                color = finalColor.copy(alpha = finalColor.alpha * 0.35f),
+                radius = currentRadius * 2.2f,
                 center = sparkPos
             )
+            // Main incandescent particle body
             drawCircle(
                 color = finalColor,
                 radius = currentRadius,
+                center = sparkPos
+            )
+            // Hot white core kernel
+            drawCircle(
+                color = Color.White.copy(alpha = finalColor.alpha * 0.85f),
+                radius = currentRadius * 0.45f,
                 center = sparkPos
             )
         }

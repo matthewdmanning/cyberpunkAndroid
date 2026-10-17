@@ -27,10 +27,35 @@ This guide maps semantic UI intent to the correct tokens in `:cyberpunkandroid`.
 | **Success / operational status** | `CyberTheme.semantics.colors.success` | `CyberTheme.colors.primary` | `Color.Green` |
 | **Info / system telemetry status** | `CyberTheme.semantics.colors.info` | `CyberTheme.colors.primary` | `Color.Cyan` |
 | **Terminal prompt / code accent** | `CyberTheme.semantics.colors.terminal`| `CyberTheme.colors.primary` | `Color.Green` |
+| **Surface Z-index / elevation** | `CyberTheme.elevation.level0`–`level5` | `CyberElevation.level0`–`level5` | Magic numbers (`dp`) |
+| **Layout spacing / padding / gap** | `CyberTheme.spacing.dp2`–`dp64` | `CyberPrimitives.Spacing.dp*` | Magic numbers (`dp`) |
 
 ---
 
 ## 2. Token Ontologies
+
+### Elevation
+| Intent | Elevation Token | Metric |
+| :--- | :--- | :--- |
+| **Flat surface / baseline** | `CyberTheme.elevation.level0` | 0.dp |
+| **Subtle raised card** | `CyberTheme.elevation.level1` | 1.dp |
+| **Standard dialog / floating panel** | `CyberTheme.elevation.level2` | 3.dp |
+| **Prominent modal / HUD overlay** | `CyberTheme.elevation.level3` | 6.dp |
+| **High-priority alert layer** | `CyberTheme.elevation.level4` | 8.dp |
+| **Maximum elevation layer** | `CyberTheme.elevation.level5` | 12.dp |
+
+### Spacing
+| Intent | Spacing Token | Metric |
+| :--- | :--- | :--- |
+| **Micro gap / outline offset** | `CyberTheme.spacing.dp2` | 2.dp |
+| **Tight padding / badge inset** | `CyberTheme.spacing.dp4` | 4.dp |
+| **Standard compact gap** | `CyberTheme.spacing.dp8` | 8.dp |
+| **Inline component padding** | `CyberTheme.spacing.dp12` | 12.dp |
+| **Standard container padding** | `CyberTheme.spacing.dp16` | 16.dp |
+| **Section spacing / card margins**| `CyberTheme.spacing.dp24` | 24.dp |
+| **Large layout separation** | `CyberTheme.spacing.dp32` | 32.dp |
+| **Hero section padding** | `CyberTheme.spacing.dp48` | 48.dp |
+| **Screen margin / max spacer** | `CyberTheme.spacing.dp64` | 64.dp |
 
 ### Shapes
 | Intent | Shape Token | Raw Geometry |

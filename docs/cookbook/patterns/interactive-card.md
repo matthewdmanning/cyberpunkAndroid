@@ -38,6 +38,7 @@ fun InteractiveCyberCard(
 
     Box(
         modifier = modifier
+            .semantics(mergeDescendants = true) { }
             .then(
                 if (isSelected) {
                     Modifier.cyberGlowBorder(color = CyberTheme.colors.primary.copy(alpha = 0.4f), glowRadius = 8.dp)
@@ -49,11 +50,12 @@ fun InteractiveCyberCard(
             .cyberOverload(
                 trigger = CyberInteractionTrigger.PRESS,
                 interactionSource = interactionSource,
-                strength = 0.3f
+                severity = 0.3f
             )
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
+                role = Role.Button,
                 onClick = onClick
             )
             .padding(16.dp)
@@ -72,12 +74,12 @@ fun InteractiveCyberCard(
             Column {
                 Text(
                     text = title,
-                    style = CyberTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleMedium,
                     color = CyberTheme.colors.textPrimary
                 )
                 Text(
                     text = subtitle,
-                    style = CyberTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodySmall,
                     color = CyberTheme.colors.textSecondary
                 )
             }

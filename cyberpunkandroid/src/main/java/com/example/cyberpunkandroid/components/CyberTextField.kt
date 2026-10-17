@@ -24,8 +24,9 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.example.cyberpunkandroid.config.CyberPrimitives
-import com.example.cyberpunkandroid.effects.cyberSemantics
 import com.example.cyberpunkandroid.theme.CyberTheme
 
 /**
@@ -85,11 +86,19 @@ fun CyberTextField(
 
     val cornerSize = CyberPrimitives.Spacing.dp12.value
 
+    val a11yDescription = customA11y ?: appendedA11y
+
     BasicTextField(
         value = value,
         onValueChange = onValueChange,
         modifier = modifier
-            .cyberSemantics("CyberTextField", appendedA11y, customA11y)
+            .then(
+                if (a11yDescription != null) {
+                    Modifier.semantics { contentDescription = a11yDescription }
+                } else {
+                    Modifier
+                }
+            )
             .fillMaxWidth()
             .clip(CyberTheme.shapes.cyberCutCornerShape)
             .background(CyberTheme.colors.surface)

@@ -1,7 +1,8 @@
 package com.example.cyberpunkandroid.components
 
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.example.cyberpunkandroid.effects.cyberTextGlow
-import com.example.cyberpunkandroid.effects.cyberSemantics
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
@@ -85,10 +86,15 @@ fun GlowingText(
     val innerBlurPx = with(density) { (glowRadius * 0.4f).toPx() }
 
     var layoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+    val a11yDescription = customA11y ?: if (!appendedA11y.isNullOrBlank()) "$text - $appendedA11y" else null
 
     Box(
         modifier = modifier
-            .cyberSemantics("GlowingText", appendedA11y, customA11y)
+            .semantics(mergeDescendants = true) {
+                if (a11yDescription != null) {
+                    contentDescription = a11yDescription
+                }
+            }
             .padding(glowRadius * 1.5f)
             .drawBehind {
                 layoutResult?.let { result ->
