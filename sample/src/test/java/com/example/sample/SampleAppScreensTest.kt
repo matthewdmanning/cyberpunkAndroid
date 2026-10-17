@@ -52,4 +52,20 @@ class SampleAppScreensTest {
         composeTestRule.onNodeWithText("LIVE", ignoreCase = true).assertExists()
         composeTestRule.onNodeWithText("TRIGGER OVERDRIVE SURGE", ignoreCase = true).assertExists()
     }
+
+    @Test
+    fun testDumpshockBiomonitorCardExists() {
+        composeTestRule.onNodeWithText("TT-CRT7 // BIOMONITOR", ignoreCase = true).assertExists()
+        composeTestRule.onNodeWithText("P31 STABLE", ignoreCase = true).assertExists()
+        composeTestRule.onNodeWithText("SUBNET INTRUSION THREAT", ignoreCase = true).assertExists()
+        composeTestRule.onNodeWithText("KNIFE SWITCH ARMED", ignoreCase = true, substring = true).assertExists()
+    }
+
+    @Test
+    fun testIceOverwatchCardExists() {
+        composeTestRule.onNodeWithText("ARASAKA IDM-800", ignoreCase = true).assertExists()
+        composeTestRule.onNodeWithText("GRID OVERWATCH", ignoreCase = true, substring = true).assertExists()
+        composeTestRule.onNodeWithText("PACKET STEALTH FILTER", ignoreCase = true).assertExists()
+        composeTestRule.onNodeWithText("SLAM MASTER TRACE PURGE", ignoreCase = true, substring = true).assertExists()
+    }
 }

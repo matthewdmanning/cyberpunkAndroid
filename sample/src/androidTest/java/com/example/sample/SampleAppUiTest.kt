@@ -15,9 +15,11 @@ class SampleAppUiTest {
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun testAppLaunch() {
-        composeTestRule.onNodeWithText("NEON DECK", ignoreCase = true).assertExists()
-        composeTestRule.onNodeWithText("INITIALIZE", ignoreCase = true).assertExists()
-        composeTestRule.onNodeWithText("INITIALIZE", ignoreCase = true).performClick()
+    fun testAppLaunchAndConduitSurge() {
+        composeTestRule.onNodeWithText("TELEMETRY BEACONS", ignoreCase = true).assertExists()
+        composeTestRule.onNodeWithText("CONDUIT SIPHON", ignoreCase = true).assertExists()
+        composeTestRule.onNodeWithText("TRIGGER OVERDRIVE SURGE", ignoreCase = true).assertExists()
+        composeTestRule.onNodeWithText("TRIGGER OVERDRIVE SURGE", ignoreCase = true).performClick()
+        composeTestRule.onNodeWithText("DISCHARGING SURGE...", ignoreCase = true).assertExists()
     }
 }

@@ -37,3 +37,12 @@ This document defines mandatory rules for AI agents implementing user interfaces
 
 8. **Preserve accessibility semantics and zero code-names in the semantic tree.**
    Allow natural visible text to surface as the primary announcement. Never inject synthetic class names or library prefixes into `contentDescription`. Assign native `Role.*` values to interactive controls, use dynamic `stateDescription` (never string concatenation) for state transitions, supply action-oriented `onClickLabel` hints, and suppress inner decorative chevrons/icons via `Modifier.clearAndSetSemantics { }`. Purely decorative standalone icons must pass `contentDescription = null`.
+
+9. **Connect component behavior with natural physical behavior.**
+   When creating or animating a component, always ask: *How does it work in the real world? How can the parameters reflect that behavior?*
+   Never apply sudden, abrupt visual snaps to continuous physical processes (such as overheating, cooling, pressure changes, or charging).
+   - **Thermal Inertia & Mass:** Temperatures climb and drop progressively through animation curves (`animateFloatAsState` with easing), modeling natural heat dissipation rather than jumping instantly.
+   - **Continuous Spectrums:** Radiance and thermal shifts glide smoothly along the blackbody spectrum (`lerp`) rather than snapping between discrete threshold colors.
+   - **Mechanical Parameter Coupling:** Mechanical components (turbines, pumps, actuators) must have physical velocity (rotation RPM, cycle duration) coupled directly to input parameters (flow rate, throttle).
+   - **Progressive Stress:** Visual degradation (glitch, overload jitter, steam/sparks) must scale proportionally with underlying physical stress rather than switching abruptly on a binary boolean.
+

@@ -48,3 +48,66 @@ CyberIcon(
     tint = CyberTheme.semantics.colors.warning
 )
 ```
+
+---
+
+## Anti-Pattern 3: Timid Sizing on Interactive Highlight Icons
+
+### The Mistake
+Using the smallest allowable icon size (`dp16`, `dp24`, or `dp32`) inside a primary interactive focal point (e.g. hold-to-charge actuators, critical toggle switches, or central hero buttons) simply because the compiler allows it.
+
+### Incorrect
+```kotlin
+// DON'T: Tiny 24dp or 32dp icon buried inside a hero hold actuator
+Box(modifier = Modifier.size(108.dp), contentAlignment = Alignment.Center) {
+    CyberRim(progress = progress, modifier = Modifier.size(90.dp))
+    Box(
+        modifier = Modifier
+            .size(64.dp)
+            .clip(CircleShape)
+            .cyberLongPressFill(durationMillis = 1200L, onComplete = { ... })
+    ) {
+        CyberIcon(
+            iconRes = CyberIcons.Lock,
+            contentDescription = null,
+            size = CyberPrimitives.IconSizes.dp24 // Anti-pattern: Whispers instead of screams "HOLD ME!"
+        )
+    }
+}
+```
+
+### Problems Identified
+1. **Weak Affordance:** The icon fails to register as the primary user interaction target. It reads as an incidental decorative label rather than an active actuator.
+2. **Poor Ergonomic Proportion:** Placing a 24dp or 32dp glyph inside a 64dp+ button leaves excessive empty padding, reducing the optical clarity and prominence of the active state change.
+
+### The Correct Implementation
+```kotlin
+// DO: Use dp64 for hero highlight actuators to scream "HOLD ME!"
+Box(modifier = Modifier.size(144.dp), contentAlignment = Alignment.Center) {
+    CyberDialTicks(
+        size = 144.dp,
+        strokeWidth = CyberPrimitives.BorderWidths.dp2,
+        color = CyberTheme.colors.primary.copy(alpha = 0.75f)
+    )
+    CyberRim(
+        progress = progress,
+        modifier = Modifier.size(122.dp),
+        strokeWidth = 6f
+    )
+    Box(
+        modifier = Modifier
+            .size(96.dp)
+            .clip(CircleShape)
+            .cyberLongPressFill(durationMillis = 1200L, onComplete = { ... }),
+        contentAlignment = Alignment.Center
+    ) {
+        CyberIcon(
+            iconRes = CyberIcons.Lock,
+            contentDescription = "Hold to bypass synaptic limiter",
+            size = CyberPrimitives.IconSizes.dp64, // Hero Highlight: unmistakable interactive focal point
+            tint = CyberTheme.colors.primary
+        )
+    }
+}
+```
+
