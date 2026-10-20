@@ -34,11 +34,11 @@ object CyberConfig {
         const val NoiseOpacity: Float = 0.03f
 
         // Defaults for CyberPixelFrontierTransition.
-        /** Default hardware block size in pixels (0.5px for sub-pixel / micro-matrix density). */
-        const val PixelFrontierBlockSizePx: Float = 0.5f
+        /** Default hardware block size in pixels (2f for visible pixel blocks). */
+        const val PixelFrontierBlockSizePx: Float = 2f
 
-        /** Width of the pixelated band, counted in coarsest blocks. Increased for broad spatial dissolution. */
-        const val PixelFrontierBandBlocks: Float = 120f
+        /** Width of the pixelated band, counted in coarsest blocks. Focused tight frontier edge. */
+        const val PixelFrontierBandBlocks: Float = 10f
 
         /** Smallest brightness difference (0..1) between two neighbor blocks that draws an outline. */
         const val PixelFrontierEdgeThreshold: Float = 0.12f

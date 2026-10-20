@@ -33,6 +33,7 @@ import com.example.cyberpunkandroid.components.CyberButton
 import com.example.cyberpunkandroid.components.CyberButtonSize
 import com.example.cyberpunkandroid.components.CyberButtonStyle
 import com.example.cyberpunkandroid.components.CyberPixelFrontierTransition
+import com.example.cyberpunkandroid.config.CyberPrimitives
 import com.example.cyberpunkandroid.theme.CyberTheme
 import com.example.sample.showcase.BioMonitorCard
 import com.example.sample.showcase.BreachCipherCard
@@ -64,8 +65,10 @@ class MainActivity : ComponentActivity() {
                     targetState = currentScreen,
                     orientation = Orientation.Horizontal,
                     reverse = true,
-                    blockSizePx = 0.5f,
-                    bandBlocks = 120f,
+                    blockSize = 4.dp,
+                    splitOffset = 0.dp,
+                    frontierJitter = CyberPrimitives.Spacing.dp8,
+                    bandBlocks = 10f,
                     glowStrength = 0.8f,
                     edgeColor = androidx.compose.ui.graphics.Color(0xFFB026FF),
                     animationSpec = tween(durationMillis = 2000, easing = LinearEasing),

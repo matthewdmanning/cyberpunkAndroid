@@ -9,14 +9,14 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FiniteAnimationSpec
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.updateTransition
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,12 +25,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
@@ -48,6 +51,218 @@ private const val ComponentName = "CyberPixelFrontierTransition"
  * so the peak sits at the middle, on the frontier.
  */
 private const val GlowPeakStop = 0.5f
+
+/** Smallest block edge in pixels. A block cannot be smaller than one pixel. */
+private const val MinBlockPx = 1f
+
+/**
+ * State holder that manages the dual-layer transition progression of [CyberPixelFrontierTransition].
+ */
+@Stable
+class CyberPixelFrontierTransitionState<S> internal constructor(
+    initialState: S,
+) {
+    /** Exiting screen content retained until the sweep settles. */
+    var outgoingState by mutableStateOf<S?>(null)
+        internal set
+
+    /** Active target screen destination. */
+    var targetState by mutableStateOf(initialState)
+        internal set
+
+    internal val progressAnimatable = Animatable(1f)
+
+    /** Current sweep progress from 0f (starting) to 1f (settled). */
+    val progress: Float
+        get() = progressAnimatable.value
+
+    /** True when a screen transition is actively underway. */
+    val isTransitioning: Boolean
+        get() = outgoingState != null && progressAnimatable.value < 1f
+
+    /**
+     * Executes the transition from the current state to [newState].
+     */
+    suspend fun transitionTo(newState: S, animationSpec: FiniteAnimationSpec<Float>) {
+        if (newState != targetState) {
+            outgoingState = targetState
+            targetState = newState
+            progressAnimatable.snapTo(0f)
+            progressAnimatable.animateTo(1f, animationSpec)
+            outgoingState = null
+        }
+    }
+}
+
+/**
+ * Creates and remembers a [CyberPixelFrontierTransitionState] for [targetState].
+ */
+@Composable
+fun <S> rememberCyberPixelFrontierTransitionState(
+    targetState: S,
+    animationSpec: FiniteAnimationSpec<Float>,
+): CyberPixelFrontierTransitionState<S> {
+    val state = remember { CyberPixelFrontierTransitionState(targetState) }
+    LaunchedEffect(targetState) {
+        state.transitionTo(targetState, animationSpec)
+    }
+    return state
+}
+
+/**
+ * Computes the bounding clip rectangle for the exiting screen layer so pixels are strictly
+ * confined to the old screen territory and cannot cross into the newly revealed screen.
+ */
+internal fun computeOldScreenClipRect(
+    width: Float,
+    height: Float,
+    frontierPos: Float,
+    vertical: Boolean,
+    reverse: Boolean,
+): Rect {
+    return when {
+        !vertical && !reverse -> {
+            // Left-to-Right: Old screen is on the right [frontierPos, width]
+            Rect(
+                left = frontierPos.coerceIn(0f, width),
+                top = 0f,
+                right = width,
+                bottom = height,
+            )
+        }
+        !vertical && reverse -> {
+            // Right-to-Left: Old screen is on the left [0, frontierPos]
+            Rect(
+                left = 0f,
+                top = 0f,
+                right = frontierPos.coerceIn(0f, width),
+                bottom = height,
+            )
+        }
+        vertical && !reverse -> {
+            // Top-to-Bottom: Old screen is at the bottom [frontierPos, height]
+            Rect(
+                left = 0f,
+                top = frontierPos.coerceIn(0f, height),
+                right = width,
+                bottom = height,
+            )
+        }
+        else -> {
+            // Bottom-to-Top: Old screen is at the top [0, frontierPos]
+            Rect(
+                left = 0f,
+                top = 0f,
+                right = width,
+                bottom = frontierPos.coerceIn(0f, height),
+            )
+        }
+    }
+}
+
+/**
+ * Computes the bounding clip rectangle for the entering (new) screen layer so the new screen
+ * only appears on the non-particle side of the barrier / divide. Particles on the other side
+ * have zero impact on new screen visibility.
+ */
+internal fun computeNewScreenClipRect(
+    width: Float,
+    height: Float,
+    frontierPos: Float,
+    vertical: Boolean,
+    reverse: Boolean,
+): Rect {
+    return when {
+        !vertical && !reverse -> {
+            // Left-to-Right: New screen is on the left [0, frontierPos]
+            Rect(
+                left = 0f,
+                top = 0f,
+                right = frontierPos.coerceIn(0f, width),
+                bottom = height,
+            )
+        }
+        !vertical && reverse -> {
+            // Right-to-Left: New screen is on the right [frontierPos, width]
+            Rect(
+                left = frontierPos.coerceIn(0f, width),
+                top = 0f,
+                right = width,
+                bottom = height,
+            )
+        }
+        vertical && !reverse -> {
+            // Top-to-Bottom: New screen is at the top [0, frontierPos]
+            Rect(
+                left = 0f,
+                top = 0f,
+                right = width,
+                bottom = frontierPos.coerceIn(0f, height),
+            )
+        }
+        else -> {
+            // Bottom-to-Top: New screen is at the bottom [frontierPos, height]
+            Rect(
+                left = 0f,
+                top = frontierPos.coerceIn(0f, height),
+                right = width,
+                bottom = height,
+            )
+        }
+    }
+}
+
+/**
+ * Derives the immutable [CyberShaders.PixelFrontierSpec] configuration for one draw frame.
+ */
+internal fun computeFrontierSpec(
+    width: Float,
+    height: Float,
+    vertical: Boolean,
+    reverse: Boolean,
+    progress: Float,
+    blockSize: Dp,
+    blockSizePx: Float?,
+    bandBlocks: Float,
+    edgeWidth: Dp,
+    edgeWidthPx: Float?,
+    edgeThreshold: Float,
+    splitOffset: Dp,
+    splitOffsetPx: Float?,
+    frontierJitter: Dp,
+    frontierJitterPx: Float?,
+    edgeColor: Color,
+    stochasticMode: Int,
+    density: Density,
+): CyberShaders.PixelFrontierSpec {
+    with(density) {
+        val blockPx = (blockSizePx ?: blockSize.toPx()).coerceAtLeast(MinBlockPx)
+        val jitterPx = frontierJitterPx ?: frontierJitter.toPx()
+        val bandPx = (blockPx * bandBlocks).coerceAtLeast(blockPx)
+        val edgePx = edgeWidthPx ?: edgeWidth.toPx()
+        val splitPx = splitOffsetPx ?: splitOffset.toPx()
+        val axisLength = if (vertical) height else width
+        val frontierPos = pixelFrontierPosition(progress, axisLength, bandPx + jitterPx / 2, reverse)
+        val shaderFrontier = if (reverse) -frontierPos else frontierPos
+        return CyberShaders.PixelFrontierSpec(
+            width = width,
+            height = height,
+            vertical = vertical,
+            reverse = reverse,
+            frontier = shaderFrontier,
+            revealBehind = false,
+            blockSize = blockPx,
+            bandWidth = bandPx,
+            edgeWidth = edgePx,
+            edgeThreshold = edgeThreshold,
+            splitOffset = splitPx,
+            jitter = jitterPx,
+            edgeColorArgb = edgeColor.toArgb(),
+            time = progress,
+            stochasticMode = stochasticMode.toFloat(),
+        )
+    }
+}
 
 /**
  * PROTOTYPE. Use this function to switch between two full screens with a pixel-block sweep.
@@ -99,13 +314,13 @@ fun <S> CyberPixelFrontierTransition(
     modifier: Modifier = Modifier,
     orientation: Orientation = Orientation.Vertical,
     reverse: Boolean = false,
-    blockSize: Dp = CyberPrimitives.Spacing.dp32,
-    blockSizePx: Float? = CyberConfig.Shaders.PixelFrontierBlockSizePx,
+    blockSize: Dp = CyberPrimitives.PixelSizes.Compact,
+    blockSizePx: Float? = null,
     bandBlocks: Float = CyberConfig.Shaders.PixelFrontierBandBlocks,
     edgeWidth: Dp = CyberPrimitives.BorderWidths.dp2,
     edgeWidthPx: Float? = null,
     edgeThreshold: Float = CyberConfig.Shaders.PixelFrontierEdgeThreshold,
-    splitOffset: Dp = CyberPrimitives.Spacing.dp4,
+    splitOffset: Dp = 0.dp,
     splitOffsetPx: Float? = null,
     frontierJitter: Dp = CyberPrimitives.Spacing.dp32,
     frontierJitterPx: Float? = null,
@@ -195,83 +410,108 @@ private fun <S> PixelFrontierHost(
     stochasticMode: Int = 0,
     content: @Composable AnimatedContentScope.(S) -> Unit,
 ) {
-    var outgoingState by remember { mutableStateOf<S?>(null) }
-    var incomingState by remember { mutableStateOf(targetState) }
-    val progress = remember { Animatable(1f) }
-
-    LaunchedEffect(targetState) {
-        if (targetState != incomingState) {
-            outgoingState = incomingState
-            incomingState = targetState
-            progress.snapTo(0f)
-            progress.animateTo(1f, animationSpec)
-            outgoingState = null
-        }
-    }
-
+    val transitionState = rememberCyberPixelFrontierTransitionState(targetState, animationSpec)
     val shaderOutgoing = remember { CyberShaders.createPixelFrontierShader() }
-    val shaderIncoming = remember { CyberShaders.createPixelFrontierShader() }
 
-    val containerModifier = modifier
-        .clipToBounds()
-        .drawWithContent {
-            drawContent()
-            val p = progress.value
-            if (glowStrength > 0f && p < 1f && outgoingState != null) {
-                val blockPx = (blockSizePx ?: blockSize.toPx()).coerceAtLeast(MinBlockPx)
-                val jitterPx = frontierJitterPx ?: frontierJitter.toPx()
-                val bandPx = (blockPx * bandBlocks).coerceAtLeast(blockPx)
-                val axisLength = if (vertical) size.height else size.width
-                val frontier = pixelFrontierPosition(p, axisLength, bandPx + jitterPx / 2, reverse)
-                drawFrontierGlow(
-                    frontier = frontier,
-                    reach = blockPx.coerceAtLeast(16.dp.toPx()),
-                    vertical = vertical,
-                    color = edgeColor.copy(alpha = glowStrength),
-                )
+    Box(
+        modifier = modifier.clipToBounds()
+    ) {
+        // Base layer: incoming new screen, rendered clean and strictly clipped to the
+        // non-particle side of the barrier/divide. Particles have zero impact on new screen visibility.
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .drawWithContent {
+                    if (transitionState.outgoingState != null) {
+                        val p = transitionState.progress
+                        val blockPx = (blockSizePx ?: blockSize.toPx()).coerceAtLeast(MinBlockPx)
+                        val jitterPx = frontierJitterPx ?: frontierJitter.toPx()
+                        val bandPx = (blockPx * bandBlocks).coerceAtLeast(blockPx)
+                        val axisLength = if (vertical) size.height else size.width
+                        val frontierPos = pixelFrontierPosition(p, axisLength, bandPx + jitterPx / 2, reverse)
+                        val clip = computeNewScreenClipRect(
+                            width = size.width,
+                            height = size.height,
+                            frontierPos = frontierPos,
+                            vertical = vertical,
+                            reverse = reverse,
+                        )
+                        clipRect(
+                            left = clip.left,
+                            top = clip.top,
+                            right = clip.right,
+                            bottom = clip.bottom,
+                        ) {
+                            this@drawWithContent.drawContent()
+                        }
+                    } else {
+                        this@drawWithContent.drawContent()
+                    }
+                }
+        ) {
+            AnimatedContent(
+                targetState = targetState,
+                transitionSpec = { ContentTransform(EnterTransition.None, ExitTransition.None) },
+                label = "$ComponentName.target"
+            ) { screen ->
+                content(screen)
             }
         }
 
-    Box(modifier = containerModifier) {
-        val currentOutgoing = outgoingState
-        val isTransitioning = progress.value < 1f && currentOutgoing != null
-
-        if (isTransitioning) {
-            // Outgoing screen layer (eroding ahead of frontier)
+        // Top layer: outgoing screen, eroding into pixels ahead of the sharp border
+        val currentOutgoing = transitionState.outgoingState
+        if (currentOutgoing != null) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .drawWithContent {
+                        val p = transitionState.progress
+                        val blockPx = (blockSizePx ?: blockSize.toPx()).coerceAtLeast(MinBlockPx)
+                        val jitterPx = frontierJitterPx ?: frontierJitter.toPx()
+                        val bandPx = (blockPx * bandBlocks).coerceAtLeast(blockPx)
+                        val axisLength = if (vertical) size.height else size.width
+                        val frontierPos = pixelFrontierPosition(p, axisLength, bandPx + jitterPx / 2, reverse)
+                        val clip = computeOldScreenClipRect(
+                            width = size.width,
+                            height = size.height,
+                            frontierPos = frontierPos,
+                            vertical = vertical,
+                            reverse = reverse,
+                        )
+                        clipRect(
+                            left = clip.left,
+                            top = clip.top,
+                            right = clip.right,
+                            bottom = clip.bottom,
+                        ) {
+                            this@drawWithContent.drawContent()
+                        }
+                    }
                     .graphicsLayer {
-                        val p = progress.value
+                        // Read progress strictly in DRAW phase (zero composition invalidation)
+                        val p = transitionState.progress
                         renderEffect = if (size.width > 0f && size.height > 0f) {
-                            val blockPx = (blockSizePx ?: blockSize.toPx()).coerceAtLeast(MinBlockPx)
-                            val jitterPx = frontierJitterPx ?: frontierJitter.toPx()
-                            val bandPx = (blockPx * bandBlocks).coerceAtLeast(blockPx)
-                            val edgePx = edgeWidthPx ?: edgeWidth.toPx()
-                            val splitPx = splitOffsetPx ?: splitOffset.toPx()
-                            val axisLength = if (vertical) size.height else size.width
-                            val frontierPos = pixelFrontierPosition(p, axisLength, bandPx + jitterPx / 2, reverse)
-                            val shaderFrontier = if (reverse) -frontierPos else frontierPos
-                            CyberShaders.pixelFrontierEffect(
-                                shaderOutgoing,
-                                CyberShaders.PixelFrontierSpec(
-                                    width = size.width,
-                                    height = size.height,
-                                    vertical = vertical,
-                                    reverse = reverse,
-                                    frontier = shaderFrontier,
-                                    revealBehind = false,
-                                    blockSize = blockPx,
-                                    bandWidth = bandPx,
-                                    edgeWidth = edgePx,
-                                    edgeThreshold = edgeThreshold,
-                                    splitOffset = splitPx,
-                                    jitter = jitterPx,
-                                    edgeColorArgb = edgeColor.toArgb(),
-                                    time = p,
-                                    stochasticMode = stochasticMode.toFloat(),
-                                ),
+                            val spec = computeFrontierSpec(
+                                width = size.width,
+                                height = size.height,
+                                vertical = vertical,
+                                reverse = reverse,
+                                progress = p,
+                                blockSize = blockSize,
+                                blockSizePx = blockSizePx,
+                                bandBlocks = bandBlocks,
+                                edgeWidth = edgeWidth,
+                                edgeWidthPx = edgeWidthPx,
+                                edgeThreshold = edgeThreshold,
+                                splitOffset = splitOffset,
+                                splitOffsetPx = splitOffsetPx,
+                                frontierJitter = frontierJitter,
+                                frontierJitterPx = frontierJitterPx,
+                                edgeColor = edgeColor,
+                                stochasticMode = stochasticMode,
+                                density = this,
                             )
+                            CyberShaders.pixelFrontierEffect(shaderOutgoing, spec)
                         } else null
                     }
             ) {
@@ -283,68 +523,9 @@ private fun <S> PixelFrontierHost(
                     content(screen)
                 }
             }
-
-            // Incoming screen layer (materializing behind frontier)
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer {
-                        val p = progress.value
-                        renderEffect = if (size.width > 0f && size.height > 0f) {
-                            val blockPx = (blockSizePx ?: blockSize.toPx()).coerceAtLeast(MinBlockPx)
-                            val jitterPx = frontierJitterPx ?: frontierJitter.toPx()
-                            val bandPx = (blockPx * bandBlocks).coerceAtLeast(blockPx)
-                            val edgePx = edgeWidthPx ?: edgeWidth.toPx()
-                            val splitPx = splitOffsetPx ?: splitOffset.toPx()
-                            val axisLength = if (vertical) size.height else size.width
-                            val frontierPos = pixelFrontierPosition(p, axisLength, bandPx + jitterPx / 2, reverse)
-                            val shaderFrontier = if (reverse) -frontierPos else frontierPos
-                            CyberShaders.pixelFrontierEffect(
-                                shaderIncoming,
-                                CyberShaders.PixelFrontierSpec(
-                                    width = size.width,
-                                    height = size.height,
-                                    vertical = vertical,
-                                    reverse = reverse,
-                                    frontier = shaderFrontier,
-                                    revealBehind = true,
-                                    blockSize = blockPx,
-                                    bandWidth = bandPx,
-                                    edgeWidth = edgePx,
-                                    edgeThreshold = edgeThreshold,
-                                    splitOffset = splitPx,
-                                    jitter = jitterPx,
-                                    edgeColorArgb = edgeColor.toArgb(),
-                                    time = p,
-                                    stochasticMode = stochasticMode.toFloat(),
-                                ),
-                            )
-                        } else null
-                    }
-            ) {
-                AnimatedContent(
-                    targetState = incomingState,
-                    transitionSpec = { ContentTransform(EnterTransition.None, ExitTransition.None) },
-                    label = "$ComponentName.incoming"
-                ) { screen ->
-                    content(screen)
-                }
-            }
-        } else {
-            // Idle: display only incoming target screen
-            AnimatedContent(
-                targetState = incomingState,
-                transitionSpec = { ContentTransform(EnterTransition.None, ExitTransition.None) },
-                label = "$ComponentName.idle"
-            ) { screen ->
-                content(screen)
-            }
         }
     }
 }
-
-/** Smallest block edge in pixels. A block cannot be smaller than one pixel. */
-private const val MinBlockPx = 1f
 
 /**
  * Use this function to find where the frontier is, in pixels along the sweep axis.

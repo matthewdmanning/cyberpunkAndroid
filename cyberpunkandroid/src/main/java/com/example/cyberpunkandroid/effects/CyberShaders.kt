@@ -101,160 +101,185 @@ internal object CyberShaders {
 
         // Number of block sizes in the band. Each step halves the block size.
         const int LevelCount = 3;
-        // Rec. 709 weights that turn a color into a brightness value.
-        const half3 LumaWeights = half3(0.2126, 0.7152, 0.0722);
 
-        half luma(half3 rgb) {
-            return dot(rgb, LumaWeights);
+        // True 2D isotropic stochastic field using 6 symmetric hexagonal wavevectors
+        // Ensures sum(kx^2) == sum(ky^2) and sum(kx*ky) == 0.0 (zero directional / row bias).
+        float evaluate2DField(float2 p, float t, int mode) {
+            float kBase = (mode == 1) ? 0.16 : ((mode == 2) ? 0.05 : 0.08);
+            float omegaBase = (mode == 1) ? 4.5 : ((mode == 2) ? 2.2 : 1.8);
+
+            float total = 0.0;
+            // Octave 1: Hexagonal symmetric wave pairs (weight 0.65)
+            total += sin(p.x * kBase + omegaBase * t + 0.0);
+            total += sin(p.y * kBase + omegaBase * t + 0.0);
+            total += sin((0.8660254 * p.x + 0.5 * p.y) * kBase + omegaBase * t + 1.2566);
+            total += sin((0.5 * p.x + 0.8660254 * p.y) * kBase + omegaBase * t + 1.2566);
+            total += sin((-0.8660254 * p.x + 0.5 * p.y) * kBase + omegaBase * t + 2.5133);
+            total += sin((0.5 * p.x - 0.8660254 * p.y) * kBase + omegaBase * t + 2.5133);
+            total = (total / 6.0) * 0.65;
+
+            // Octave 2: Diagonal and axis harmonics (weight 0.35, 2x frequency)
+            float kHarm = kBase * 2.0;
+            float omegaHarm = omegaBase * 1.6;
+            float totalHarm = 0.0;
+            totalHarm += sin(p.x * kHarm + omegaHarm * t + 3.7699);
+            totalHarm += sin(p.y * kHarm + omegaHarm * t + 3.7699);
+            totalHarm += sin((0.7071068 * p.x + 0.7071068 * p.y) * kHarm + omegaHarm * t + 0.85);
+            totalHarm += sin((0.7071068 * p.x - 0.7071068 * p.y) * kHarm + omegaHarm * t + 5.0265);
+            totalHarm += sin((-0.7071068 * p.x + 0.7071068 * p.y) * kHarm + omegaHarm * t + 5.0265);
+            total += (totalHarm / 5.0) * 0.35;
+
+            return total;
         }
 
-        // Pseudo-random value from 0 to 1 for a 2D coordinate.
-        float hash2(float2 p) {
-            return fract(sin(dot(p, float2(127.1, 311.7))) * 43758.5453);
+        // Catmull-Rom cubic spline interpolator for 2D density extrema curves
+        float catmullRom(float p0, float p1, float p2, float p3, float t) {
+            float t2 = t * t;
+            float t3 = t2 * t;
+            return 0.5 * (
+                (2.0 * p1) +
+                (-p0 + p2) * t +
+                (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t2 +
+                (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * t3
+            );
         }
 
-        // Pre-calculated Fourier series coefficients (amp, k_spatial, omega_temporal, phase).
-        // Evaluates a continuous, band-limited stochastic field with spatial and temporal autocorrelation.
-        float fourierField(float spatialCoord, float t, int preset) {
-            float val = 0.0;
-            if (preset == 1) {
-                // Preset 1: High-frequency cyber glitch / telemetry jitter
-                val += 0.40 * sin(spatialCoord * 0.012 + t * 5.0 + 0.5);
-                val += 0.30 * sin(spatialCoord * 0.028 + t * 9.2 + 2.1);
-                val += 0.20 * sin(spatialCoord * 0.055 + t * 14.0 + 3.7);
-                val += 0.10 * sin(spatialCoord * 0.110 + t * 22.0 + 1.2);
-            } else if (preset == 2) {
-                // Preset 2: Harmonic surge / undulating pulse
-                val += 0.55 * sin(spatialCoord * 0.005 + t * 1.8 + 1.0);
-                val += 0.25 * sin(spatialCoord * 0.011 + t * 3.2 + 0.2);
-                val += 0.12 * sin(spatialCoord * 0.022 + t * 5.5 + 3.1);
-                val += 0.08 * sin(spatialCoord * 0.045 + t * 8.0 + 5.0);
+        float evalSpline(float p0, float p1, float p2, float p3, float p4, float p5, float v) {
+            float sv = clamp(v, 0.0, 0.9999) * 3.0;
+            int idx = int(floor(sv));
+            float t = fract(sv);
+            if (idx == 0) return catmullRom(p0, p1, p2, p3, t);
+            else if (idx == 1) return catmullRom(p1, p2, p3, p4, t);
+            else return catmullRom(p2, p3, p4, p5, t);
+        }
+
+        // Distinct top-to-bottom spline curves acting as density extrema (not all the same).
+        // Start offset is 0 so particle spawn density begins immediately at the barrier/divide:
+        float evalSplineStart(float v) {
+            return 0.0;
+        }
+
+        float evalSplinePeak(float v) {
+            return evalSpline(0.36, 0.46, 0.38, 0.52, 0.34, 0.44, v);
+        }
+
+        float evalSplineEnd(float v) {
+            return evalSpline(0.72, 0.84, 0.70, 0.88, 0.76, 0.82, v);
+        }
+
+        // 2D spawn density field rho(normDist, v) with top-to-bottom spline extrema
+        float computeSpawnDensity(float normDist, float v) {
+            float xs = evalSplineStart(v);
+            float xp = evalSplinePeak(v);
+            float xe = evalSplineEnd(v);
+
+            if (normDist <= xs || normDist >= xe) {
+                return 0.0;
+            } else if (normDist <= xp) {
+                float u = clamp((normDist - xs) / max(1e-4, xp - xs), 0.0, 1.0);
+                return 3.0 * u * u - 2.0 * u * u * u;
             } else {
-                // Preset 0: Natural rolling continuous undulation (1/f power spectrum)
-                val += 0.50 * sin(spatialCoord * 0.008 + t * 2.5 + 0.0);
-                val += 0.28 * sin(spatialCoord * 0.016 + t * 4.1 + 1.3);
-                val += 0.14 * sin(spatialCoord * 0.032 + t * 6.7 + 2.8);
-                val += 0.08 * sin(spatialCoord * 0.064 + t * 9.3 + 4.1);
+                float w = clamp((normDist - xp) / max(1e-4, xe - xp), 0.0, 1.0);
+                return 1.0 - (3.0 * w * w - 2.0 * w * w * w);
             }
-            return val;
         }
 
-        // Stochastic width multiplier derived from the Fourier series field
-        float localBandWidthAt(float2 point) {
-            float2 across = float2(axis.y, axis.x);
-            float s = dot(point, across);
-            int preset = int(clamp(stochasticMode, 0.0, 2.0));
-            float f = fourierField(s, time, preset);
-            // Dynamic width scale smoothly varying between 0.7x and 1.4x with spatial & temporal continuity
-            return bandWidth * (1.0 + 0.35 * f);
-        }
-
-        // Frontier position for the block column that contains a point.
-        // Incorporates spatial-temporal correlated fluctuation alongside micro-jitter.
-        float frontierAt(float2 point) {
-            float2 across = float2(axis.y, axis.x);
-            float column = floor(dot(point, across) / max(blockSize, 1.0));
-            int preset = int(clamp(stochasticMode, 0.0, 2.0));
-            float f = fourierField(dot(point, across), time, preset);
-            return frontier + (hash2(float2(column, floor(time * 30.0))) - 0.5) * jitter + f * (jitter * 0.8);
-        }
-
-        // Reads the content at a point, kept half a pixel inside the layer so the read is always valid.
         half4 sampleInside(float2 point) {
             return contents.eval(clamp(point, float2(0.5), resolution - 0.5));
         }
 
-        // Returns 1.0 when this pixel lies within edgeWidth of a block side that needs an outline.
-        float sideEdge(float2 neighborCenter, half centerLuma, float distanceToSide, bool ahead) {
-            if (distanceToSide > edgeWidth) {
-                return 0.0;
-            }
-            bool neighborAhead = dot(neighborCenter, axis) - frontierAt(neighborCenter) >= 0.0;
-            if (neighborAhead != ahead) {
-                return 1.0;
-            }
-            half neighborLuma = luma(sampleInside(neighborCenter).rgb);
-            return abs(centerLuma - neighborLuma) >= edgeThreshold ? 1.0 : 0.0;
-        }
-
         half4 main(float2 fragCoord) {
-            float localBand = localBandWidthAt(fragCoord);
-
-            // Pick the block for this pixel. The loop runs from the finest level to the coarsest.
-            float2 samplePoint = fragCoord;
-            float cell = 0.0; // 0.0 means the pixel is outside the band
-            for (int i = 0; i < LevelCount; i++) {
-                int level = LevelCount - 1 - i;
-                float size = max(blockSize / exp2(float(level)), 1.0);
-                float2 center = (floor(fragCoord / size) + 0.5) * size;
-                float reach = localBand * float(level + 1) / float(LevelCount);
-                if (abs(dot(center, axis) - frontierAt(center)) < reach) {
-                    samplePoint = center;
-                    cell = size;
-                }
-            }
-
-            // distAdvancing:
-            // 0 at the sharp frontier edge (where the new screen starts to reveal and old screen starts to erode).
-            // Negative behind the frontier (already fully traversed / revealed).
-            // Positive ahead along the advancing direction into untouched territory.
-            float distAdvancing = dot(samplePoint, axis) - frontierAt(samplePoint);
+            float distAdvancing = dot(fragCoord, axis) - frontier;
             bool ahead = distAdvancing >= 0.0;
 
-            // Gaussian decay along the advancing direction:
-            // Sharp line at distAdvancing = 0 (density = 1.0).
-            // Behind the frontier (distAdvancing < 0): 0 decay ahead.
-            // Ahead of the frontier (distAdvancing >= 0): decays smoothly with sigma = localBand * 1.5.
-            float sigma = max(localBand * 1.5, 1.0);
-            float gaussianDensity = ahead ? exp(- (distAdvancing * distAdvancing) / (2.0 * sigma * sigma)) : 1.0;
-
-            // Stochastic modulation with spatial-temporal autocorrelation (Fourier field)
-            int preset = int(clamp(stochasticMode, 0.0, 2.0));
-            float densityField = fourierField(dot(samplePoint, float2(axis.y, axis.x)) * 0.5, time * 1.5, preset);
-            float targetDensity = clamp(gaussianDensity + 0.2 * densityField * gaussianDensity, 0.0, 1.0);
-
-            float pixelHash = hash2(floor(samplePoint / max(cell, 1.0)));
-            bool dropPixel = (cell > 0.0) && (pixelHash > targetDensity);
-
-            bool visible;
             if (revealBehind > 0.5) {
-                // Incoming screen layer (revealed behind the frontier)
-                // Fully visible behind frontier (!ahead); decays into floating pixels ahead in advancing direction
-                visible = !ahead || (!dropPixel && cell > 0.0);
-            } else {
-                // Outgoing screen layer (eroding ahead of frontier)
-                // Sharp cut behind frontier; dissolves out along advancing direction
-                visible = ahead && (cell == 0.0 || !dropPixel);
-            }
-
-            if (!visible) {
+                if (!ahead) {
+                    return contents.eval(fragCoord);
+                }
                 return half4(0.0);
             }
 
-            if (cell == 0.0) {
+            if (!ahead) {
+                return half4(0.0);
+            }
+
+            // Far ahead of the dissolution band: intact solid outgoing screen
+            if (distAdvancing >= bandWidth) {
                 return contents.eval(fragCoord);
             }
 
-            // Proximity along the active band for chromatic aberration and edge neon
-            float proximity = clamp(1.0 - abs(distAdvancing) / max(localBand, 1.0), 0.0, 1.0);
+            float cell = blockSize;
+            for (int i = 0; i < LevelCount; i++) {
+                float reach = bandWidth * float(i + 1) / float(LevelCount);
+                if (distAdvancing < reach) {
+                    cell = blockSize;
+                }
+            }
 
-            // Block color with a red/blue split along the axis.
-            float2 split = axis * splitOffset * proximity;
-            half4 middle = sampleInside(samplePoint);
-            half4 color = half4(sampleInside(samplePoint + split).r, middle.g, sampleInside(samplePoint - split).b, middle.a);
+            // 2D discrete particle emission sites:
+            float2 blockCoord = floor(fragCoord / max(blockSize, 1.0));
+            float2 samplePoint = (blockCoord + 0.5) * blockSize;
+            float particleDist = dot(samplePoint, axis) - frontier;
 
-            // Outlines on the block sides
-            float2 local = fragCoord - (samplePoint - 0.5 * cell);
-            half centerLuma = luma(middle.rgb);
-            float edge = 0.0;
-            edge = max(edge, sideEdge(samplePoint + float2(-cell, 0.0), centerLuma, local.x, ahead));
-            edge = max(edge, sideEdge(samplePoint + float2(cell, 0.0), centerLuma, cell - local.x, ahead));
-            edge = max(edge, sideEdge(samplePoint + float2(0.0, -cell), centerLuma, local.y, ahead));
-            edge = max(edge, sideEdge(samplePoint + float2(0.0, cell), centerLuma, cell - local.y, ahead));
+            if (particleDist < 0.0) {
+                return half4(0.0);
+            }
 
-            half strength = half(edge * proximity * edgeColor.a);
-            color.rgb = mix(color.rgb, edgeColor.rgb * color.a, strength);
-            return color;
+            float normDist = clamp(particleDist / max(bandWidth, 1.0), 0.0, 1.0);
+
+            // 2D SPAWN DENSITY GOVERNED BY TOP-TO-BOTTOM SPLINE EXTREMA (NOT ALL THE SAME):
+            float2 across = float2(-axis.y, axis.x);
+            float v = clamp(dot(fragCoord, across) / max(dot(resolution, abs(across)), 1.0), 0.0, 1.0);
+            float xp = evalSplinePeak(v);
+            float xe = evalSplineEnd(v);
+
+            // BEYOND PARTICLE EXTINCTION (NO BLACK GAP): INTACT SOLID OUTGOING SCREEN
+            if (normDist >= xe) {
+                return contents.eval(fragCoord);
+            }
+
+            // STOCHASTIC EROSION OF OUTGOING SCREEN ALL THE WAY TO THE FRONTIER BORDER:
+            // The old screen erodes continuously from xe down to 0.0 with zero deadband or black gaps.
+            float solidHash = fract(sin(dot(blockCoord, float2(26.37, 83.19))) * 43758.5453);
+            float solidProb = smoothstep(0.0, xe, normDist);
+            if (solidHash < solidProb) {
+                return contents.eval(fragCoord);
+            }
+
+            // CIRCULAR PARTICLE GEOMETRY: OUTSIDE RADIUS IS TRANSPARENT SPACE
+            float radius = 0.48 * blockSize;
+            float distFromCenter = length(fragCoord - samplePoint);
+            if (distFromCenter > radius) {
+                return half4(0.0);
+            }
+
+            float spawnDensity = computeSpawnDensity(normDist, v);
+
+            // COMPLETELY RANDOM LIFETIME PER INDIVIDUAL PARTICLE (BETA(2, 5) SKINNY TAIL):
+            float lifeHash = fract(sin(dot(blockCoord, float2(12.9898 + stochasticMode * 3.7, 78.233 + stochasticMode * 7.1))) * 43758.5453);
+            // Solve CDF of Beta(2, 5) via Newton-Raphson:
+            float xBeta = 0.25;
+            for (int i = 0; i < 2; i++) {
+                float oneMinusX = clamp(1.0 - xBeta, 0.0, 1.0);
+                float f = xBeta * xBeta * (15.0 + xBeta * (-40.0 + xBeta * (45.0 + xBeta * (-24.0 + 5.0 * xBeta)))) - lifeHash;
+                float df = max(30.0 * xBeta * oneMinusX * oneMinusX * oneMinusX * oneMinusX, 0.001);
+                xBeta = clamp(xBeta - f / df, 0.0, 1.0);
+            }
+            float particleLifetime = clamp(0.30 + 1.70 * xBeta, 0.30, 2.0);
+
+            // EMISSION DRAW MODULATED BY SPAWN DENSITY & LIFETIME (2x INITIAL DENSITY = 0.80, 2x LIFETIME):
+            float emitHash = fract(sin(dot(blockCoord + float2(0.31, 0.73), float2(41.17, 93.31)) + time * 0.5) * 43758.5453);
+            float threshold = clamp(max(spawnDensity, 0.80) * particleLifetime * 0.95, 0.0, 1.0);
+
+            bool isParticleActive = emitHash < threshold;
+            if (!isParticleActive) {
+                return half4(0.0);
+            }
+
+            // 100% OPAQUE & LUMINOUS CIRCULAR PARTICLE (ALPHA = 1.0, NO TRANSPARENCY):
+            half4 sampled = sampleInside(samplePoint);
+            half3 particleColor = mix(sampled.rgb, edgeColor.rgb, 0.75);
+            return half4(particleColor, 1.0);
         }
     """
 

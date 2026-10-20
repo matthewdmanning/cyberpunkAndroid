@@ -46,6 +46,8 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
+    implementation(libs.commons.statistics.distribution)
+    implementation(libs.commons.statistics.descriptive)
 
     val composeBom = platform(libs.androidx.compose.bom)
     implementation(composeBom)
