@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -30,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import com.example.cyberpunkandroid.components.CyberBadge
 import com.example.cyberpunkandroid.components.CyberBadgeVariant
 import com.example.cyberpunkandroid.components.CyberCard
+import com.example.cyberpunkandroid.components.CyberNumberPicker
+import com.example.cyberpunkandroid.components.CyberNumberPickerSize
 import com.example.cyberpunkandroid.components.CyberSectorRim
 import com.example.cyberpunkandroid.components.CyberSlider
 import com.example.cyberpunkandroid.components.CyberSwitch
@@ -53,10 +56,11 @@ import com.example.cyberpunkandroid.theme.CyberTheme
 @Composable
 fun CryoRegulatorCard(modifier: Modifier = Modifier) {
     var isOverclocked by remember { mutableStateOf(false) }
+    var coreMultiplier by remember { mutableIntStateOf(4) }
     var coolantRate by remember { mutableFloatStateOf(0.35f) }
 
-    // Baseline 3.2 GHz: 37°C. Overclock (5.8 GHz) adds 52°C. Coolant extraction: up to 48°C.
-    val targetTemp = (37f + (if (isOverclocked) 52f else 0f) - (coolantRate * 48f)).coerceIn(24f, 96f)
+    // Baseline 3.2 GHz: 37°C. Overclock (5.8 GHz) adds 52°C. Core multiplier scaling. Coolant extraction: up to 48°C.
+    val targetTemp = (37f + (if (isOverclocked) 52f else 0f) + ((coreMultiplier - 4) * 3f) - (coolantRate * 48f)).coerceIn(24f, 96f)
 
     // Natural Thermal Lag & Inertia
     val animatedCoreTemp by animateFloatAsState(
@@ -108,7 +112,7 @@ fun CryoRegulatorCard(modifier: Modifier = Modifier) {
                     color = CyberTheme.colors.primary
                 )
                 Text(
-                    text = "CyberSlider • CyberSwitch • CyberSectorRim • cyberNoise • cyberTextGlow",
+                    text = "CyberNumberPicker • CyberSlider • CyberSwitch • CyberSectorRim • cyberNoise",
                     style = CyberTheme.typography.body,
                     color = CyberTheme.colors.textSecondary
                 )
@@ -215,6 +219,28 @@ fun CryoRegulatorCard(modifier: Modifier = Modifier) {
                         CyberSlider(
                             value = coolantRate,
                             onValueChange = { coolantRate = it }
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = CyberTheme.spacing.dp4),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "ACTIVE CORES",
+                            style = CyberTheme.typography.terminal,
+                            color = CyberTheme.colors.textSecondary
+                        )
+                        CyberNumberPicker(
+                            value = coreMultiplier,
+                            range = 1..16,
+                            step = 1,
+                            size = CyberNumberPickerSize.Small,
+                            prefix = "#",
+                            onValueChange = { coreMultiplier = it }
                         )
                     }
                 }
