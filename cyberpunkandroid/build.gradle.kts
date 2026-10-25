@@ -76,7 +76,7 @@ afterEvaluate {
                 from(components["release"])
                 groupId = "com.github.matthewdmanning"
                 artifactId = "cyberpunkAndroid"
-                version = System.getenv("JITPACK_VERSION") ?: System.getenv("VERSION") ?: "1.0.0"
+                version = System.getenv("JITPACK_VERSION") ?: System.getenv("VERSION") ?: "1.0.14"
             }
         }
     }
