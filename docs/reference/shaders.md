@@ -136,6 +136,42 @@ Modifier.cyberOverload(…)            public API, CyberModifiers.kt
 - **Launch angle:** ±45° from vertical, with launch speed scaled to 45% of the short side.
 - **Life:** same color stages, fading out and halving in radius over each spark's life.
 
+## `PixelFrontierShader`
+
+**Effect:** Full-screen hardware shader transition. Used by `CyberPixelFrontierTransition`. The component applies this shader as an AGSL `RenderEffect` on each screen layer (eroding outgoing layer with `revealBehind = 0`, materializing incoming layer with `revealBehind = 1`). Both layers share coordinated progress, sweep axes, and stochastic modulation.
+
+**What it computes**
+1. **Fourier Series Stochastic Synthesis:** Instead of white noise flicker, the shader synthesizes a continuous 1D spatial-temporal stochastic field using pre-calculated Fourier series harmonics:
+   $$\text{field}(s, t) = \sum_{k=1}^4 a_k \sin(s \cdot k_{\text{spatial}} + t \cdot \omega_{\text{temporal}} + \phi_k)$$
+   This generates coherent spatial and temporal autocorrelation across the sweep axis ($s = \text{dot}(p, \text{across})$).
+2. **Dynamic Stochastic Band Width:** The effective width of the transition zone varies dynamically along the frontier: $\text{localBand} = \text{bandWidth} \times (1.0 + 0.35 \times \text{fourierField})$. This creates organically undulating, breathing waves across the screen.
+3. **Micro-Pixel Matrix & Multi-level Dissolution:** Blocks down to sub-pixel / 0.5px hardware device pixels (`blockSizePx = 0.5f`) are evaluated across 3 hierarchical levels (`LevelCount = 3`).
+4. **Sharp Starting Edge & Asymmetric Gaussian Density Decay:** At the advancing origin where the effect begins ($\text{distAdvancing} = 0$), pixels form a sharp, distinct boundary (density = 100%). In the advancing direction ($\text{distAdvancing} \ge 0$), the pixel density decays exponentially following a half-Gaussian distribution:
+   $$\text{gaussianDensity} = \exp\left(-\frac{\text{distAdvancing}^2}{2\sigma^2}\right) \quad \text{where } \sigma = \text{localBand} \times 1.5$$
+   This Gaussian profile is modulated by the spatial-temporal Fourier stochastic field, creating a razor-sharp leading edge that dissolves into a progressively dispersed micro-pixel mist along the sweep vector.
+5. **Frontier Raggedness & Chromatic Aberration:** Combines high-frequency column jitter with low-frequency Fourier drift. Chromatic aberration splits R and B channels along the axis by $\text{splitOffset} \times \text{proximity}$.
+6. **Outlines & Neon Edge:** Edge outlines detect luminance differences ($\ge \text{edgeThreshold}$) or frontier boundaries within $\text{edgeWidth}$, mixed with emissive $\text{edgeColor}$.
+
+| Uniform | Type | Set from | Parameter Influence |
+| --- | --- | --- | --- |
+| `resolution` | `float2` | layer size | Viewport dimensions in physical pixels. |
+| `axis` | `float2` | orientation & direction | Normalized sweep vector: `(-1, 0)` for Right-to-Left, `(1, 0)` for Left-to-Right, `(0, 1)` for Top-to-Bottom. |
+| `frontier` | `float` | sweep progress | Center coordinate of the active transition wave along the sweep axis. |
+| `revealBehind` | `float` | 1 for incoming, 0 for outgoing | Controls materialization behind vs erosion ahead of the frontier. |
+| `blockSize` | `float` | `blockSizePx ?: blockSize.toPx()` | Base edge length in pixels. Set to `0.5f` for micro-pixel dissolution or `32.dp` for chunky digital retro blocks. |
+| `bandWidth` | `float` | `blockSize × bandBlocks` | Width of the active dissolving wave. Default `120f` gives an expansive, wide sweeping zone across the screen. |
+| `edgeWidth` | `float` | `edgeWidthPx ?: edgeWidth.toPx()` | Thickness of neon boundary contours in pixels. |
+| `edgeThreshold` | `float` | `edgeThreshold` | Contrast threshold (0..1) for drawing block borders. Lower values trigger more edge tracer outlines. |
+| `splitOffset` | `float` | `splitOffsetPx ?: splitOffset.toPx()` | Peak RGB channel chromatic displacement. |
+| `jitter` | `float` | `frontierJitterPx ?: frontierJitter.toPx()` | Micro-displacement magnitude perpendicular to the sweep axis. |
+| `edgeColor` | `layout(color) half4` | `edgeColor` | Outline tint and emissive glow color (e.g. Neon Purple `#B026FF`). |
+| `time` | `float` | normalized progress / clock | Drives temporal autocorrelation in the Fourier synthesis, creating smooth continuous undulation rather than static banding. |
+| `stochasticMode` | `float` | `stochasticMode` (0, 1, 2) | Selects pre-calculated harmonic series: `0` = continuous rolling 1/f wave, `1` = high-frequency telemetry glitch, `2` = low-frequency harmonic surge. |
+
+**Fallback:** Below API 33, standard Compose `AnimatedContent` transition runs without shader compilation.
+
+**Physical Device Verification:** Verified on Google Pixel 7 (Android 17 / SDK 37) running at 90 Hz with 0.5–1.0px micro-pixel matrix, Right-to-Left sweep vector, and neon purple palette. Evidence in `docs/test-drives/`.
+
 ---
 
 ## Adding a shader effect

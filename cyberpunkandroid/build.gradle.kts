@@ -46,6 +46,8 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
+    implementation(libs.commons.statistics.distribution)
+    implementation(libs.commons.statistics.descriptive)
 
     val composeBom = platform(libs.androidx.compose.bom)
     implementation(composeBom)
@@ -74,7 +76,7 @@ afterEvaluate {
                 from(components["release"])
                 groupId = "com.github.matthewdmanning"
                 artifactId = "cyberpunkAndroid"
-                version = System.getenv("JITPACK_VERSION") ?: System.getenv("VERSION") ?: "1.0.0"
+                version = System.getenv("JITPACK_VERSION") ?: System.getenv("VERSION") ?: "1.0.14"
             }
         }
     }

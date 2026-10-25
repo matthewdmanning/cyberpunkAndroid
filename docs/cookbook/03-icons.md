@@ -90,3 +90,24 @@ CyberGlowIconPath(
     glowRadius = 12.dp
 )
 ```
+
+---
+
+## 6. Sizing Hierarchy & Interactive Hero Affordance
+
+Icons in `:cyberpunkandroid` serve distinct hierarchical functions across the UI. Choosing icon sizing must be driven by **functional purpose and tactile affordance**, never by choosing the smallest permitted size.
+
+| Token | Size | Purpose | UI Placement | Example Usage |
+| :--- | :--- | :--- | :--- | :--- |
+| `IconSizes.dp16` | 16.dp | Inline badge / status suffix | Embedded directly within text lines, chip suffixes | Network status dot, security pill |
+| `IconSizes.dp24` | 24.dp | Standard toolbar / action item | Navigation bars, standard buttons, list tiles | Tab bar items, overflow menu actions |
+| `IconSizes.dp32` | 32.dp | Section header / secondary accent | Container headers, telemetry tile corners | Metric tile headers, sub-panel icons |
+| `IconSizes.dp48` | 48.dp | Prominent action / primary CTA | Standalone primary action buttons | High-priority trigger buttons |
+| `IconSizes.dp64` | 64.dp | **Hero Interactive Focal Point** | Centerpiece tactile actuators, hold-to-charge capacitors | Synaptic governor bypass, central reactor switch |
+
+> [!CAUTION]
+> **Anti-Pattern: Timid Sizing on Interactive Highlight Icons**
+> Never use `IconSizes.dp16`, `dp24`, or `dp32` for the primary point of user interaction (such as a hold-to-charge actuator or main toggle). An interactive hero icon must scream its affordance: **"HOLD ME!"** or **"ACTUATE ME!"** Sizing a primary interactive control down to a small status size destroys visual hierarchy and makes the touch target feel ambiguous or non-interactive.
+>
+> Pair `IconSizes.dp64` with generous touch bounds (88dp–144dp) using `CyberRim` and `CyberDialTicks` to establish an unmistakable hero focal point.
+

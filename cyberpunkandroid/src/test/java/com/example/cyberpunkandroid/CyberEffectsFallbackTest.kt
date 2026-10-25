@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.cyberpunkandroid.effects.cyberOverload
 import com.example.cyberpunkandroid.effects.cyberScanlines
-import com.example.cyberpunkandroid.effects.cyberNeonBorderFlow
+import com.example.cyberpunkandroid.effects.cyberGlowBorderFlow
 import com.example.cyberpunkandroid.effects.cyberNoise
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -106,19 +106,19 @@ class CyberEffectsFallbackTest {
     }
 
     @Test
-    fun `cyberNeonBorderFlow renders without crashing`() {
+    fun `cyberGlowBorderFlow renders without crashing`() {
         var completed = false
         composeTestRule.setContent {
             Box(
                 modifier = Modifier
                     .size(100.dp)
-                    .cyberNeonBorderFlow(enabled = true)
+                    .cyberGlowBorderFlow()
             ) {
                 completed = true
             }
         }
 
         composeTestRule.waitForIdle()
-        assertTrue("Compose should complete rendering cyberNeonBorderFlow without crashing", completed)
+        assertTrue("Compose should complete rendering cyberGlowBorderFlow without crashing", completed)
     }
 }

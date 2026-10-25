@@ -58,6 +58,26 @@ object CyberPrimitives {
         val dp64 = 64.dp
     }
 
+    object PixelSizes {
+        // Primitive pixel dimensions
+        val dp2 = 2.dp   // Fine matrix
+        val dp4 = 4.dp   // Compact pixel
+        val dp8 = 8.dp   // Standard retro grain
+        val dp12 = 12.dp // Chunky block
+        val dp16 = 16.dp // Coarse mosaic
+        val dp24 = 24.dp // Large pixel
+        val dp32 = 32.dp // Massive frontier block
+
+        // Semantic purpose-driven aliases
+        val Fine = dp2
+        val Compact = dp4
+        val Standard = dp8
+        val Chunky = dp12
+        val Coarse = dp16
+        val Large = dp24
+        val Frontier = dp32
+    }
+
     object BorderWidths {
         val dp1 = 1.dp
         val dp2 = 2.dp

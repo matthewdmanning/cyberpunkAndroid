@@ -32,6 +32,19 @@ object CyberConfig {
         const val CrtCurvature: Float = 0.3f
         const val ScanlineOpacity: Float = 0.02f
         const val NoiseOpacity: Float = 0.03f
+
+        // Defaults for CyberPixelFrontierTransition.
+        /** Default hardware block size in pixels (2f for visible pixel blocks). */
+        const val PixelFrontierBlockSizePx: Float = 2f
+
+        /** Width of the pixelated band, counted in coarsest blocks. Focused tight frontier edge. */
+        const val PixelFrontierBandBlocks: Float = 10f
+
+        /** Smallest brightness difference (0..1) between two neighbor blocks that draws an outline. */
+        const val PixelFrontierEdgeThreshold: Float = 0.12f
+
+        /** Peak opacity (0..1) of the soft glow drawn along the frontier. 0 turns the glow off. */
+        const val PixelFrontierGlowStrength: Float = 0.65f
     }
 
     object Effects {

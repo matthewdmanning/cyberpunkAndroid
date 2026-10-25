@@ -4,7 +4,7 @@ Every public visual effect in `cyberpunkandroid`: what it is, what it looks like
 
 Shared parameters (`trigger`, `interactionSource`, `appendedA11y`, `customA11y`) behave the same everywhere and are explained once in the [reference index](README.md#concepts-shared-by-every-effect). They're left out of the tables below unless an effect treats them differently.
 
-**Jump to:** [Distortion shaders](#distortion-shaders) · [Glow](#glow) · [Motion](#motion) · [Surfaces & patterns](#surfaces--patterns) · [Interaction](#interaction) · [Utilities](#utilities) · [Choosing an effect](#choosing-an-effect)
+**Jump to:** [Distortion shaders](#distortion-shaders) · [Glow](#glow) · [Motion](#motion) · [Surfaces & patterns](#surfaces--patterns) · [Interaction](#interaction) · [Screen transitions](#screen-transitions) · [Utilities](#utilities) · [Choosing an effect](#choosing-an-effect)
 
 ---
 
@@ -468,6 +468,13 @@ No trigger: always on.
 | `shape` | `Shape` | `CutCornerShape(12.dp)` | Outline to trace. |
 | `pathEffect` | `PathEffect?` | 10 px dash, 10 px gap | Dash pattern; `null` = solid. |
 
+> [!IMPORTANT]
+> **High-DPI Stroke Legibility & Dotted/Dashed Visibility**
+> On modern high-density mobile displays (xxhdpi/xxxhdpi, 400+ dpi), a `1.dp` dashed or dotted border rendered with reduced alpha (<0.7f) or small dash patterns becomes an imperceptible hairline scatter or invisible artifact.
+> - **Anti-Pattern:** Defaulting to `1.dp` simply because it is the smallest permitted non-prohibited value.
+> - **Visibility Rule:** For dotted, dashed, or ticked strokes (`cyberBorder`, `CyberDialTicks`), always specify at least `width = CyberPrimitives.BorderWidths.dp2` (2.dp) or `dp4` (4.dp), with calibrated dash intervals (minimum 12–20px dash length) and strong contrast (alpha ≥ 0.75f or emissive neon glow). Reserve `1.dp` strictly for high-contrast, fully opaque solid dividing rules.
+
+
 ### `Modifier.cyberBackdropBlur`
 
 **What:** A glassmorphism overlay using translucent tint, gradient `Brush`, and optional blur on API 31+.
@@ -511,6 +518,57 @@ Throws if used outside `CyberDragDropProvider`.
 | `pollingDelayMillis` | `Long` | `16` | Progress update interval (~60 Hz). |
 | `onProgressUpdate` | `(Float) -> Unit` | required | Called with 0–1 while held, and 0 on early release. |
 | `onComplete` | `() -> Unit` | required | Called once when progress reaches 1. |
+
+---
+
+## Screen transitions
+
+### `CyberPixelFrontierTransition`
+
+**What:** A full-screen switch from one screen to another. A frontier sweeps across the display with a wide stochastic micro-pixel matrix, density fade-out, and pre-calculated Fourier series autocorrelation.
+
+**Looks like:** A razor-sharp cyber wave sweeps across the screen (horizontally or vertically). Along a broad dissolving band, both screens dissolve into micro-pixels (defaulting to sub-pixel hardware resolution `0.5px`). The density fades out toward the edges of the band, while the transition width and density undulate smoothly via a spatial-temporal autocorrelated Fourier series. Neon tracer outlines, chromatic aberration, and an emissive glow contour the frontier. Below Android 13 (API 33), the default `AnimatedContent` transition runs as a graceful fallback.
+
+**Use for:** Switching between whole screens or major app modes (e.g., Splash to Main Catalogue, entering a cyber terminal, or switching views).
+
+```kotlin
+CyberPixelFrontierTransition(
+    targetState = currentScreen,
+    orientation = Orientation.Horizontal,
+    reverse = true,
+    blockSizePx = 0.5f,
+    bandBlocks = 120f,
+    edgeColor = Color(0xFFB026FF), // Neon Purple
+    stochasticMode = 0,
+) { screen ->
+    when (screen) {
+        AppScreen.SPLASH -> SplashScreen()
+        AppScreen.CATALOGUE -> CatalogueScreen()
+    }
+}
+```
+
+Draw the `screen` value the lambda receives, not the outer state. The old screen stays visible while it leaves. Each screen needs an opaque background.
+
+| Parameter | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `targetState` | `S` | required | The screen to show. A change starts the transition. |
+| `orientation` | `Orientation` | `Vertical` | `Vertical` sweeps top to bottom. `Horizontal` sweeps left to right. |
+| `reverse` | `Boolean` | `false` | Inverts sweep direction (`true` + `Horizontal` sweeps Right-to-Left). |
+| `blockSize` | `Dp` | `32.dp` | Edge length of largest block in Dp (used if `blockSizePx` is null). |
+| `blockSizePx` | `Float?` | `0.5f` | Edge length directly in hardware device pixels, bypassing Dp scaling for crisp 0.5–1.0px micro-dissolution. |
+| `bandBlocks` | `Float` | `120f` | Width of the transition wave in block units. High values create a broad, cinematic dissolving zone. |
+| `edgeWidth` | `Dp` | `2.dp` | Thickness of neon contour outlines in Dp. |
+| `edgeWidthPx` | `Float?` | `null` | Explicit outline thickness in hardware device pixels. |
+| `edgeThreshold` | `Float` | `0.12f` | Smallest brightness difference (0..1) between neighbor blocks that draws an outline. |
+| `splitOffset` | `Dp` | `4.dp` | Peak red/blue shift along the sweep. 0 turns it off. |
+| `splitOffsetPx` | `Float?` | `null` | Explicit chromatic aberration offset in hardware device pixels. |
+| `frontierJitter` | `Dp` | `32.dp` | Random column shift magnitude in Dp. |
+| `frontierJitterPx` | `Float?` | `null` | Explicit random column shift in hardware device pixels. |
+| `glowStrength` | `Float` | `0.65f` | Peak opacity of the emissive glow along the frontier. 0 turns the glow off. |
+| `animationSpec` | `FiniteAnimationSpec<Float>` | `tween(300)` | Timing of the sweep. |
+| `edgeColor` | `Color` | theme `primary` | Color of the outlines and the glow (e.g. Neon Purple `#B026FF`). |
+| `stochasticMode` | `Int` | `0` | Selects Fourier harmonic preset (0: continuous rolling wave, 1: cyber glitch/telemetry, 2: harmonic surge). |
 
 ---
 

@@ -14,7 +14,7 @@ maven { url = uri("https://jitpack.io") }
 Add the dependency to your app-level `build.gradle.kts`:
 
 ```kotlin
-implementation("com.github.matthewdmanning:cyberpunkAndroid:1.0.5")
+implementation("com.github.matthewdmanning:cyberpunkAndroid:1.0.14")
 ```
 
 ## How do I use this to create usable components for the app?

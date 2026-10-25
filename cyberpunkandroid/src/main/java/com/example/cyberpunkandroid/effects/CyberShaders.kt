@@ -35,6 +35,329 @@ internal object CyberShaders {
         return android.graphics.RenderEffect.createRuntimeShaderEffect(shader, "contents").asComposeRenderEffect()
     }
 
+    /**
+     * Names of the uniforms that [PixelFrontierShader] declares. Kotlin code sets uniforms only through
+     * these names, and a unit test checks that the shader source still declares every one of them.
+     * (Setting a uniform that the shader does not declare throws at runtime.)
+     */
+    internal object PixelFrontierUniforms {
+        const val Resolution = "resolution"
+        const val Contents = "contents"
+        const val Axis = "axis"
+        const val Frontier = "frontier"
+        const val RevealBehind = "revealBehind"
+        const val BlockSize = "blockSize"
+        const val BandWidth = "bandWidth"
+        const val EdgeWidth = "edgeWidth"
+        const val EdgeThreshold = "edgeThreshold"
+        const val SplitOffset = "splitOffset"
+        const val Jitter = "jitter"
+        const val EdgeColor = "edgeColor"
+        const val Time = "time"
+        const val StochasticMode = "stochasticMode"
+
+        /** Every uniform name, used by the source-consistency test. */
+        val All = listOf(
+            Resolution, Contents, Axis, Frontier, RevealBehind, BlockSize, BandWidth,
+            EdgeWidth, EdgeThreshold, SplitOffset, Jitter, EdgeColor,
+            Time, StochasticMode,
+        )
+    }
+
+    /**
+     * Visual: a frontier line sweeps across one screen layer. On the side where this layer is hidden, the
+     * shader returns transparent pixels. On the side where it is shown, pixels near the frontier are
+     * grouped into square blocks. Blocks are largest at the frontier and halve in size in steps
+     * (three steps, set by `LevelCount` in the source) away from it, so the picture sharpens with distance. Each block is shown
+     * or hidden as a whole. Each column of largest blocks moves the frontier by its own random amount
+     * (up to `jitter`), so the frontier is a ragged, stepped edge, not a straight line.
+     *
+     * Edge effects, only inside the band: (1) a neon outline on a block side when the neighbor block
+     * differs in brightness, (2) the same outline on a block side that touches the frontier, and
+     * (3) a red/blue color split along the sweep axis, strongest at the frontier.
+     *
+     * Two layers (old screen and new screen) use the same shader with opposite [revealBehind] values.
+     * Both layers compute the same blocks, so their visible areas never overlap and never leave a gap.
+     *
+     * Cost per pixel: one sample outside the band. Inside the band, three samples for the block color,
+     * plus up to four neighbor samples, and only for pixels within `edgeWidth` of a block side.
+     */
+    @Language("AGSL")
+    const val PixelFrontierShader = """
+        uniform float2 resolution;
+        uniform shader contents;
+        uniform float2 axis;            // (1,0) sweeps left to right, (0,1) sweeps top to bottom
+        uniform float frontier;         // frontier position along the axis, in pixels
+        uniform float revealBehind;     // 1.0: show pixels the frontier has passed (new screen). 0.0: show pixels ahead of it (old screen)
+        uniform float blockSize;        // edge length of the largest block, in pixels
+        uniform float bandWidth;        // distance from the frontier over which blocks exist, in pixels
+        uniform float edgeWidth;        // outline thickness, in pixels
+        uniform float edgeThreshold;    // smallest brightness difference (0..1) that draws an outline
+        uniform float splitOffset;      // peak red/blue shift along the axis, in pixels
+        uniform float jitter;           // total random shift of the frontier per block column, in pixels (0 = straight line)
+        layout(color) uniform half4 edgeColor;
+        uniform float time;             // animation progress/time for temporal autocorrelation
+        uniform float stochasticMode;   // 0: smooth wave, 1: cyber glitch, 2: harmonic surge
+
+        // Number of block sizes in the band. Each step halves the block size.
+        const int LevelCount = 3;
+
+        // True 2D isotropic stochastic field using 6 symmetric hexagonal wavevectors
+        // Ensures sum(kx^2) == sum(ky^2) and sum(kx*ky) == 0.0 (zero directional / row bias).
+        float evaluate2DField(float2 p, float t, int mode) {
+            float kBase = (mode == 1) ? 0.16 : ((mode == 2) ? 0.05 : 0.08);
+            float omegaBase = (mode == 1) ? 4.5 : ((mode == 2) ? 2.2 : 1.8);
+
+            float total = 0.0;
+            // Octave 1: Hexagonal symmetric wave pairs (weight 0.65)
+            total += sin(p.x * kBase + omegaBase * t + 0.0);
+            total += sin(p.y * kBase + omegaBase * t + 0.0);
+            total += sin((0.8660254 * p.x + 0.5 * p.y) * kBase + omegaBase * t + 1.2566);
+            total += sin((0.5 * p.x + 0.8660254 * p.y) * kBase + omegaBase * t + 1.2566);
+            total += sin((-0.8660254 * p.x + 0.5 * p.y) * kBase + omegaBase * t + 2.5133);
+            total += sin((0.5 * p.x - 0.8660254 * p.y) * kBase + omegaBase * t + 2.5133);
+            total = (total / 6.0) * 0.65;
+
+            // Octave 2: Diagonal and axis harmonics (weight 0.35, 2x frequency)
+            float kHarm = kBase * 2.0;
+            float omegaHarm = omegaBase * 1.6;
+            float totalHarm = 0.0;
+            totalHarm += sin(p.x * kHarm + omegaHarm * t + 3.7699);
+            totalHarm += sin(p.y * kHarm + omegaHarm * t + 3.7699);
+            totalHarm += sin((0.7071068 * p.x + 0.7071068 * p.y) * kHarm + omegaHarm * t + 0.85);
+            totalHarm += sin((0.7071068 * p.x - 0.7071068 * p.y) * kHarm + omegaHarm * t + 5.0265);
+            totalHarm += sin((-0.7071068 * p.x + 0.7071068 * p.y) * kHarm + omegaHarm * t + 5.0265);
+            total += (totalHarm / 5.0) * 0.35;
+
+            return total;
+        }
+
+        // Catmull-Rom cubic spline interpolator for 2D density extrema curves
+        float catmullRom(float p0, float p1, float p2, float p3, float t) {
+            float t2 = t * t;
+            float t3 = t2 * t;
+            return 0.5 * (
+                (2.0 * p1) +
+                (-p0 + p2) * t +
+                (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t2 +
+                (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * t3
+            );
+        }
+
+        float evalSpline(float p0, float p1, float p2, float p3, float p4, float p5, float v) {
+            float sv = clamp(v, 0.0, 0.9999) * 3.0;
+            int idx = int(floor(sv));
+            float t = fract(sv);
+            if (idx == 0) return catmullRom(p0, p1, p2, p3, t);
+            else if (idx == 1) return catmullRom(p1, p2, p3, p4, t);
+            else return catmullRom(p2, p3, p4, p5, t);
+        }
+
+        // Distinct top-to-bottom spline curves acting as density extrema (not all the same).
+        // Start offset is 0 so particle spawn density begins immediately at the barrier/divide:
+        float evalSplineStart(float v) {
+            return 0.0;
+        }
+
+        float evalSplinePeak(float v) {
+            return evalSpline(0.36, 0.46, 0.38, 0.52, 0.34, 0.44, v);
+        }
+
+        float evalSplineEnd(float v) {
+            return evalSpline(0.72, 0.84, 0.70, 0.88, 0.76, 0.82, v);
+        }
+
+        // 2D spawn density field rho(normDist, v) with top-to-bottom spline extrema
+        float computeSpawnDensity(float normDist, float v) {
+            float xs = evalSplineStart(v);
+            float xp = evalSplinePeak(v);
+            float xe = evalSplineEnd(v);
+
+            if (normDist <= xs || normDist >= xe) {
+                return 0.0;
+            } else if (normDist <= xp) {
+                float u = clamp((normDist - xs) / max(1e-4, xp - xs), 0.0, 1.0);
+                return 3.0 * u * u - 2.0 * u * u * u;
+            } else {
+                float w = clamp((normDist - xp) / max(1e-4, xe - xp), 0.0, 1.0);
+                return 1.0 - (3.0 * w * w - 2.0 * w * w * w);
+            }
+        }
+
+        half4 sampleInside(float2 point) {
+            return contents.eval(clamp(point, float2(0.5), resolution - 0.5));
+        }
+
+        half4 main(float2 fragCoord) {
+            float distAdvancing = dot(fragCoord, axis) - frontier;
+            bool ahead = distAdvancing >= 0.0;
+
+            if (revealBehind > 0.5) {
+                if (!ahead) {
+                    return contents.eval(fragCoord);
+                }
+                return half4(0.0);
+            }
+
+            if (!ahead) {
+                return half4(0.0);
+            }
+
+            // Far ahead of the dissolution band: intact solid outgoing screen
+            if (distAdvancing >= bandWidth) {
+                return contents.eval(fragCoord);
+            }
+
+            float cell = blockSize;
+            for (int i = 0; i < LevelCount; i++) {
+                float reach = bandWidth * float(i + 1) / float(LevelCount);
+                if (distAdvancing < reach) {
+                    cell = blockSize;
+                }
+            }
+
+            // 2D discrete particle emission sites:
+            float2 blockCoord = floor(fragCoord / max(blockSize, 1.0));
+            float2 samplePoint = (blockCoord + 0.5) * blockSize;
+            float particleDist = dot(samplePoint, axis) - frontier;
+
+            if (particleDist < 0.0) {
+                return half4(0.0);
+            }
+
+            float normDist = clamp(particleDist / max(bandWidth, 1.0), 0.0, 1.0);
+
+            // 2D SPAWN DENSITY GOVERNED BY TOP-TO-BOTTOM SPLINE EXTREMA (NOT ALL THE SAME):
+            float2 across = float2(-axis.y, axis.x);
+            float v = clamp(dot(fragCoord, across) / max(dot(resolution, abs(across)), 1.0), 0.0, 1.0);
+            float xp = evalSplinePeak(v);
+            float xe = evalSplineEnd(v);
+
+            // BEYOND PARTICLE EXTINCTION (NO BLACK GAP): INTACT SOLID OUTGOING SCREEN
+            if (normDist >= xe) {
+                return contents.eval(fragCoord);
+            }
+
+            // STOCHASTIC EROSION OF OUTGOING SCREEN ALL THE WAY TO THE FRONTIER BORDER:
+            // The old screen erodes continuously from xe down to 0.0 with zero deadband or black gaps.
+            float solidHash = fract(sin(dot(blockCoord, float2(26.37, 83.19))) * 43758.5453);
+            float solidProb = smoothstep(0.0, xe, normDist);
+            if (solidHash < solidProb) {
+                return contents.eval(fragCoord);
+            }
+
+            // CIRCULAR PARTICLE GEOMETRY: OUTSIDE RADIUS IS TRANSPARENT SPACE
+            float radius = 0.48 * blockSize;
+            float distFromCenter = length(fragCoord - samplePoint);
+            if (distFromCenter > radius) {
+                return half4(0.0);
+            }
+
+            float spawnDensity = computeSpawnDensity(normDist, v);
+
+            // COMPLETELY RANDOM LIFETIME PER INDIVIDUAL PARTICLE (BETA(2, 5) SKINNY TAIL):
+            float lifeHash = fract(sin(dot(blockCoord, float2(12.9898 + stochasticMode * 3.7, 78.233 + stochasticMode * 7.1))) * 43758.5453);
+            // Solve CDF of Beta(2, 5) via Newton-Raphson:
+            float xBeta = 0.25;
+            for (int i = 0; i < 2; i++) {
+                float oneMinusX = clamp(1.0 - xBeta, 0.0, 1.0);
+                float f = xBeta * xBeta * (15.0 + xBeta * (-40.0 + xBeta * (45.0 + xBeta * (-24.0 + 5.0 * xBeta)))) - lifeHash;
+                float df = max(30.0 * xBeta * oneMinusX * oneMinusX * oneMinusX * oneMinusX, 0.001);
+                xBeta = clamp(xBeta - f / df, 0.0, 1.0);
+            }
+            float particleLifetime = clamp(0.30 + 1.70 * xBeta, 0.30, 2.0);
+
+            // EMISSION DRAW MODULATED BY SPAWN DENSITY & LIFETIME (2x INITIAL DENSITY = 0.80, 2x LIFETIME):
+            float emitHash = fract(sin(dot(blockCoord + float2(0.31, 0.73), float2(41.17, 93.31)) + time * 0.5) * 43758.5453);
+            float threshold = clamp(max(spawnDensity, 0.80) * particleLifetime * 0.95, 0.0, 1.0);
+
+            bool isParticleActive = emitHash < threshold;
+            if (!isParticleActive) {
+                return half4(0.0);
+            }
+
+            // 100% OPAQUE & LUMINOUS CIRCULAR PARTICLE (ALPHA = 1.0, NO TRANSPARENCY):
+            half4 sampled = sampleInside(samplePoint);
+            half3 particleColor = mix(sampled.rgb, edgeColor.rgb, 0.75);
+            return half4(particleColor, 1.0);
+        }
+    """
+
+    /** Settings for one frame of [PixelFrontierShader]. All distances are in pixels. */
+    internal data class PixelFrontierSpec(
+        /** Layer width. */
+        val width: Float,
+        /** Layer height. */
+        val height: Float,
+        /** True when the frontier sweeps top to bottom. False when it sweeps left to right. */
+        val vertical: Boolean,
+        /** True to reverse the sweep (bottom-to-top if vertical, right-to-left if horizontal). */
+        val reverse: Boolean = false,
+        /** Frontier position along the sweep axis. */
+        val frontier: Float,
+        /** True for the new screen (shown behind the frontier). False for the old screen. */
+        val revealBehind: Boolean,
+        /** Edge length of the largest block. */
+        val blockSize: Float,
+        /** Width of the band in which blocks exist. */
+        val bandWidth: Float,
+        /** Outline thickness. */
+        val edgeWidth: Float,
+        /** Smallest brightness difference (0..1) that draws an outline. */
+        val edgeThreshold: Float,
+        /** Peak red/blue shift along the sweep axis. */
+        val splitOffset: Float,
+        /** Total random shift of the frontier per block column. 0 gives a straight frontier. */
+        val jitter: Float,
+        /** Outline color as a packed ARGB integer. */
+        val edgeColorArgb: Int,
+        /** Normalized time or progress driving temporal autocorrelation. */
+        val time: Float = 0f,
+        /** Preset selector for pre-calculated Fourier series autocorrelation (0: smooth wave, 1: cyber glitch, 2: harmonic surge). */
+        val stochasticMode: Float = 0f,
+    )
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    fun createPixelFrontierShader() = RuntimeShader(PixelFrontierShader)
+
+    /**
+     * Writes [spec] into [shader] and wraps it as a render effect for one screen layer.
+     *
+     * @param shader A shader made by [createPixelFrontierShader]. Use one instance per screen layer.
+     * @param spec Settings for this frame.
+     * @return A render effect that applies the shader to the layer content.
+     */
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    internal fun pixelFrontierEffect(shader: RuntimeShader, spec: PixelFrontierSpec): androidx.compose.ui.graphics.RenderEffect {
+        shader.setFloatUniform(PixelFrontierUniforms.Resolution, spec.width, spec.height)
+        val ax = when {
+            spec.vertical && !spec.reverse -> 0f
+            spec.vertical && spec.reverse -> 0f
+            !spec.vertical && !spec.reverse -> 1f
+            else -> -1f
+        }
+        val ay = when {
+            spec.vertical && !spec.reverse -> 1f
+            spec.vertical && spec.reverse -> -1f
+            else -> 0f
+        }
+        shader.setFloatUniform(PixelFrontierUniforms.Axis, ax, ay)
+        shader.setFloatUniform(PixelFrontierUniforms.Frontier, spec.frontier)
+        shader.setFloatUniform(PixelFrontierUniforms.RevealBehind, if (spec.revealBehind) 1f else 0f)
+        shader.setFloatUniform(PixelFrontierUniforms.BlockSize, spec.blockSize)
+        shader.setFloatUniform(PixelFrontierUniforms.BandWidth, spec.bandWidth)
+        shader.setFloatUniform(PixelFrontierUniforms.EdgeWidth, spec.edgeWidth)
+        shader.setFloatUniform(PixelFrontierUniforms.EdgeThreshold, spec.edgeThreshold)
+        shader.setFloatUniform(PixelFrontierUniforms.SplitOffset, spec.splitOffset)
+        shader.setFloatUniform(PixelFrontierUniforms.Jitter, spec.jitter)
+        shader.setColorUniform(PixelFrontierUniforms.EdgeColor, spec.edgeColorArgb)
+        shader.setFloatUniform(PixelFrontierUniforms.Time, spec.time)
+        shader.setFloatUniform(PixelFrontierUniforms.StochasticMode, spec.stochasticMode)
+        return android.graphics.RenderEffect
+            .createRuntimeShaderEffect(shader, PixelFrontierUniforms.Contents)
+            .asComposeRenderEffect()
+    }
+
 
     @Language("AGSL")
     const val GlowShader = """

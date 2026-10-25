@@ -14,8 +14,11 @@ lifecycleRuntime = "2.8.7"
 robolectric = "4.17"
 # Pinned to the version both modules used before the catalog move; the Compose BOM would resolve an older one.
 material3 = "1.4.0"
+commonsStatistics = "1.1"
 
 [libraries]
+commons-statistics-distribution = { group = "org.apache.commons", name = "commons-statistics-distribution", version.ref = "commonsStatistics" }
+commons-statistics-descriptive = { group = "org.apache.commons", name = "commons-statistics-descriptive", version.ref = "commonsStatistics" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
