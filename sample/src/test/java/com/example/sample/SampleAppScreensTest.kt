@@ -34,8 +34,6 @@ class SampleAppScreensTest {
     fun testSplashScreenAndReplayTransition() {
         composeTestRule.onNodeWithText("REPLAY INTRO", ignoreCase = true).performClick()
         composeTestRule.waitForIdle()
-        composeTestRule.mainClock.advanceTimeBy(2000L)
-        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("CYBERPUNK", ignoreCase = true).assertExists()
         composeTestRule.onNodeWithText("INITIALIZE INTERFACE", ignoreCase = true, substring = true).assertExists()
     }
