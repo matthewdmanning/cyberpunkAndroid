@@ -208,18 +208,17 @@ class CyberNavFeedbackInfoTest {
     fun `change pulse fires on change but not on first value`() {
         var key by mutableIntStateOf(1)
         var peak = 0f
-        composeTestRule.mainClock.autoAdvance = false
         composeTestRule.setContent {
             val pulse = rememberCyberChangePulse(key = key, shouldPulse = { old, new -> new > old })
             peak = maxOf(peak, pulse.value)
         }
-        composeTestRule.mainClock.advanceTimeBy(100)
+        composeTestRule.waitForIdle()
         assertEquals(0f, peak)
         key = 0 // A decrease is rejected by shouldPulse.
-        composeTestRule.mainClock.advanceTimeBy(100)
+        composeTestRule.waitForIdle()
         assertEquals(0f, peak)
         key = 5
-        composeTestRule.mainClock.advanceTimeBy(100)
+        composeTestRule.waitForIdle() // Runs the whole pulse; composition samples it on each frame.
         assertTrue(peak > 0f)
     }
 

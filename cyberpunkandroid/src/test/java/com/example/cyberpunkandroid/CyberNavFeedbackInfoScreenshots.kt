@@ -19,10 +19,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.test.captureToImage
-import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.activity.ComponentActivity
+import android.graphics.Canvas
 import com.example.cyberpunkandroid.components.CyberAlertVariant
 import com.example.cyberpunkandroid.components.CyberBanner
 import com.example.cyberpunkandroid.components.CyberBreadcrumbs
@@ -65,7 +64,7 @@ import java.io.File
 class CyberNavFeedbackInfoScreenshots {
 
     @get:Rule
-    val composeTestRule = createComposeRule()
+    val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
     /** Output folder, relative to the module directory that Gradle uses as the test working directory. */
     private val outDir = File("build/screenshots/nav-feedback-info").apply { mkdirs() }
@@ -77,7 +76,11 @@ class CyberNavFeedbackInfoScreenshots {
      */
     private fun capture(name: String) {
         composeTestRule.waitForIdle()
-        val bitmap = composeTestRule.onRoot().captureToImage().asAndroidBitmap()
+        // Test-only capture: draw the window's root view into a bitmap. Compose's captureToImage waits for a
+        // real frame callback, which never arrives while the test clock is paused.
+        val root = composeTestRule.activity.window.decorView
+        val bitmap = Bitmap.createBitmap(root.width, root.height, Bitmap.Config.ARGB_8888)
+        composeTestRule.runOnUiThread { root.draw(Canvas(bitmap)) }
         File(outDir, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
 
