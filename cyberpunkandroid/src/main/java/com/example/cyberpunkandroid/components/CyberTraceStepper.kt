@@ -27,6 +27,7 @@ import com.example.cyberpunkandroid.config.CyberConfig
 import com.example.cyberpunkandroid.config.CyberPrimitives
 import com.example.cyberpunkandroid.effects.CyberHoloBrushSource
 import com.example.cyberpunkandroid.effects.CyberHoloPalette
+import com.example.cyberpunkandroid.effects.LocalCyberHoloUseShader
 import com.example.cyberpunkandroid.effects.cyberComponentSemantics
 import com.example.cyberpunkandroid.effects.cyberHoloPalette
 import com.example.cyberpunkandroid.effects.rememberCyberDriftPhase
@@ -87,6 +88,7 @@ fun CyberTraceStepper(
     val current = currentStep.coerceIn(0, steps.lastIndex)
     val progress by animateFloatAsState(current.toFloat(), traceAnimationSpec, label = "CyberTraceStepperTrace")
     val phase by rememberCyberDriftPhase(driftCyclesPerSecond)
+    val useShader = LocalCyberHoloUseShader.current
     val count = steps.size
 
     Column(
@@ -109,7 +111,7 @@ fun CyberTraceStepper(
                 .fillMaxWidth()
                 .height(nodeSize * 2) // The reticle ring is twice the inner ring.
                 .drawWithCache {
-                    val source = CyberHoloBrushSource()
+                    val source = CyberHoloBrushSource(useShader)
                     val stroke = traceWidth.toPx()
                     val inner = nodeSize.toPx() / 2f
                     val reticle = inner * 2f

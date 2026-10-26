@@ -21,7 +21,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.activity.ComponentActivity
-import android.graphics.Canvas
 import com.example.cyberpunkandroid.components.CyberAlertVariant
 import com.example.cyberpunkandroid.components.CyberBanner
 import com.example.cyberpunkandroid.components.CyberBreadcrumbs
@@ -42,6 +41,8 @@ import com.example.cyberpunkandroid.components.CyberHoloBanner
 import com.example.cyberpunkandroid.components.CyberRingTimer
 import com.example.cyberpunkandroid.components.CyberSpectrumReadout
 import com.example.cyberpunkandroid.effects.rememberCyberCountdown
+import com.example.cyberpunkandroid.effects.LocalCyberHoloUseShader
+import androidx.compose.runtime.CompositionLocalProvider
 import com.example.cyberpunkandroid.icons.CyberIcons
 import com.example.cyberpunkandroid.theme.CyberTheme
 import org.junit.Rule
@@ -63,6 +64,11 @@ import java.io.File
 @Config(sdk = [33], qualifiers = "w411dp-h891dp-port-420dpi")
 class CyberNavFeedbackInfoScreenshots {
 
+    init {
+        // Render PixelCopy requests with Robolectric's hardware renderer, which supports runtime shaders.
+        System.setProperty("robolectric.pixelCopyRenderMode", "hardware")
+    }
+
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
@@ -76,11 +82,18 @@ class CyberNavFeedbackInfoScreenshots {
      */
     private fun capture(name: String) {
         composeTestRule.waitForIdle()
-        // Test-only capture: draw the window's root view into a bitmap. Compose's captureToImage waits for a
-        // real frame callback, which never arrives while the test clock is paused.
-        val root = composeTestRule.activity.window.decorView
+        // Test-only capture: copy the window through PixelCopy, which Robolectric renders on its hardware path, so
+        // runtime shaders draw. Compose's captureToImage waits for a real frame callback, which never arrives
+        // while the test clock is paused.
+        val window = composeTestRule.activity.window
+        val root = window.decorView
         val bitmap = Bitmap.createBitmap(root.width, root.height, Bitmap.Config.ARGB_8888)
-        composeTestRule.runOnUiThread { root.draw(Canvas(bitmap)) }
+        val done = java.util.concurrent.CountDownLatch(1)
+        composeTestRule.runOnUiThread {
+            android.view.PixelCopy.request(window, bitmap, { done.countDown() }, android.os.Handler(android.os.Looper.getMainLooper()))
+        }
+        org.robolectric.shadows.ShadowLooper.idleMainLooper()
+        done.await(5, java.util.concurrent.TimeUnit.SECONDS)
         File(outDir, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
 
@@ -97,7 +110,9 @@ class CyberNavFeedbackInfoScreenshots {
         padded: Boolean = true,
         content: @Composable BoxScope.() -> Unit,
     ) {
+        // Robolectric does not apply AGSL uniforms correctly, so screens use the holographic gradient fallback.
         CyberTheme {
+          CompositionLocalProvider(LocalCyberHoloUseShader provides false) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -106,6 +121,7 @@ class CyberNavFeedbackInfoScreenshots {
                 contentAlignment = alignment,
                 content = content
             )
+          }
         }
     }
 

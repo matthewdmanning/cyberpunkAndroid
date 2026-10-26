@@ -30,6 +30,7 @@ import com.example.cyberpunkandroid.config.CyberConfig
 import com.example.cyberpunkandroid.config.CyberPrimitives
 import com.example.cyberpunkandroid.effects.CyberHoloBrushSource
 import com.example.cyberpunkandroid.effects.CyberHoloPalette
+import com.example.cyberpunkandroid.effects.LocalCyberHoloUseShader
 import com.example.cyberpunkandroid.effects.cyberComponentSemantics
 import com.example.cyberpunkandroid.effects.cyberHoloPalette
 import com.example.cyberpunkandroid.effects.rememberCyberDriftPhase
@@ -89,6 +90,7 @@ fun CyberTraceBreadcrumbs(
     var expanded by rememberSaveable { mutableStateOf(false) }
     val slots = breadcrumbSlots(segments.size, maxVisibleSegments.coerceAtLeast(2), expanded)
     val phase by rememberCyberDriftPhase(driftCyclesPerSecond)
+    val useShader = LocalCyberHoloUseShader.current
     // Start x of each visible slot, written in placement and read only while drawing the trace.
     val slotStarts = remember(slots) { mutableStateMapOf<Int, Float>() }
     val cellPadding = CyberTheme.spacing.dp4
@@ -98,7 +100,7 @@ fun CyberTraceBreadcrumbs(
         modifier = modifier
             .cyberComponentSemantics("CyberTraceBreadcrumbs", appendedA11y, customA11y)
             .drawWithCache {
-                val source = CyberHoloBrushSource()
+                val source = CyberHoloBrushSource(useShader)
                 val ringRadius = nodeSize.toPx() / 2f
                 val dotRadius = ringRadius / 2f
                 val stroke = traceWidth.toPx()

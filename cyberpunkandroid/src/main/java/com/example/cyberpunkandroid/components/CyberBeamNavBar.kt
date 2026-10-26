@@ -33,6 +33,7 @@ import com.example.cyberpunkandroid.config.CyberConfig
 import com.example.cyberpunkandroid.config.CyberPrimitives
 import com.example.cyberpunkandroid.effects.CyberHoloBrushSource
 import com.example.cyberpunkandroid.effects.CyberHoloPalette
+import com.example.cyberpunkandroid.effects.LocalCyberHoloUseShader
 import com.example.cyberpunkandroid.effects.cyberComponentSemantics
 import com.example.cyberpunkandroid.effects.cyberHoloPalette
 import com.example.cyberpunkandroid.effects.rememberCyberDriftPhase
@@ -106,6 +107,7 @@ fun CyberBeamNavBar(
     val position by animateFloatAsState(target, indicatorAnimationSpec, label = "CyberBeamNavBarIndicator")
     val echo = rememberCyberEcho(target, echoFadeSpec)
     val phase by rememberCyberDriftPhase(driftCyclesPerSecond)
+    val useShader = LocalCyberHoloUseShader.current
     val beamAlpha = CyberConfig.Effects.BeamAlpha
 
     Row(
@@ -115,7 +117,7 @@ fun CyberBeamNavBar(
             .height(height)
             .background(containerColor)
             .drawWithCache {
-                val source = CyberHoloBrushSource()
+                val source = CyberHoloBrushSource(useShader)
                 val slot = size.width / items.size
                 val beamWidth = slot * emitterFraction.coerceIn(0f, 1f)
                 val emitterPx = emitterWidth.toPx()

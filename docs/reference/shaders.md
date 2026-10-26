@@ -248,6 +248,6 @@ fun Modifier.cyberExample(
 | `direction` | `float2` | `cos/sin(angleDegrees)` |
 | `bands` | `float` | `bands` |
 | `phase` | `float` | `rememberCyberDriftPhase` |
-| `color0..2` | `layout(color) half4` | palette × `alpha` |
+| `color0..2` | `half4` (premultiplied sRGB floats) | palette × `alpha` |
 
 **Fallback:** `Brush.linearGradient(c0, c1, c2, c0)`, `TileMode.Repeated`, shifted by `phase` along `direction`.

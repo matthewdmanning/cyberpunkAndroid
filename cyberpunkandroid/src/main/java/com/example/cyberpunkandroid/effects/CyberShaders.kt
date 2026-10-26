@@ -20,9 +20,9 @@ internal object CyberShaders {
         uniform float2 direction;
         uniform float bands;
         uniform float phase;
-        layout(color) uniform half4 color0;
-        layout(color) uniform half4 color1;
-        layout(color) uniform half4 color2;
+        uniform half4 color0; // Premultiplied sRGB, set as plain floats for portability.
+        uniform half4 color1;
+        uniform half4 color2;
 
         half4 main(float2 fragCoord) {
             float2 uv = fragCoord / resolution;

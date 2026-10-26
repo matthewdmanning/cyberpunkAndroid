@@ -27,6 +27,7 @@ import com.example.cyberpunkandroid.config.CyberPrimitives
 import com.example.cyberpunkandroid.effects.CyberChromaEchoText
 import com.example.cyberpunkandroid.effects.CyberHoloBrushSource
 import com.example.cyberpunkandroid.effects.CyberHoloPalette
+import com.example.cyberpunkandroid.effects.LocalCyberHoloUseShader
 import com.example.cyberpunkandroid.effects.CyberTickSide
 import com.example.cyberpunkandroid.effects.cyberComponentSemantics
 import com.example.cyberpunkandroid.effects.cyberHoloPalette
@@ -95,6 +96,7 @@ fun CyberSpectrumReadout(
         shouldPulse = { old, new -> echoOnChange && old != new }
     )
     val phase by rememberCyberDriftPhase(driftCyclesPerSecond)
+    val useShader = LocalCyberHoloUseShader.current
 
     Column(
         modifier = modifier
@@ -121,7 +123,7 @@ fun CyberSpectrumReadout(
                 .height(CyberTheme.spacing.dp8) // Room for the major ticks.
                 .cyberTickEdge(color = labelColor, side = CyberTickSide.Top)
                 .drawWithCache {
-                    val source = CyberHoloBrushSource()
+                    val source = CyberHoloBrushSource(useShader)
                     val stroke = baselineWidth.toPx()
                     onDrawBehind {
                         drawLine(source.brush(size, phase, palette), Offset(0f, stroke / 2f), Offset(size.width, stroke / 2f), stroke)

@@ -18,6 +18,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -35,7 +36,6 @@ import androidx.compose.ui.graphics.addOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
@@ -63,6 +63,12 @@ data class CyberHoloPalette(
     val color1: Color,
     val color2: Color,
 )
+
+/**
+ * `true` (default) lets holographic components use the iridescence runtime shader on API 33+. Provide `false`
+ * for a subtree that is drawn into a software canvas, or to force the gradient look everywhere.
+ */
+val LocalCyberHoloUseShader = staticCompositionLocalOf { true }
 
 /**
  * Returns the theme's holographic palette: primary (cyan), secondary (magenta), and the success role (green).
@@ -121,10 +127,15 @@ fun rememberCyberDriftPhase(
  * palette, which looks close but has harder band transitions.
  *
  * Create one per drawing element (for example inside `drawWithCache`) and call [brush] on each draw.
+ *
+ * Android cannot draw a runtime shader into a software canvas (for example `View.draw` into a `Bitmap`). Pass
+ * `useShader = false` for content that is drawn that way; the gradient fallback works everywhere.
+ *
+ * @param useShader `true` to use the runtime shader where the API level supports it.
  */
-class CyberHoloBrushSource {
+class CyberHoloBrushSource(useShader: Boolean = true) {
     private val shader: RuntimeShader? =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) RuntimeShader(CyberShaders.HoloIridescenceShader) else null
+        if (useShader && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) RuntimeShader(CyberShaders.HoloIridescenceShader) else null
     private val shaderBrush: Brush? = shader?.let { ShaderBrush(it) }
 
     /**
@@ -157,9 +168,9 @@ class CyberHoloBrushSource {
             s.setFloatUniform("direction", dx, dy)
             s.setFloatUniform("bands", bands)
             s.setFloatUniform("phase", phase)
-            s.setColorUniform("color0", c0.toArgb())
-            s.setColorUniform("color1", c1.toArgb())
-            s.setColorUniform("color2", c2.toArgb())
+            s.setPremultipliedColor("color0", c0)
+            s.setPremultipliedColor("color1", c1)
+            s.setPremultipliedColor("color2", c2)
             return shaderBrush
         }
         // Fallback: one palette cycle spans the projection of the area onto the band direction, divided by bands.
@@ -175,6 +186,18 @@ class CyberHoloBrushSource {
 }
 
 /**
+ * Sets a `half4` uniform to [color] as premultiplied sRGB floats, which is what a shader returns.
+ *
+ * @param name Uniform name.
+ * @param color Color to set.
+ */
+@androidx.annotation.RequiresApi(Build.VERSION_CODES.TIRAMISU)
+private fun RuntimeShader.setPremultipliedColor(name: String, color: Color) {
+    val c = color.convert(androidx.compose.ui.graphics.colorspace.ColorSpaces.Srgb)
+    setFloatUniform(name, c.red * c.alpha, c.green * c.alpha, c.blue * c.alpha, c.alpha)
+}
+
+/**
  * Draws an outline of [shape] with a holographic brush whose colors drift with [phase].
  *
  * Visual: a thin stroke whose color flows from cyan to magenta to green (by default) along a shallow diagonal,
@@ -187,6 +210,7 @@ class CyberHoloBrushSource {
  * @param angleDegrees Band direction, clockwise from the +x axis.
  * @param bands Full palette cycles across the element.
  * @param alpha Stroke opacity, `0f` to `1f`.
+ * @param useShader `true` to use the runtime shader where supported; see [CyberHoloBrushSource].
  * @param appendedA11y Optional accessibility label. The border is decorative, so no label is applied unless one
  *   of the accessibility parameters is supplied.
  * @param customA11y Optional accessibility label that replaces [appendedA11y].
@@ -199,6 +223,7 @@ fun Modifier.cyberHoloBorder(
     angleDegrees: Float = CyberConfig.Effects.HoloAngleDegrees,
     bands: Float = CyberConfig.Effects.HoloBands,
     alpha: Float = 1f,
+    useShader: Boolean = true,
     appendedA11y: String? = null,
     customA11y: String? = null,
 ): Modifier = this
@@ -210,7 +235,7 @@ fun Modifier.cyberHoloBorder(
         val inner = Size((size.width - strokePx).coerceAtLeast(0f), (size.height - strokePx).coerceAtLeast(0f))
         val path = Path().apply { addOutline(shape.createOutline(inner, layoutDirection, this@drawWithCache)) }
         path.translate(Offset(inset, inset))
-        val source = CyberHoloBrushSource()
+        val source = CyberHoloBrushSource(useShader)
         val stroke = Stroke(width = strokePx)
         onDrawWithContent {
             drawContent()

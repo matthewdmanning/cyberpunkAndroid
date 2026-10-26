@@ -21,6 +21,7 @@ import com.example.cyberpunkandroid.config.CyberConfig
 import com.example.cyberpunkandroid.config.CyberPrimitives
 import com.example.cyberpunkandroid.effects.CyberHoloBrushSource
 import com.example.cyberpunkandroid.effects.CyberHoloPalette
+import com.example.cyberpunkandroid.effects.LocalCyberHoloUseShader
 import com.example.cyberpunkandroid.effects.cyberHoloPalette
 import com.example.cyberpunkandroid.effects.rememberCyberDriftPhase
 import com.example.cyberpunkandroid.theme.CyberTheme
@@ -79,13 +80,14 @@ fun CyberRingTimer(
     content: (@Composable BoxScope.() -> Unit)? = null,
 ) {
     val phase by rememberCyberDriftPhase(driftCyclesPerSecond)
+    val useShader = LocalCyberHoloUseShader.current
     Box(modifier = modifier.size(size), contentAlignment = Alignment.Center) {
         Box(
             modifier = Modifier
                 .matchParentSize()
                 .clearAndSetSemantics { if (customA11y != null) contentDescription = customA11y }
                 .drawWithCache {
-                    val source = CyberHoloBrushSource()
+                    val source = CyberHoloBrushSource(useShader)
                     val stroke = strokeWidth.toPx()
                     val diameter = min(this.size.width, this.size.height) - stroke
                     val topLeft = Offset((this.size.width - diameter) / 2f, (this.size.height - diameter) / 2f)
