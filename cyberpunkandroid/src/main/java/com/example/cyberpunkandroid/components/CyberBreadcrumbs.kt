@@ -108,7 +108,7 @@ fun CyberBreadcrumbs(
                 index == lastIndex -> BreadcrumbText(
                     text = segments[index],
                     color = currentColor,
-                    modifier = Modifier.semantics { stateDescription = currentStateDescription }
+                    modifier = Modifier.semantics(mergeDescendants = true) { stateDescription = currentStateDescription }
                 )
                 else -> BreadcrumbText(
                     text = segments[index],

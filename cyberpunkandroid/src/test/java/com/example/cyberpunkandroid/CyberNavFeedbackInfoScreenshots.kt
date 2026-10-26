@@ -137,7 +137,7 @@ class CyberNavFeedbackInfoScreenshots {
         advance(1_000)
         capture("02_nav_rail")
         selected = 2
-        advance(48) // Mid-slide: the indicator is between slots.
+        advance(64) // Mid-slide: the indicator is between slots.
         capture("02_nav_rail_effect")
     }
 
@@ -180,7 +180,7 @@ class CyberNavFeedbackInfoScreenshots {
         advance(1_000)
         capture("04_banner")
         message = "Uplink weak"
-        advance(48) // Near the flash peak.
+        advance(64) // Near the flash peak.
         capture("04_banner_effect")
     }
 
@@ -233,7 +233,7 @@ class CyberNavFeedbackInfoScreenshots {
         advance(1_000)
         capture("06_readout")
         value = "45"
-        advance(48) // Near the flash peak.
+        advance(64) // Near the flash peak.
         capture("06_readout_effect")
     }
 
@@ -274,7 +274,7 @@ class CyberNavFeedbackInfoScreenshots {
         advance(1_000)
         capture("08_count_badge")
         count = 4
-        advance(32) // Near the bump peak.
+        advance(64) // Near the bump peak.
         capture("08_count_badge_effect")
     }
 }

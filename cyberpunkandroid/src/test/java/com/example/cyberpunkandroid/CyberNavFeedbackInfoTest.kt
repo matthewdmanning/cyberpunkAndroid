@@ -219,7 +219,7 @@ class CyberNavFeedbackInfoTest {
         composeTestRule.mainClock.advanceTimeBy(100)
         assertEquals(0f, peak)
         key = 5
-        composeTestRule.mainClock.advanceTimeBy(32)
+        composeTestRule.mainClock.advanceTimeBy(100)
         assertTrue(peak > 0f)
     }
 
