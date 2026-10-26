@@ -95,3 +95,63 @@ CyberTimeoutBar(remainingFraction = { remaining.value })
 **Looks like:** A `status.danger.color` pill with an `onColor` number in `labelSmall`. One digit gives a circle (`roundedFull` + square minimum `IconSizes.dp16`). `> maxCount` shows `99+`. `count <= 0` draws nothing.
 
 **Effect:** On an increase only, one bump (`cyberChangeBump`, 300 ms). Decreases do not animate.
+
+---
+
+## Holographic set
+
+Same UX jobs as the components above, in a digital, cybernetic and holographic style. Each one pairs with a base component.
+
+| Holographic | Base | Shared job |
+| --- | --- | --- |
+| `CyberTraceBreadcrumbs` | `CyberBreadcrumbs` | Show location in a hierarchy |
+| `CyberBeamNavBar` | `CyberNavRail` | Switch top-level destinations (phone bottom bar) |
+| `CyberTraceStepper` | `CyberStepper` | Show progress through steps |
+| `CyberHoloBanner` | `CyberBanner` | Persistent notice |
+| `CyberRingTimer` | `CyberTimeoutBar` | Time left before expiry |
+| `CyberSpectrumReadout` | `CyberReadout` | One key metric |
+
+### Visual language
+
+- **Light, not boxes.** Edges are lines that fade (horizon lines), emitters that cast a beam, traces with nodes, and rulers. No component draws a closed frame.
+- **One holographic brush.** Iridescent color comes from `CyberHoloBrushSource`: an AGSL shader on API 33+, a repeating linear gradient below. Its palette is the theme's three accents (`cyberHoloPalette()`: primary, secondary, success).
+- **Subtle movement.** The brush drifts at 0.1 cycles/s (`CyberConfig.Effects.HoloDriftCyclesPerSecond`). Each component takes `driftCyclesPerSecond`; `0f` stops it. Other motion is one-shot and tied to a state change.
+- **Geometry.** Nodes and rings are true circles. Bars and lines are straight. No parallelograms, no hexagons.
+
+### `CyberTraceBreadcrumbs`
+
+**Looks like:** Labels with no separators over one continuous holographic trace. Ancestors have small `border` dots on the trace. The current location has a holographic ring, where the trace ends.
+
+**Motion:** Brush drift only.
+
+### `CyberBeamNavBar`
+
+**Looks like:** Equal-width icon-over-label slots on `surfaceSecondary`, with a `border` hairline on top. Over the selected slot: a short holographic emitter line on the top edge and a `primary` beam that fades down behind the icon (`cyberBeam`).
+
+**Motion:** On selection change, the beam slides to the new slot (`indicatorAnimationSpec`). An afterimage stays at the old slot and fades (`rememberCyberEcho`, `echoFadeSpec`, 500 ms).
+
+### `CyberTraceStepper`
+
+**Looks like:** A header with the current label (start) and `2/4` (end). Under it, one trace with evenly spaced circular nodes: completed = small filled dot; current = ring inside a thinner reticle ring; upcoming = hollow `border` ring. The completed part of the trace is holographic.
+
+**Motion:** The holographic part extends to the new node (`traceAnimationSpec`, 300 ms).
+
+**Semantics:** One progress-bar node, state "Step 2 of 4, Verify".
+
+### `CyberHoloBanner`
+
+**Looks like:** No box. Content between top and bottom status-color lines that fade at both ends, over a half-transparent status container with a faint beam from the top.
+
+**Motion:** On appearance, a scan line projects the banner from the start edge to the end edge (`cyberMaterialize`, `materializeSpec`, 500 ms). No idle motion.
+
+### `CyberRingTimer`
+
+**Looks like:** A circle of `segments` (24) ticks. Remaining time lights ticks clockwise from 12 o'clock with the holographic brush; below `warningFraction` they are `status.warning.color`. A center slot holds content (for example the seconds left).
+
+**Motion:** Drain plus brush drift. Drive it with `rememberCyberCountdown`.
+
+### `CyberSpectrumReadout`
+
+**Looks like:** No panel. Label, value (display type), unit on the baseline. Under them, a holographic baseline with a tick ruler hanging from it (`cyberTickEdge`). Delta row as in `CyberReadout`.
+
+**Motion:** On a value change, cyan and magenta echoes of the digits split and converge (`CyberChromaEchoText`, `echoAnimationSpec`, 300 ms).

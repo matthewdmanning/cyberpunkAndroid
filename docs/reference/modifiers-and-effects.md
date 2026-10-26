@@ -697,3 +697,47 @@ Pair with `CyberTimeoutBar`, or use it to auto-dismiss a caller-controlled `Cybe
 | `strokeWidth` | `Dp` | `BorderWidths.dp2` | Stroke width. |
 | `armLength` | `Dp` | `Spacing.dp12` | Arm length from the corner. Capped at half the short side. |
 | `inset` | `Dp` | `0.dp` | Distance from the edges to the outer side of the marks. |
+
+---
+
+## Holographic
+
+### `rememberCyberDriftPhase` and `cyberHoloPalette`
+
+**What:** `rememberCyberDriftPhase(cyclesPerSecond)` returns an endless phase in `0 until 1`, frame-synced. `0f` holds it at `0`. `cyberHoloPalette()` returns `CyberHoloPalette(primary, secondary, status.success.color)`. Share one phase between related effects so their colors drift together.
+
+### `CyberHoloBrushSource`
+
+**What:** Builds the iridescent brush. API 33+: `CyberShaders.HoloIridescenceShader`. Below: a repeating linear gradient `c0 → c1 → c2 → c0` (harder band edges). Create one per drawing element (inside `drawWithCache`); call `brush(size, phase, palette, angleDegrees, bands, alpha)` on each draw.
+
+| Parameter | Default | What it does |
+| --- | --- | --- |
+| `angleDegrees` | `CyberConfig.Effects.HoloAngleDegrees` (30) | Band direction, clockwise from +x. |
+| `bands` | `CyberConfig.Effects.HoloBands` (1) | Palette cycles across the area. |
+| `alpha` | `1` | Opacity multiplier. |
+
+### `Modifier.cyberHoloBorder`
+
+**Looks like:** A thin outline of `shape` in the holographic brush, over the content, inside the bounds. Colors drift with `phase`.
+
+Parameters: `shape`, `phase: () -> Float`, `palette`, `width` (`BorderWidths.dp1`), `angleDegrees`, `bands`, `alpha`.
+
+### `Modifier.cyberBeam`
+
+**Looks like:** A vertical gradient behind the content: `color` at `alpha` (`CyberConfig.Effects.BeamAlpha`, 0.22) on the top edge to transparent at the bottom. Static.
+
+### `rememberCyberEcho`
+
+**What:** A hook for afterimages. When `target` changes, `CyberEchoState.position` keeps the old value and `alpha` fades 1 → 0 with `fadeSpec` (500 ms out-expo). Read both in draw lambdas.
+
+### `Modifier.cyberTickEdge`
+
+**Looks like:** A ruler of hairline ticks along `side` (`Top` or `Bottom`): `minorLength` (`Spacing.dp4`) every `spacing` (`Spacing.dp8`), `majorLength` (`Spacing.dp8`) every `majorEvery` (5). Static.
+
+### `Modifier.cyberMaterialize`
+
+**Looks like:** Content clipped to `progress × width`, with a `color` scan line at the front and a `trail` (`Spacing.dp24`) gradient behind it at `trailAlpha` (0.5). At `progress = 1` it draws the content only. Drive `progress` 0 → 1 once.
+
+### `CyberChromaEchoText`
+
+**Looks like:** Text with two echo copies (`primary`, `secondary`). At `pulse = 1` they shift `offset` (`Spacing.dp4`) toward the start and end edges at `echoAlpha` (`CyberConfig.Effects.ChromaEchoAlpha`, 0.8). They converge as `pulse` decays. Echoes are hidden from screen readers. Drive `pulse` with `rememberCyberChangePulse(text)`.
