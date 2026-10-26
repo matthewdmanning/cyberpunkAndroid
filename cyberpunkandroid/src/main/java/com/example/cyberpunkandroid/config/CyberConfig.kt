@@ -64,5 +64,20 @@ object CyberConfig {
 
         /** Vertical position of a leader line in its bounds, as a fraction of the height (0.5 = center). */
         const val LeaderLineCenterFraction: Float = 0.5f
+
+        /** Holographic drift speed in palette cycles per second. 0.1 is one full cycle every 10 s: visible, not busy. */
+        const val HoloDriftCyclesPerSecond: Float = 0.1f
+
+        /** Number of full palette cycles across a holographic brush. 1 shows each palette color once. */
+        const val HoloBands: Float = 1f
+
+        /** Direction of holographic color bands, in degrees clockwise from the +x axis. 30 gives a shallow diagonal. */
+        const val HoloAngleDegrees: Float = 30f
+
+        /** Peak opacity (0..1) of a projector beam at its source edge. */
+        const val BeamAlpha: Float = 0.22f
+
+        /** Peak opacity (0..1) of the chromatic echo copies at the start of a change. */
+        const val ChromaEchoAlpha: Float = 0.8f
     }
 }

@@ -12,6 +12,28 @@ import org.intellij.lang.annotations.Language
  */
 internal object CyberShaders {
 
+    // Brush shader (no `contents` input): blends three palette colors with cosine lobes 120 degrees apart along a
+    // direction, so bands of color flow into each other like the interference film on a hologram foil.
+    @Language("AGSL")
+    const val HoloIridescenceShader = """
+        uniform float2 resolution;
+        uniform float2 direction;
+        uniform float bands;
+        uniform float phase;
+        layout(color) uniform half4 color0;
+        layout(color) uniform half4 color1;
+        layout(color) uniform half4 color2;
+
+        half4 main(float2 fragCoord) {
+            float2 uv = fragCoord / resolution;
+            float t = dot(uv, direction) * bands + phase;
+            float w0 = 0.5 + 0.5 * cos(6.2831853 * t);
+            float w1 = 0.5 + 0.5 * cos(6.2831853 * (t - 0.3333333));
+            float w2 = 0.5 + 0.5 * cos(6.2831853 * (t - 0.6666667));
+            return (color0 * w0 + color1 * w1 + color2 * w2) / (w0 + w1 + w2);
+        }
+    """
+
     // Samples each square at its center so the whole screen resolves from coarse pixels to sharp content.
     @Language("AGSL")
     const val PixelateShader = """

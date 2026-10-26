@@ -36,6 +36,12 @@ import com.example.cyberpunkandroid.components.CyberReadout
 import com.example.cyberpunkandroid.components.CyberStepper
 import com.example.cyberpunkandroid.components.CyberTimeoutBar
 import com.example.cyberpunkandroid.components.CyberTrend
+import com.example.cyberpunkandroid.components.CyberTraceBreadcrumbs
+import com.example.cyberpunkandroid.components.CyberBeamNavBar
+import com.example.cyberpunkandroid.components.CyberTraceStepper
+import com.example.cyberpunkandroid.components.CyberHoloBanner
+import com.example.cyberpunkandroid.components.CyberRingTimer
+import com.example.cyberpunkandroid.components.CyberSpectrumReadout
 import com.example.cyberpunkandroid.effects.rememberCyberCountdown
 import com.example.cyberpunkandroid.icons.CyberIcons
 import com.example.cyberpunkandroid.theme.CyberTheme
@@ -276,5 +282,113 @@ class CyberNavFeedbackInfoScreenshots {
         count = 4
         advance(64) // Near the bump peak.
         capture("08_count_badge_effect")
+    }
+
+    // ---- Holographic set -------------------------------------------------------------------
+
+    @Test
+    fun holoTraceBreadcrumbs() {
+        composeTestRule.mainClock.autoAdvance = false
+        composeTestRule.setContent {
+            Screen(Alignment.TopStart) {
+                CyberTraceBreadcrumbs(segments = listOf("Root", "Grid", "Sector", "Node"), onSegmentClick = {})
+            }
+        }
+        advance(2_000)
+        capture("11_trace_breadcrumbs")
+    }
+
+    @Test
+    fun holoBeamNavBar() {
+        var selected by mutableIntStateOf(0)
+        composeTestRule.mainClock.autoAdvance = false
+        composeTestRule.setContent {
+            Screen(Alignment.BottomCenter, padded = false) {
+                CyberBeamNavBar(
+                    items = listOf(
+                        CyberNavRailItem("Map", CyberIcons.ChartLine),
+                        CyberNavRailItem("Comms", CyberIcons.Bell, badgeCount = 3),
+                        CyberNavRailItem("Files", CyberIcons.File),
+                        CyberNavRailItem("Logs", CyberIcons.Terminal),
+                    ),
+                    selectedIndex = selected,
+                    onItemSelected = { selected = it }
+                )
+            }
+        }
+        advance(1_000)
+        capture("12_beam_nav_bar")
+        selected = 2
+        advance(96) // Beam mid-slide, echo still bright at the old slot.
+        capture("12_beam_nav_bar_effect")
+    }
+
+    @Test
+    fun holoTraceStepper() {
+        var step by mutableIntStateOf(1)
+        composeTestRule.mainClock.autoAdvance = false
+        composeTestRule.setContent {
+            Screen { CyberTraceStepper(steps = listOf("Scan", "Verify", "Upload", "Done"), currentStep = step) }
+        }
+        advance(1_000)
+        capture("13_trace_stepper")
+        step = 2
+        advance(150) // Holographic trace halfway to the next node.
+        capture("13_trace_stepper_effect")
+    }
+
+    @Test
+    fun holoBanner() {
+        composeTestRule.mainClock.autoAdvance = false
+        composeTestRule.setContent {
+            Screen(Alignment.TopCenter, padded = false) {
+                Column(verticalArrangement = Arrangement.spacedBy(CyberTheme.spacing.dp16)) {
+                    CyberHoloBanner(message = "Uplink lost", visible = true, variant = CyberAlertVariant.Warning, onDismiss = {})
+                    CyberHoloBanner(message = "Synced", visible = true, variant = CyberAlertVariant.Success)
+                    CyberHoloBanner(message = "Update ready", visible = true, variant = CyberAlertVariant.Info)
+                    CyberHoloBanner(message = "Breach", visible = true, variant = CyberAlertVariant.Error, onDismiss = {})
+                }
+            }
+        }
+        advance(200) // Mid-projection: scan line partway across.
+        capture("14_holo_banner_effect")
+        advance(1_000)
+        capture("14_holo_banner")
+    }
+
+    @Test
+    fun holoRingTimer() {
+        composeTestRule.mainClock.autoAdvance = false
+        composeTestRule.setContent {
+            Screen {
+                Row(horizontalArrangement = Arrangement.spacedBy(CyberTheme.spacing.dp32), verticalAlignment = Alignment.CenterVertically) {
+                    val full = rememberCyberCountdown(durationMillis = 10_000)
+                    val low = rememberCyberCountdown(durationMillis = 1_250)
+                    CyberRingTimer(remainingFraction = { full.value }) { Text("9", style = CyberTheme.typography.terminal) }
+                    CyberRingTimer(remainingFraction = { low.value }) { Text("1", style = CyberTheme.typography.terminal) }
+                }
+            }
+        }
+        advance(1_000)
+        capture("15_ring_timer")
+    }
+
+    @Test
+    fun holoSpectrumReadout() {
+        var value by mutableStateOf("42")
+        composeTestRule.mainClock.autoAdvance = false
+        composeTestRule.setContent {
+            Screen {
+                Row(horizontalArrangement = Arrangement.spacedBy(CyberTheme.spacing.dp32)) {
+                    CyberSpectrumReadout(label = "Ping", value = value, unit = "ms", delta = "+3", trend = CyberTrend.Up, deltaSentiment = CyberDeltaSentiment.Negative)
+                    CyberSpectrumReadout(label = "Rate", value = "9.6", unit = "Gb/s", delta = "+1.2", trend = CyberTrend.Up, deltaSentiment = CyberDeltaSentiment.Positive)
+                }
+            }
+        }
+        advance(1_000)
+        capture("16_spectrum_readout")
+        value = "45"
+        advance(48) // Echoes near full split.
+        capture("16_spectrum_readout_effect")
     }
 }
