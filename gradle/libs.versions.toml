@@ -14,7 +14,7 @@ lifecycleRuntime = "2.8.7"
 robolectric = "4.17"
 # Pinned to the version both modules used before the catalog move; the Compose BOM would resolve an older one.
 material3 = "1.4.0"
-commonsStatistics = "1.1"
+commonsStatistics = "1.3"
 
 [libraries]
 commons-statistics-distribution = { group = "org.apache.commons", name = "commons-statistics-distribution", version.ref = "commonsStatistics" }
