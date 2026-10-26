@@ -621,3 +621,79 @@ val needle by rememberDrivenFloatState(telemetry = reading) { current, target ->
 | Entrance | `cyberBoot` |
 | Caution / locked | `cyberStripes` |
 | Energy burst | `Modifier.cyberSpark` |
+
+---
+
+## Change signals, timing & information guides
+
+These effects mark a function, not a mood. Each one is static or one-shot. None runs a continuous animation at rest. All are decorative: no accessibility label unless `appendedA11y` or `customA11y` is supplied.
+
+### `rememberCyberChangePulse`
+
+**What:** A hook. It returns a one-shot envelope `State<Float>`: `0` at rest; on a key change it jumps to `1` and decays to `0`.
+
+**Use for:** Driving `cyberChangeFlash` or `cyberChangeBump` when data updates. Read the state only in draw or layer lambdas.
+
+| Parameter | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `key` | `T` | required | Observed data. A new value can start a pulse. |
+| `animationSpec` | `AnimationSpec<Float>` | `tween(500, OutExpoEasing)` | Decay from 1 to 0. |
+| `shouldPulse` | `(old, new) -> Boolean` | `old != new` | Filter. Example: `{ o, n -> n > o }` pulses on increase only. |
+
+The first composition never pulses.
+
+### `Modifier.cyberChangeFlash`
+
+**Looks like:** A flat `color` fill in `shape`, behind the content. Opacity = `pulse() × maxAlpha`. Nothing at rest.
+
+| Parameter | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `pulse` | `() -> Float` | required | Envelope level, read in the draw phase. |
+| `color` | `Color` | required | Tint. Use the role of the change (primary for new data, a status color for a status change). |
+| `shape` | `Shape` | `RectangleShape` | Match the element background. |
+| `maxAlpha` | `Float` | `CyberConfig.Effects.ChangeFlashAlpha` (0.35) | Peak opacity. |
+
+### `Modifier.cyberChangeBump`
+
+**Looks like:** One scale bump about the center, peak `1 + scaleDelta`. Layout size does not change.
+
+| Parameter | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `pulse` | `() -> Float` | required | Envelope level, read in the layer block. |
+| `scaleDelta` | `Float` | `CyberConfig.Effects.ChangeBumpScale` (0.15) | Extra scale at the peak. |
+
+### `rememberCyberCountdown`
+
+**What:** A hook. It returns the remaining fraction `State<Float>` of a pausable countdown, `1` → `0`.
+
+| Parameter | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `durationMillis` | `Int` | required | Total length. |
+| `running` | `Boolean` | `true` | `false` pauses and holds the value. Resume continues from the held value. |
+| `restartKey` | `Any?` | `Unit` | A new value resets to `1`. |
+| `easing` | `Easing` | `LinearEasing` | Shape over time. |
+| `onTimeout` | `() -> Unit` | no-op | Called once at `0`. |
+
+Pair with `CyberTimeoutBar`, or use it to auto-dismiss a caller-controlled `CyberSnackbar`. Pause it while the user interacts with the timed element.
+
+### `Modifier.cyberLeaderLine`
+
+**Looks like:** A row of round dots across the element width, behind the content, at `verticalFraction` of the height.
+
+| Parameter | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `color` | `Color` | required | Dot color. Use a low-emphasis role (`border`). |
+| `strokeWidth` | `Dp` | `BorderWidths.dp2` | Dot diameter. |
+| `gap` | `Dp` | `Spacing.dp4` | Edge-to-edge dot gap. |
+| `verticalFraction` | `Float` | `0.5` | Line position in the height. |
+
+### `Modifier.cyberCornerBrackets`
+
+**Looks like:** Four L-shaped corner marks (viewfinder frame) over the content. No stroke along the middle of the edges. Static.
+
+| Parameter | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `color` | `Color` | required | Stroke color. |
+| `strokeWidth` | `Dp` | `BorderWidths.dp2` | Stroke width. |
+| `armLength` | `Dp` | `Spacing.dp12` | Arm length from the corner. Capped at half the short side. |
+| `inset` | `Dp` | `0.dp` | Distance from the edges to the outer side of the marks. |

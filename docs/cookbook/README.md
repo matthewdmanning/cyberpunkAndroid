@@ -20,6 +20,13 @@ Find your design intent in the table below to jump directly to the correct recip
 | **Indicate active process or state** | `Modifier.cyberPing` beacon / `cyberOverload` | [recipes/ui-recipes.md](recipes/ui-recipes.md) |
 | **Holographic rotating surface** | `Modifier.cyberHoloBackground` | [recipes/ui-recipes.md](recipes/ui-recipes.md) |
 | **CRT monitor screen simulation** | `Modifier.cyberCrt` | [recipes/ui-recipes.md](recipes/ui-recipes.md) |
+| **Show location in a hierarchy** | `CyberBreadcrumbs` | [../reference/components-nav-feedback-info.md](../reference/components-nav-feedback-info.md) |
+| **Side navigation on wide layouts** | `CyberNavRail` + `CyberCountBadge` | [../reference/components-nav-feedback-info.md](../reference/components-nav-feedback-info.md) |
+| **Show progress through a multi-step flow** | `CyberStepper` | [../reference/components-nav-feedback-info.md](../reference/components-nav-feedback-info.md) |
+| **Persistent notice with actions** | `CyberBanner` | [../reference/components-nav-feedback-info.md](../reference/components-nav-feedback-info.md) |
+| **Show time left before expiry** | `rememberCyberCountdown` + `CyberTimeoutBar` | [../reference/components-nav-feedback-info.md](../reference/components-nav-feedback-info.md) |
+| **Key metric or spec sheet** | `CyberReadout`, `CyberDataList` | [../reference/components-nav-feedback-info.md](../reference/components-nav-feedback-info.md) |
+| **Mark data that just changed** | `rememberCyberChangePulse` + `cyberChangeFlash` / `cyberChangeBump` | [../reference/modifiers-and-effects.md](../reference/modifiers-and-effects.md#change-signals-timing--information-guides) |
 | **Model physical physics & continuous states** | `animateFloatAsState` (thermal lag) + `lerp` + RPM coupling | [patterns/natural-behavior-modeling.md](patterns/natural-behavior-modeling.md) |
 
 ---
