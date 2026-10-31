@@ -232,3 +232,22 @@ fun Modifier.cyberExample(
 - Read `clock.value` and the `level` state inside `uniforms`/`fallback` lambdas, never in the composable body. That keeps per-frame updates in the draw phase, with no recomposition.
 - Use `colorUniform` (not `floatUniform`) for `layout(color)` uniforms so colors are converted to the right color space.
 - Keep loops bounded by constants; AGSL requires it.
+
+## `HoloIridescenceShader`
+
+**Effect:** Iridescent foil bands. It is a **brush** shader, not a `RenderEffect`: it has no `contents` input and is wrapped in a `ShaderBrush` by `CyberHoloBrushSource`.
+
+**What it computes**
+1. **Band coordinate:** `t = dot(uv, direction) × bands + phase`, with `uv = fragCoord / resolution`.
+2. **Weights:** three cosine lobes 120° apart, `w_k = 0.5 + 0.5 cos(2π (t − k/3))`. Their sum is always 1.5, so there is no divide-by-zero.
+3. **Output:** `(color0 w0 + color1 w1 + color2 w2) / (w0 + w1 + w2)`.
+
+| Uniform | Type | Set from |
+| --- | --- | --- |
+| `resolution` | `float2` | area size |
+| `direction` | `float2` | `cos/sin(angleDegrees)` |
+| `bands` | `float` | `bands` |
+| `phase` | `float` | `rememberCyberDriftPhase` |
+| `color0..2` | `half4` (premultiplied sRGB floats) | palette × `alpha` |
+
+**Fallback:** `Brush.linearGradient(c0, c1, c2, c0)`, `TileMode.Repeated`, shifted by `phase` along `direction`.
