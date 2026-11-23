@@ -11,7 +11,7 @@ composeBom = "2024.12.01"
 activityCompose = "1.10.0"
 navigationCompose = "2.8.5"
 lifecycleRuntime = "2.8.7"
-robolectric = "4.17"
+robolectric = "4.18.1"
 # Pinned to the version both modules used before the catalog move; the Compose BOM would resolve an older one.
 material3 = "1.4.0"
 commonsStatistics = "1.1"
